@@ -1,0 +1,30 @@
+name: sensorx
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sensorx_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: sk1234
+      POSTGRES_DB: postgres # DB mặc định để khởi tạo
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Mount script tạo nhiều DB vào đây
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: sensorx_pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@sensorx.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+
+volumes:
+  postgres_data:

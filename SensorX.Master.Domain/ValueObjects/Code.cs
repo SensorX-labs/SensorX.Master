@@ -1,13 +1,10 @@
 using System.Text.RegularExpressions;
 using SensorX.Master.Domain.Common.Exceptions;
-using SensorX.Master.Domain.SeedWork;
 
 namespace SensorX.Master.Domain.ValueObjects;
 
-public record Code
+public partial record Code
 {
-    private static readonly Regex CodeRegex = new(@"^[A-Z]+-\d{6}-\d{9}$", RegexOptions.Compiled);
-
     public string Value { get; init; }
 
     private Code(string value)
@@ -15,7 +12,7 @@ public record Code
         if (string.IsNullOrWhiteSpace(value))
             throw new DomainException("Code cannot be empty.");
         //kiểm tra định dạng $"{prefix.ToUpper()}-{now:yyMMdd}-{now:HHmmssfff}";
-        if (!CodeRegex.IsMatch(value))
+        if (!MyRegex().IsMatch(value))
             throw new DomainException("Code format is invalid.");
         Value = value;
     }
@@ -35,4 +32,6 @@ public record Code
     public static implicit operator string(Code code) => code?.Value ?? string.Empty;
 
     public override string ToString() => Value;
+    [GeneratedRegex(@"^[A-Z]+-\d{6}-\d{9}$")]
+    private static partial Regex MyRegex();
 }
