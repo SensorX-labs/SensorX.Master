@@ -9,7 +9,14 @@ public class OrderService
     {
         var subTotal = order.GetSubtotal();
         var taxAmount = order.GetTotalTax();
-        var invoice = Invoice.Create(order.Id, order.CustomerInfo, subTotal, taxAmount);
+        var billingInfo = new BillingInfo
+        {
+            CompanyName = order.CustomerInfo.CompanyName,
+            TaxCode = order.CustomerInfo.TaxCode,
+            Address = order.CustomerInfo.Address,
+            Email = order.CustomerInfo.Email
+        };
+        var invoice = Invoice.Create(order.Id, billingInfo, subTotal, taxAmount);
         foreach (var item in order.Items)
         {
             invoice.AddItem(InvoiceItem.Create(item.Id, item.ProductId, item.ProductName, item.Unit, item.Quantity, item.UnitPrice, item.TaxRate));

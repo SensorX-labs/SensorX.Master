@@ -4,8 +4,8 @@ namespace SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAgg
 
 public class BillingInfo
 {
-    public string CompanyName { get; init; }
-    public string TaxCode { get; init; }
-    public string Address { get; init; }
-    public Email Email { get; init; }
+    public string CompanyName { get; set; }
+    public string TaxCode { get; set; }
+    public string Address { get; set; }
+    public Email Email { get; set; }
 }

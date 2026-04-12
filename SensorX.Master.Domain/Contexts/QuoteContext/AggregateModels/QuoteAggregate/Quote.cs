@@ -35,15 +35,15 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
             ReasonReject = reasonReject;
         }
 
-        public Code Code { get; private set; }
-        public RFQId RFQId { get; private set; }
-        public CustomerId CustomerId { get; private set; }
-        public CustomerInfo CustomerInfo { get; private set; }
-        public string? Note { get; private set; }
-        public QuoteStatus Status { get; private set; }
-        public QuoteResponse Response { get; private set; }
-        public DateTimeOffset QuoteDate { get; private set; }
-        public string ReasonReject { get; private set; }
+        public Code Code { get; set; }
+        public RFQId RFQId { get; set; }
+        public CustomerId CustomerId { get; set; }
+        public CustomerInfo CustomerInfo { get; set; }
+        public string? Note { get; set; }
+        public QuoteStatus Status { get; set; }
+        public QuoteResponse Response { get; set; }
+        public DateTimeOffset QuoteDate { get; set; }
+        public string ReasonReject { get; set; }
 
         private readonly List<QuoteItem> _lineItems = [];
         public IReadOnlyList<QuoteItem> LineItems => _lineItems.AsReadOnly();

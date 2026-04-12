@@ -1,17 +1,19 @@
+using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 using SensorX.Master.Domain.SeedWork;
+using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
 
 namespace SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
 
 public class Order : Entity<OrderId>
 {
-    public QuoteId QuoteId { get; init; }
-    public Code Code { get; init; }
-    public CustomerId CustomerId { get; init; }
-    public CustomerInfo CustomerInfo { get; init; }
-    public SenderInfo SenderInfo { get; init; }
-    public OrderStatus Status { get; init; }
-    public DateTimeOffset OrderDate { get; init; }
+    public QuoteId QuoteId { get; set; }
+    public Code Code { get; set; }
+    public CustomerId CustomerId { get; set; }
+    public CustomerInfo CustomerInfo { get; set; }
+    public SenderInfo SenderInfo { get; set; }
+    public OrderStatus Status { get; set; }
+    public DateTimeOffset OrderDate { get; set; }
     private readonly List<OrderItem> _items = new();
     public IReadOnlyList<OrderItem> Items => _items.AsReadOnly();
 
@@ -22,16 +24,17 @@ public class Order : Entity<OrderId>
 
     public Money GetSubtotal()
     {
-        return _items.Sum(item => item.GetLineAmount());
+        return _items.Select(item => item.GetLineAmount()).Aggregate(Money.Zero("VND"), (a, b) => a + b);
     }
 
     public Money GetTotalTax()
     {
-        return _items.Sum(item => item.GetTaxAmount());
+        return _items.Select(item => item.GetTaxAmount()).Aggregate(Money.Zero("VND"), (a, b) => a + b);
     }
 
     public Money GetGrandTotal()
     {
-        return _items.Sum(item => item.GetTotalLineAmount());
+        return _items.Select(item => item.GetTotalLineAmount()).Aggregate(Money.Zero("VND"), (a, b) => a + b);
     }
 }
+

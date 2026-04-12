@@ -1,3 +1,4 @@
+using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
 
@@ -5,22 +6,22 @@ namespace SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAgg
 
 public class InvoiceItem
 {
-    public InvoiceItemId Id { get; init; }
-    public ProductId ProductId { get; init; }
-    public string ProductName { get; init; }
-    public string Unit { get; init; }
-    public Quantity Quantity { get; init; }
-    public Money UnitPrice { get; init; }
-    public Percent TaxRate { get; init; }
-    public Money LineAmount { get; init; }
-    public Money TaxAmount { get; init; }
-    public Money TotalLineAmount { get; init; }
+    public InvoiceItemId Id { get; set; }
+    public ProductId ProductId { get; set; }
+    public string ProductName { get; set; }
+    public string Unit { get; set; }
+    public Quantity Quantity { get; set; }
+    public Money UnitPrice { get; set; }
+    public Percent TaxRate { get; set; }
+    public Money LineAmount { get; set; }
+    public Money TaxAmount { get; set; }
+    public Money TotalLineAmount { get; set; }
 
     public static InvoiceItem Create(OrderItemId orderItemId, ProductId productId, string productName, string unit, Quantity quantity, Money unitPrice, Percent taxRate)
     {
         return new InvoiceItem
         {
-            Id = orderItemId,
+            Id = new InvoiceItemId(orderItemId.Value),
             ProductId = productId,
             ProductName = productName,
             Unit = unit,

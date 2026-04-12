@@ -1,22 +1,24 @@
+using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
 using SensorX.Master.Domain.SeedWork;
+using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
 
 namespace SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAggregate;
 
 public class Invoice : Entity<InvoiceId>
 {
-    public Code Code { get; init; }
-    public OrderId OrderId { get; init; }
-    public BillingInfo BillingInfo { get; init; }
-    public string InvoiceSymbol { get; init; }
-    public string InvoiceNumber { get; init; }
-    public string TaxAuthorityCode { get; init; }
-    public DateTimeOffset IssueAt { get; init; }
-    public Money SubTotal { get; init; }
-    public Money TaxAmount { get; init; }
-    public Money GrandTotal { get; init; }
-    public Money AmountPaid { get; init; }
-    public InvoiceStatus Status { get; init; }
+    public Code Code { get; set; }
+    public OrderId OrderId { get; set; }
+    public BillingInfo BillingInfo { get; set; }
+    public string InvoiceSymbol { get; set; }
+    public string InvoiceNumber { get; set; }
+    public string TaxAuthorityCode { get; set; }
+    public DateTimeOffset IssueAt { get; set; }
+    public Money SubTotal { get; set; }
+    public Money TaxAmount { get; set; }
+    public Money GrandTotal { get; set; }
+    public Money AmountPaid { get; set; }
+    public InvoiceStatus Status { get; set; }
     private readonly List<InvoiceItem> _items = new();
     public IReadOnlyList<InvoiceItem> Items => _items.AsReadOnly();
 
@@ -30,7 +32,7 @@ public class Invoice : Entity<InvoiceId>
             SubTotal = subTotal,
             TaxAmount = taxAmount,
             GrandTotal = subTotal + taxAmount,
-            AmountPaid = Money.Zero(Currency.VND),
+            AmountPaid = Money.Zero("VND"),
             Status = InvoiceStatus.Unpaid
         };
     }
