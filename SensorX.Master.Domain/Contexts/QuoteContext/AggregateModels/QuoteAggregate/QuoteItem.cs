@@ -6,8 +6,6 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
 {
     public class QuoteItem : Entity<QuoteItemId>
     {
-        private QuoteItem() : base() { }
-
         public QuoteItem(
             QuoteItemId id,
             ProductId productId,
