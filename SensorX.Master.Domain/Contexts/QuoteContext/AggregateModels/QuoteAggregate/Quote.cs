@@ -9,6 +9,8 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
 {
     public class Quote : Entity<QuoteId>, ICreationTrackable, IUpdateTrackable
     {
+        private Quote() : base() { }
+
         public Quote(
             QuoteId id,
             Code code,
@@ -43,8 +45,8 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         public DateTimeOffset QuoteDate { get; private set; }
         public string ReasonReject { get; private set; }
 
-        private readonly List<QuoteItem> _quoteItems = [];
-        public IReadOnlyList<QuoteItem> QuoteItems => _quoteItems.AsReadOnly();
+        private readonly List<QuoteItem> _lineItems = [];
+        public IReadOnlyList<QuoteItem> LineItems => _lineItems.AsReadOnly();
 
         public DateTimeOffset CreatedAt { get; set; }
         public DateTimeOffset? UpdatedAt { get; set; }
@@ -54,7 +56,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         /// </summary>
         public void AddItem(QuoteItem item)
         {
-            _quoteItems.Add(item);
+            _lineItems.Add(item);
             UpdatedAt = DateTimeOffset.UtcNow;
         }
 
@@ -63,7 +65,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         /// </summary>
         public void RemoveItem(QuoteItemId quoteItemId)
         {
-            _quoteItems.RemoveAll(item => item.Id == quoteItemId);
+            _lineItems.RemoveAll(item => item.Id == quoteItemId);
             UpdatedAt = DateTimeOffset.UtcNow;
         }
 
@@ -72,7 +74,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         /// </summary>
         public Money GetSubtotal()
         {
-            return _quoteItems.Select(item => item.GetLineAmount())
+            return _lineItems.Select(item => item.GetLineAmount())
                         .Aggregate(Money.Zero(), (acc, next) => acc + next);
         }
 
@@ -81,7 +83,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         /// </summary>
         public Money GetTotalTax()
         {
-            return _quoteItems.Select(item => item.GetTaxAmount())
+            return _lineItems.Select(item => item.GetTaxAmount())
                         .Aggregate(Money.Zero(), (acc, next) => acc + next);
         }
 
@@ -90,7 +92,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         /// </summary>
         public Money GetGrandTotal()
         {
-            return _quoteItems.Select(item => item.GetTotalLineAmount())
+            return _lineItems.Select(item => item.GetTotalLineAmount())
                         .Aggregate(Money.Zero(), (acc, next) => acc + next);
         }
 

@@ -1,10 +1,10 @@
+using SensorX.Master.Domain.Common.Exceptions;
 using SensorX.Master.Domain.Contexts.QuoteContext;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 using SensorX.Master.Domain.Contexts.QuoteContext.ValueObjects;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
-using SensorX.Master.Domain.Common.Exceptions;
 using Xunit;
 
 namespace SensorX.Master.Domain.Tests.Contexts.QuoteContext.AggregateModels.QuoteAggregate
@@ -26,8 +26,9 @@ namespace SensorX.Master.Domain.Tests.Contexts.QuoteContext.AggregateModels.Quot
             var rfqId = new RFQId(Guid.NewGuid());
             var customerId = new CustomerId(Guid.NewGuid());
             var customerInfo = GetTestCustomerInfo();
-            var response = new QuoteResponse 
-            { 
+            var response = new QuoteResponse
+            {
+
                 ResponseType = QuoteResponseStatus.Accept, // Fixed
                 ShippingAddress = "Hanoi, Vietnam"
             };
@@ -49,7 +50,7 @@ namespace SensorX.Master.Domain.Tests.Contexts.QuoteContext.AggregateModels.Quot
             // Assert
             Assert.Equal(quoteId, quote.Id);
             Assert.Equal(QuoteStatus.Draft, quote.Status);
-            Assert.Empty(quote.QuoteItems);
+            Assert.Empty(quote.LineItems);
         }
 
         /// <summary>
@@ -75,7 +76,7 @@ namespace SensorX.Master.Domain.Tests.Contexts.QuoteContext.AggregateModels.Quot
             quote.AddItem(item);
 
             // Assert
-            Assert.Single(quote.QuoteItems);
+            Assert.Single(quote.LineItems);
             Assert.Equal(Money.FromVnd(1000000), quote.GetSubtotal());
             Assert.Equal(Money.FromVnd(100000), quote.GetTotalTax());
             Assert.Equal(Money.FromVnd(1100000), quote.GetGrandTotal());
@@ -90,8 +91,9 @@ namespace SensorX.Master.Domain.Tests.Contexts.QuoteContext.AggregateModels.Quot
         {
             // Arrange
             var quote = CreateSut();
-            
+
             // Act
+
             quote.SubmitForApproval();
 
             // Assert
