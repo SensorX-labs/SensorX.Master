@@ -17,6 +17,20 @@ public class Payment : Entity<PaymentId>
     public string BankTransactionId { get; private set; }
     public string TransferContent { get; private set; }
 
+    private Payment() : base() { }
+
+    public Payment(PaymentId id, InvoiceId invoiceId, OrderId orderId, Money amount, PaymentMethod method, PaymentStatus status, DateTimeOffset transactionDate, string bankTransactionId, string transferContent) : base(id)
+    {
+        InvoiceId = invoiceId;
+        OrderId = orderId;
+        Amount = amount;
+        Method = method;
+        Status = status;
+        TransactionDate = transactionDate;
+        BankTransactionId = bankTransactionId;
+        TransferContent = transferContent;
+    }
+
     public void MarkAsCompleted()
     {
         Status = PaymentStatus.Completed;

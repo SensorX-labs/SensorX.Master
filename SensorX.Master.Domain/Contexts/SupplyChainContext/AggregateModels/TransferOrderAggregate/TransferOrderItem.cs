@@ -8,7 +8,6 @@ namespace SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.Tran
 
 public class TransferOrderItem : Entity<TransferOrderItemId>
 {
-    public TransferOrderItemId Id { get; private set; }
     public ProductId ProductId { get; private set; }
     public Code ProductCode { get; private set; }
     public string ProductName { get; private set; }

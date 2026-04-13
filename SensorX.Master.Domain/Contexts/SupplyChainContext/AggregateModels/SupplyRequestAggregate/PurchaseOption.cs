@@ -4,10 +4,18 @@ using SensorX.Master.Domain.ValueObjects;
 
 namespace SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.SupplyRequestAggregate;
 
-public class PurchaseOption : Entity<PurchaseOptionId>
+public class PurchaseOption : Entity<PurchaseOptionId> , ICreationTrackable , IUpdateTrackable
 {
-    public PurchaseOptionId Id { get; private set; }
     public ProductId ProductId { get; private set; }
     public Quantity Quantity { get; private set; }
     public string Note { get; private set; }
+
+    private PurchaseOption() : base() { }
+
+    public PurchaseOption(PurchaseOptionId id, ProductId productId, Quantity quantity, string note) : base(id)
+    {
+        ProductId = productId;
+        Quantity = quantity;
+        Note = note;
+    }
 }

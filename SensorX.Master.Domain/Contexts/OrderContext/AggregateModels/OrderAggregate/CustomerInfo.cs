@@ -2,7 +2,7 @@ using SensorX.Master.Domain.ValueObjects;
 
 namespace SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
 
-public class CustomerInfo
+public record CustomerInfo
 {
     public string RecipientName { get; private set; }
     public string RecipientPhone { get; private set; }

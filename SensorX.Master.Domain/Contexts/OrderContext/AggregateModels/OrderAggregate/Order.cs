@@ -17,6 +17,19 @@ public class Order : Entity<OrderId>
     private readonly List<OrderItem> _items = new();
     public IReadOnlyList<OrderItem> Items => _items.AsReadOnly();
 
+    private Order() : base() { }
+
+    public Order(OrderId id, QuoteId quoteId, Code code, CustomerId customerId, CustomerInfo customerInfo, SenderInfo senderInfo, OrderStatus status, DateTimeOffset orderDate) : base(id)
+    {
+        QuoteId = quoteId;
+        Code = code;
+        CustomerId = customerId;
+        CustomerInfo = customerInfo;
+        SenderInfo = senderInfo;
+        Status = status;
+        OrderDate = orderDate;
+    }
+
     public void AddItem(OrderItem item)
     {
         _items.Add(item);

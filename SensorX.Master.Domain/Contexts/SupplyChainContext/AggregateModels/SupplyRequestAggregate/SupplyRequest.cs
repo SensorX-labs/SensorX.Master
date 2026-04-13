@@ -4,9 +4,8 @@ using SensorX.Master.Domain.ValueObjects;
 
 namespace SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.SupplyRequestAggregate;
 
-public class SupplyRequest : Entity<SupplyRequestId>
+public class SupplyRequest : Entity<SupplyRequestId> , ICreationTrackable , IUpdateTrackable
 {
-    public SupplyRequestId Id { get; private set; }
     public WarehouseId WarehouseId { get; private set; }
     public SupplyRequestStatus Status { get; private set; }
     public string Note { get; private set; }
@@ -16,6 +15,15 @@ public class SupplyRequest : Entity<SupplyRequestId>
 
     private readonly List<PurchaseOption> _purchaseOptions = new();
     public IReadOnlyList<PurchaseOption> PurchaseOptions => _purchaseOptions.AsReadOnly();
+
+    private SupplyRequest() : base() { }
+
+    public SupplyRequest(SupplyRequestId id, WarehouseId warehouseId, SupplyRequestStatus status, string note) : base(id)
+    {
+        WarehouseId = warehouseId;
+        Status = status;
+        Note = note;
+    }
 
     public void Complete()
     {

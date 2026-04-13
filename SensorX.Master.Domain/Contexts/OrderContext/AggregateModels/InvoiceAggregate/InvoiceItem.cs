@@ -4,9 +4,8 @@ using SensorX.Master.Domain.ValueObjects;
 
 namespace SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAggregate;
 
-public class InvoiceItem
+public class InvoiceItem : Entity<InvoiceItemId>, ICreationTrackable , IUpdateTrackable
 {
-    public InvoiceItemId Id { get; private set; }
     public ProductId ProductId { get; private set; }
     public string ProductName { get; private set; }
     public string Unit { get; private set; }
@@ -16,6 +15,22 @@ public class InvoiceItem
     public Money LineAmount { get; private set; }
     public Money TaxAmount { get; private set; }
     public Money TotalLineAmount { get; private set; }
+
+    private InvoiceItem() : base() { }
+
+    public InvoiceItem(InvoiceItemId id, ProductId productId, string productName, string unit, Quantity quantity, Money unitPrice, Percent taxRate, Money lineAmount, Money taxAmount, Money totalLineAmount) : base(id)
+    {
+        ProductId = productId;
+        ProductName = productName;
+        Unit = unit;
+        Quantity = quantity;
+        UnitPrice = unitPrice;
+        TaxRate = taxRate;
+        LineAmount = lineAmount;
+        TaxAmount = taxAmount;
+        TotalLineAmount = totalLineAmount;
+    }
+
 
     public static InvoiceItem Create(OrderItemId orderItemId, ProductId productId, string productName, string unit, Quantity quantity, Money unitPrice, Percent taxRate)
     {

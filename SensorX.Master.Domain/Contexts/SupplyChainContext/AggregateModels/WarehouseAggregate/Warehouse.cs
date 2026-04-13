@@ -5,6 +5,5 @@ namespace SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.Ware
 
 public class Warehouse : Entity<WarehouseId>
 {
-    public WarehouseId Id { get; private set; }
     public string Name { get; private set; }
 }

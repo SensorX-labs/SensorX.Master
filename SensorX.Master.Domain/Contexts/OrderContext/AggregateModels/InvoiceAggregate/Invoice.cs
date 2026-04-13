@@ -22,6 +22,24 @@ public class Invoice : Entity<InvoiceId>
     private readonly List<InvoiceItem> _items = new();
     public IReadOnlyList<InvoiceItem> Items => _items.AsReadOnly();
 
+    private Invoice() : base() { }
+
+    public Invoice(InvoiceId id, Code code, OrderId orderId, BillingInfo billingInfo, string invoiceSymbol, string invoiceNumber, string taxAuthorityCode, DateTimeOffset issueAt, Money subTotal, Money taxAmount, Money grandTotal, Money amountPaid, InvoiceStatus status) : base(id)
+    {
+        Code = code;
+        OrderId = orderId;
+        BillingInfo = billingInfo;
+        InvoiceSymbol = invoiceSymbol;
+        InvoiceNumber = invoiceNumber;
+        TaxAuthorityCode = taxAuthorityCode;
+        IssueAt = issueAt;
+        SubTotal = subTotal;
+        TaxAmount = taxAmount;
+        GrandTotal = grandTotal;
+        AmountPaid = amountPaid;
+        Status = status;
+    }
+
     public static Invoice Create(OrderId orderId, BillingInfo billingInfo, Money subTotal, Money taxAmount)
     {
         return new Invoice
