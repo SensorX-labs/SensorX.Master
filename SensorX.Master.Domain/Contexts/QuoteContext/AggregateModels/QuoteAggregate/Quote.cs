@@ -48,8 +48,8 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         private readonly List<QuoteItem> _lineItems = [];
         public IReadOnlyList<QuoteItem> LineItems => _lineItems.AsReadOnly();
 
-        public DateTimeOffset CreatedAt { get; private set; }
-        public DateTimeOffset? UpdatedAt { get; private set; }
+        public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset? UpdatedAt { get; set; }
 
         /// <summary>
         /// Adds a new item to the quote and updates the last modified timestamp.

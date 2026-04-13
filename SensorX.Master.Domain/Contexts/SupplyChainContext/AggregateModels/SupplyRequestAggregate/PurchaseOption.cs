@@ -6,9 +6,11 @@ namespace SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.Supp
 
 public class PurchaseOption : Entity<PurchaseOptionId> , ICreationTrackable , IUpdateTrackable
 {
-    public ProductId ProductId { get; private set; }
-    public Quantity Quantity { get; private set; }
-    public string Note { get; private set; }
+    public ProductId ProductId { get; private set; } = null!;
+    public Quantity Quantity { get; private set; } = null!;
+    public string Note { get; private set; } = null!;
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? UpdatedAt { get; set; }
 
     private PurchaseOption() : base() { }
 

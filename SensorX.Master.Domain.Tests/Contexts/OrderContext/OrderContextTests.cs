@@ -1,5 +1,6 @@
 using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAggregate;
 using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
+using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 using SensorX.Master.Domain.Services;
 using SensorX.Master.Domain.ValueObjects;
 using SensorX.Master.Domain.StrongIDs;
@@ -17,36 +18,55 @@ public class OrderContextTests
         var customerInfo = new CustomerInfo
         {
             RecipientName = "Nguyễn Văn A",
+            RecipientPhone = "0123456789",
+            CompanyName = "Company",
             Email = Email.From("test@test.com"),
-            Address = "Hà Nội"
+            Address = "Hà Nội",
+            TaxCode = "123456"
         };
         
-        var order = new Order
+        var senderInfo = new SenderInfo
         {
-            Id = new OrderId(Guid.NewGuid()),
-            Code = Code.Create("ORD"),
-            CustomerInfo = customerInfo,
-            Status = OrderStatus.PendingPayment,
-            OrderDate = DateTimeOffset.Now
+            Name = "Sender Name",
+            Email = Email.From("sender@test.com")
         };
+        
+        var order = new Order(
+            new OrderId(Guid.NewGuid()),
+            new QuoteId(Guid.NewGuid()),
+            Code.Create("ORD"),
+            new CustomerId(Guid.NewGuid()),
+            customerInfo,
+            senderInfo,
+            OrderStatus.PendingPayment,
+            DateTimeOffset.Now
+        );
 
-        var item1 = new OrderItem
-        {
-            Id = new OrderItemId(Guid.NewGuid()),
-            ProductId = new ProductId(Guid.NewGuid()),
-            UnitPrice = Money.FromVnd(100000),
-            Quantity = new Quantity(2),
-            TaxRate = Percent.From(10) // 10%
-        };
+        var item1 = new OrderItem(
+            new OrderItemId(Guid.NewGuid()),
+            new ProductId(Guid.NewGuid()),
+            Code.Create("PROD"),
+            "Product 1",
+            "Manufacturer 1",
+            "piece",
+            new Quantity(2),
+            Money.FromVnd(100000),
+            Percent.From(10),
+            null
+        );
 
-        var item2 = new OrderItem
-        {
-            Id = new OrderItemId(Guid.NewGuid()),
-            ProductId = new ProductId(Guid.NewGuid()),
-            UnitPrice = Money.FromVnd(50000),
-            Quantity = new Quantity(1),
-            TaxRate = Percent.From(0) // 0%
-        };
+        var item2 = new OrderItem(
+            new OrderItemId(Guid.NewGuid()),
+            new ProductId(Guid.NewGuid()),
+            Code.Create("PROD"),
+            "Product 2",
+            "Manufacturer 2",
+            "piece",
+            new Quantity(1),
+            Money.FromVnd(50000),
+            Percent.From(0),
+            null
+        );
 
         // Act
         order.AddItem(item1);
@@ -100,22 +120,47 @@ public class OrderContextTests
 
     private Order CreateSampleOrder()
     {
-        var order = new Order
+        var customerInfo = new CustomerInfo
         {
-            Id = new OrderId(Guid.NewGuid()),
-            Code = Code.Create("ORD"),
-            CustomerInfo = new CustomerInfo { RecipientName = "Test", Email = Email.From("a@b.com") },
-            Status = OrderStatus.Processing
+            RecipientName = "Test",
+            RecipientPhone = "0123456789",
+            CompanyName = "Test Company",
+            Email = Email.From("a@b.com"),
+            Address = "Test Address",
+            TaxCode = "123456"
         };
-
-        order.AddItem(new OrderItem
+        
+        var senderInfo = new SenderInfo
         {
-            Id = new OrderItemId(Guid.NewGuid()),
-            ProductId = new ProductId(Guid.NewGuid()),
-            UnitPrice = Money.FromVnd(100000),
-            Quantity = new Quantity(1),
-            TaxRate = Percent.From(10)
-        });
+            Name = "Sender",
+            Email = Email.From("sender@test.com")
+        };
+        
+        var order = new Order(
+            new OrderId(Guid.NewGuid()),
+            new QuoteId(Guid.NewGuid()),
+            Code.Create("ORD"),
+            new CustomerId(Guid.NewGuid()),
+            customerInfo,
+            senderInfo,
+            OrderStatus.Processing,
+            DateTimeOffset.Now
+        );
+
+        var item = new OrderItem(
+            new OrderItemId(Guid.NewGuid()),
+            new ProductId(Guid.NewGuid()),
+            Code.Create("PROD"),
+            "Product 1",
+            "Manufacturer 1",
+            "piece",
+            new Quantity(1),
+            Money.FromVnd(100000),
+            Percent.From(10),
+            null
+        );
+
+        order.AddItem(item);
 
         return order;
     }

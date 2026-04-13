@@ -12,12 +12,12 @@ public class SupplyChainContextTests
     public void SupplyRequest_AddItem_ShouldIncreaseItemCount()
     {
         // Arrange
-        var request = new SupplyRequest
-        {
-            Id = SupplyRequestId.New(),
-            WarehouseId = WarehouseId.New(),
-            Status = SupplyRequestStatus.Pending
-        };
+        var request = new SupplyRequest(
+            SupplyRequestId.New(),
+            WarehouseId.New(),
+            SupplyRequestStatus.Pending,
+            "Test note"
+        );
 
         // Act
         request.AddItem(new ProductId(Guid.NewGuid()), new Quantity(10));
@@ -33,12 +33,12 @@ public class SupplyChainContextTests
     public void SupplyRequest_Complete_ShouldChangeStatusToCompleted()
     {
         // Arrange
-        var request = new SupplyRequest
-        {
-            Id = SupplyRequestId.New(),
-            WarehouseId = WarehouseId.New(),
-            Status = SupplyRequestStatus.Pending
-        };
+        var request = new SupplyRequest(
+            SupplyRequestId.New(),
+            WarehouseId.New(),
+            SupplyRequestStatus.Pending,
+            "Test note"
+        );
 
         // Act
         request.Complete();
@@ -51,12 +51,12 @@ public class SupplyChainContextTests
     public void SupplyRequest_AddPurchaseOption_ShouldIncreaseOptionCount()
     {
         // Arrange
-        var request = new SupplyRequest
-        {
-            Id = SupplyRequestId.New(),
-            WarehouseId = WarehouseId.New(),
-            Status = SupplyRequestStatus.Pending
-        };
+        var request = new SupplyRequest(
+            SupplyRequestId.New(),
+            WarehouseId.New(),
+            SupplyRequestStatus.Pending,
+            "Test note"
+        );
 
         // Act
         request.AddPurchaseOption(
@@ -74,14 +74,14 @@ public class SupplyChainContextTests
     public void TransferOrder_AddItem_ShouldIncreaseItemCount()
     {
         // Arrange
-        var transfer = new TransferOrder
-        {
-            Id = TransferOrderId.New(),
-            Code = Code.Create("TO"),
-            SourceWarehouseId = WarehouseId.New(),
-            DestinationWarehouseId = WarehouseId.New(),
-            Status = TransferOrderStatus.Processing
-        };
+        var transfer = new TransferOrder(
+            TransferOrderId.New(),
+            Code.Create("TO"),
+            WarehouseId.New(),
+            WarehouseId.New(),
+            TransferOrderStatus.Processing,
+            "Test note"
+        );
 
         // Act
         transfer.AddItem(
@@ -103,14 +103,14 @@ public class SupplyChainContextTests
     public void TransferOrder_Complete_ShouldChangeStatusToCompleted()
     {
         // Arrange
-        var transfer = new TransferOrder
-        {
-            Id = TransferOrderId.New(),
-            Code = Code.Create("TO"),
-            SourceWarehouseId = WarehouseId.New(),
-            DestinationWarehouseId = WarehouseId.New(),
-            Status = TransferOrderStatus.Processing
-        };
+        var transfer = new TransferOrder(
+            TransferOrderId.New(),
+            Code.Create("TO"),
+            WarehouseId.New(),
+            WarehouseId.New(),
+            TransferOrderStatus.Processing,
+            "Test note"
+        );
 
         // Act
         transfer.Complete();
@@ -124,15 +124,15 @@ public class SupplyChainContextTests
     {
         // Arrange
         var supplyRequestId = SupplyRequestId.New();
-        var transfer = new TransferOrder
-        {
-            Id = TransferOrderId.New(),
-            Code = Code.Create("TO"),
-            SourceWarehouseId = WarehouseId.New(),
-            DestinationWarehouseId = WarehouseId.New(),
-            Status = TransferOrderStatus.Processing,
-            SupplyRequestId = supplyRequestId
-        };
+        var transfer = new TransferOrder(
+            TransferOrderId.New(),
+            Code.Create("TO"),
+            WarehouseId.New(),
+            WarehouseId.New(),
+            TransferOrderStatus.Processing,
+            "Test note",
+            supplyRequestId
+        );
 
         // Assert
         Assert.Equal(supplyRequestId, transfer.SupplyRequestId);

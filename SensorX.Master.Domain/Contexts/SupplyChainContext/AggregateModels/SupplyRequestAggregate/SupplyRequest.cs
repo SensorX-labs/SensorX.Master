@@ -6,9 +6,11 @@ namespace SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.Supp
 
 public class SupplyRequest : Entity<SupplyRequestId> , ICreationTrackable , IUpdateTrackable
 {
-    public WarehouseId WarehouseId { get; private set; }
+    public WarehouseId WarehouseId { get; private set; } = null!;
     public SupplyRequestStatus Status { get; private set; }
-    public string Note { get; private set; }
+    public string Note { get; private set; } = null!;
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? UpdatedAt { get; set; }
 
     private readonly List<SupplyRequestItem> _items = new();
     public IReadOnlyList<SupplyRequestItem> Items => _items.AsReadOnly();
@@ -32,22 +34,11 @@ public class SupplyRequest : Entity<SupplyRequestId> , ICreationTrackable , IUpd
 
     public void AddItem(ProductId productId, Quantity requestedQuantity)
     {
-        _items.Add(new SupplyRequestItem
-        {
-            Id = SupplyRequestItemId.New(),
-            ProductId = productId,
-            RequestedQuantity = requestedQuantity
-        });
+        _items.Add(new SupplyRequestItem(SupplyRequestItemId.New(), productId, requestedQuantity));
     }
 
     public void AddPurchaseOption(ProductId productId, Quantity quantity, string note)
     {
-        _purchaseOptions.Add(new PurchaseOption
-        {
-            Id = PurchaseOptionId.New(),
-            ProductId = productId,
-            Quantity = quantity,
-            Note = note
-        });
+        _purchaseOptions.Add(new PurchaseOption(PurchaseOptionId.New(), productId, quantity, note));
     }
 }

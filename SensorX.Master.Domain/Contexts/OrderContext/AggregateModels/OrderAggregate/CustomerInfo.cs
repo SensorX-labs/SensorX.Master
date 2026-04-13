@@ -4,10 +4,10 @@ namespace SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggre
 
 public record CustomerInfo
 {
-    public string RecipientName { get; private set; }
-    public string RecipientPhone { get; private set; }
-    public string CompanyName { get; private set; }
-    public Email Email { get; private set; }
-    public string Address { get; private set; }
-    public string TaxCode { get; private set; }
+    public required string RecipientName { get; init; }
+    public required string RecipientPhone { get; init; }
+    public required string CompanyName { get; init; }
+    public required Email Email { get; init; }
+    public required string Address { get; init; }
+    public required string TaxCode { get; init; }
 }

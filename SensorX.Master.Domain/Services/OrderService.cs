@@ -26,7 +26,7 @@ public class OrderService
 
     public void CancelOrderByCustomer(Order order, Invoice invoice)
     {
-        order.Status = OrderStatus.Cancelled;
-        invoice.Status = InvoiceStatus.Cancelled;
+        order.Cancel();
+        invoice.Cancel();
     }
 }

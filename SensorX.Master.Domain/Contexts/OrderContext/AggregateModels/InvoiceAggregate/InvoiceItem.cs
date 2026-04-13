@@ -1,4 +1,5 @@
 using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
+using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
 
@@ -15,6 +16,8 @@ public class InvoiceItem : Entity<InvoiceItemId>, ICreationTrackable , IUpdateTr
     public Money LineAmount { get; private set; }
     public Money TaxAmount { get; private set; }
     public Money TotalLineAmount { get; private set; }
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? UpdatedAt { get; set; }
 
     private InvoiceItem() : base() { }
 

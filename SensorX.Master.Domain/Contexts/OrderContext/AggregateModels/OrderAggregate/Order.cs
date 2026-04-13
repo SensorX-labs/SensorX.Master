@@ -7,11 +7,11 @@ namespace SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggre
 
 public class Order : Entity<OrderId>
 {
-    public QuoteId QuoteId { get; private set; }
-    public Code Code { get; private set; }
-    public CustomerId CustomerId { get; private set; }
-    public CustomerInfo CustomerInfo { get; private set; }
-    public SenderInfo SenderInfo { get; private set; }
+    public QuoteId QuoteId { get; private set; } = null!;
+    public Code Code { get; private set; } = null!;
+    public CustomerId CustomerId { get; private set; } = null!;
+    public CustomerInfo CustomerInfo { get; private set; } = null!;
+    public SenderInfo SenderInfo { get; private set; } = null!;
     public OrderStatus Status { get; private set; }
     public DateTimeOffset OrderDate { get; private set; }
     private readonly List<OrderItem> _items = new();
@@ -48,6 +48,11 @@ public class Order : Entity<OrderId>
     public Money GetGrandTotal()
     {
         return _items.Select(item => item.GetTotalLineAmount()).Aggregate(Money.Zero("VND"), (a, b) => a + b);
+    }
+
+    public void Cancel()
+    {
+        Status = OrderStatus.Cancelled;
     }
 }
 

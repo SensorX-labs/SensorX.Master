@@ -4,6 +4,6 @@ namespace SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggre
 
 public record SenderInfo
 {
-    public string Name { get; private set; }
-    public Email Email { get; private set; }
+    public required string Name { get; init; }
+    public required Email Email { get; init; }
 }

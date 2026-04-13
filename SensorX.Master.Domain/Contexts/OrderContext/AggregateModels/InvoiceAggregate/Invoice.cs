@@ -7,12 +7,12 @@ namespace SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAgg
 
 public class Invoice : Entity<InvoiceId>
 {
-    public Code Code { get; private set; }
-    public OrderId OrderId { get; private set; }
-    public BillingInfo BillingInfo { get; private set; }
-    public string InvoiceSymbol { get; private set; }
-    public string InvoiceNumber { get; private set; }
-    public string TaxAuthorityCode { get; private set; }
+    public Code Code { get; private set; } = null!;
+    public OrderId OrderId { get; private set; } = null!;
+    public BillingInfo BillingInfo { get; private set; } = null!;
+    public string InvoiceSymbol { get; private set; } = null!;
+    public string InvoiceNumber { get; private set; } = null!;
+    public string TaxAuthorityCode { get; private set; } = null!;
     public DateTimeOffset IssueAt { get; private set; }
     public Money SubTotal { get; private set; }
     public Money TaxAmount { get; private set; }
@@ -42,17 +42,21 @@ public class Invoice : Entity<InvoiceId>
 
     public static Invoice Create(OrderId orderId, BillingInfo billingInfo, Money subTotal, Money taxAmount)
     {
-        return new Invoice
-        {
-            Id = InvoiceId.New(),
-            OrderId = orderId,
-            BillingInfo = billingInfo,
-            SubTotal = subTotal,
-            TaxAmount = taxAmount,
-            GrandTotal = subTotal + taxAmount,
-            AmountPaid = Money.Zero("VND"),
-            Status = InvoiceStatus.Unpaid
-        };
+        return new Invoice(
+            InvoiceId.New(),
+            Code.Create("INV"),
+            orderId,
+            billingInfo,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            DateTimeOffset.UtcNow,
+            subTotal,
+            taxAmount,
+            subTotal + taxAmount,
+            Money.Zero("VND"),
+            InvoiceStatus.Unpaid
+        );
     }
 
     public void AddItem(InvoiceItem item)
@@ -67,7 +71,7 @@ public class Invoice : Entity<InvoiceId>
 
     public void RecordPayment(Money amount)
     {
-        AmountPaid += amount;
+        AmountPaid = AmountPaid + amount;
         if (AmountPaid >= GrandTotal)
         {
             Status = InvoiceStatus.Paid;
@@ -76,6 +80,11 @@ public class Invoice : Entity<InvoiceId>
         {
             Status = InvoiceStatus.PartiallyPaid;
         }
+    }
+
+    public void Cancel()
+    {
+        Status = InvoiceStatus.Cancelled;
     }
 
     public void Issue(string taxAuthorityCode)

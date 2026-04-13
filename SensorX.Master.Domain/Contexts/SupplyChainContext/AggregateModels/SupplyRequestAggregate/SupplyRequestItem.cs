@@ -6,8 +6,8 @@ namespace SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.Supp
 
 public class SupplyRequestItem : Entity<SupplyRequestItemId>
 {
-    public ProductId ProductId { get; private set; }
-    public Quantity RequestedQuantity { get; private set; }
+    public ProductId ProductId { get; private set; } = null!;
+    public Quantity RequestedQuantity { get; private set; } = null!;
 
     private SupplyRequestItem() : base() { }
 
