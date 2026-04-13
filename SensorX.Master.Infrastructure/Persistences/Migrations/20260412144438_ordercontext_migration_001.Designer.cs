@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SensorX.Master.Infrastructure.Persistences;
@@ -11,9 +12,11 @@ using SensorX.Master.Infrastructure.Persistences;
 namespace SensorX.Master.Infrastructure.Persistences.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260412144438_ordercontext_migration_001")]
+    partial class ordercontext_migration_001
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -390,9 +393,6 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                             b1.Property<Guid>("Id")
                                 .HasColumnType("uuid");
 
-                            b1.Property<DateTimeOffset>("CreatedAt")
-                                .HasColumnType("timestamp with time zone");
-
                             b1.Property<Guid>("InvoiceId")
                                 .HasColumnType("uuid");
 
@@ -424,9 +424,6 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
 
                             b1.Property<decimal>("UnitPrice")
                                 .HasColumnType("numeric");
-
-                            b1.Property<DateTimeOffset?>("UpdatedAt")
-                                .HasColumnType("timestamp with time zone");
 
                             b1.HasKey("Id");
 

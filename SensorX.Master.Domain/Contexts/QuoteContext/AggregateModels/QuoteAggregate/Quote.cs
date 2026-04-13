@@ -48,7 +48,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         private readonly List<QuoteItem> _lineItems = [];
         public IReadOnlyList<QuoteItem> LineItems => _lineItems.AsReadOnly();
 
-        public DateTimeOffset CreatedAt { get; set; }
+        public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
         public DateTimeOffset? UpdatedAt { get; set; }
 
         /// <summary>

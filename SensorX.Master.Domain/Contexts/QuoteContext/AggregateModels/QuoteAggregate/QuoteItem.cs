@@ -41,3 +41,4 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         public Money GetTotalLineAmount() => GetLineAmount() + GetTaxAmount();
     }
 }
+
