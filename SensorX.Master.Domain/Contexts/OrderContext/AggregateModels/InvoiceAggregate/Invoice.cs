@@ -7,18 +7,18 @@ namespace SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAgg
 
 public class Invoice : Entity<InvoiceId>
 {
-    public Code Code { get; set; }
-    public OrderId OrderId { get; set; }
-    public BillingInfo BillingInfo { get; set; }
-    public string InvoiceSymbol { get; set; }
-    public string InvoiceNumber { get; set; }
-    public string TaxAuthorityCode { get; set; }
-    public DateTimeOffset IssueAt { get; set; }
-    public Money SubTotal { get; set; }
-    public Money TaxAmount { get; set; }
-    public Money GrandTotal { get; set; }
-    public Money AmountPaid { get; set; }
-    public InvoiceStatus Status { get; set; }
+    public Code Code { get; private set; }
+    public OrderId OrderId { get; private set; }
+    public BillingInfo BillingInfo { get; private set; }
+    public string InvoiceSymbol { get; private set; }
+    public string InvoiceNumber { get; private set; }
+    public string TaxAuthorityCode { get; private set; }
+    public DateTimeOffset IssueAt { get; private set; }
+    public Money SubTotal { get; private set; }
+    public Money TaxAmount { get; private set; }
+    public Money GrandTotal { get; private set; }
+    public Money AmountPaid { get; private set; }
+    public InvoiceStatus Status { get; private set; }
     private readonly List<InvoiceItem> _items = new();
     public IReadOnlyList<InvoiceItem> Items => _items.AsReadOnly();
 

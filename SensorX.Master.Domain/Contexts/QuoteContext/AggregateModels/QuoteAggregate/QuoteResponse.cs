@@ -2,9 +2,9 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
 {
     public class QuoteResponse
     {
-        public QuoteResponseStatus ResponseType { get; set; }
-        public PaymentTerm PaymentTerm { get; set; }
-        public required string ShippingAddress { get; set; }
-        public string? Feedback { get; set; }
+        public QuoteResponseStatus ResponseType { get; private set; }
+        public PaymentTerm PaymentTerm { get; private set; }
+        public required string ShippingAddress { get; private set; }
+        public string? Feedback { get; private set; }
     }
 }

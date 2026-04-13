@@ -5,16 +5,16 @@ namespace SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggre
 
 public class OrderItem
 {
-    public OrderItemId Id { get; set; }
-    public ProductId ProductId { get; set; }
-    public Code ProductCode { get; set; }
-    public string ProductName { get; set; }
-    public string Manufacturer { get; set; }
-    public string Unit { get; set; }
-    public Quantity Quantity { get; set; }
-    public Money UnitPrice { get; set; }
-    public Percent TaxRate { get; set; }
-    public string? Note { get; set; }
+    public OrderItemId Id { get; private set; }
+    public ProductId ProductId { get; private set; }
+    public Code ProductCode { get; private set; }
+    public string ProductName { get; private set; }
+    public string Manufacturer { get; private set; }
+    public string Unit { get; private set; }
+    public Quantity Quantity { get; private set; }
+    public Money UnitPrice { get; private set; }
+    public Percent TaxRate { get; private set; }
+    public string? Note { get; private set; }
 
     public Money GetLineAmount() => UnitPrice * Quantity;
     public Money GetTaxAmount() => GetLineAmount() * TaxRate;

@@ -8,14 +8,14 @@ namespace SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.PaymentAgg
 
 public class Payment : Entity<PaymentId>
 {
-    public InvoiceId InvoiceId { get; set; }
-    public OrderId OrderId { get; set; }
-    public Money Amount { get; set; }
-    public PaymentMethod Method { get; set; }
-    public PaymentStatus Status { get; set; }
-    public DateTimeOffset TransactionDate { get; set; }
-    public string BankTransactionId { get; set; }
-    public string TransferContent { get; set; }
+    public InvoiceId InvoiceId { get; private set; }
+    public OrderId OrderId { get; private set; }
+    public Money Amount { get; private set; }
+    public PaymentMethod Method { get; private set; }
+    public PaymentStatus Status { get; private set; }
+    public DateTimeOffset TransactionDate { get; private set; }
+    public string BankTransactionId { get; private set; }
+    public string TransferContent { get; private set; }
 
     public void MarkAsCompleted()
     {

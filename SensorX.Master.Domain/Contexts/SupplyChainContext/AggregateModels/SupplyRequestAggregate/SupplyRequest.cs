@@ -6,10 +6,10 @@ namespace SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.Supp
 
 public class SupplyRequest : Entity<SupplyRequestId>
 {
-    public SupplyRequestId Id { get; set; }
-    public WarehouseId WarehouseId { get; set; }
-    public SupplyRequestStatus Status { get; set; }
-    public string Note { get; set; }
+    public SupplyRequestId Id { get; private set; }
+    public WarehouseId WarehouseId { get; private set; }
+    public SupplyRequestStatus Status { get; private set; }
+    public string Note { get; private set; }
 
     private readonly List<SupplyRequestItem> _items = new();
     public IReadOnlyList<SupplyRequestItem> Items => _items.AsReadOnly();

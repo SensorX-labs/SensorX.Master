@@ -6,7 +6,7 @@ namespace SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.Supp
 
 public class SupplyRequestItem : Entity<SupplyRequestItemId>
 {
-    public SupplyRequestItemId Id { get; set; }
-    public ProductId ProductId { get; set; }
-    public Quantity RequestedQuantity { get; set; }
+    public SupplyRequestItemId Id { get; private set; }
+    public ProductId ProductId { get; private set; }
+    public Quantity RequestedQuantity { get; private set; }
 }

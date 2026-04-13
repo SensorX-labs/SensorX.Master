@@ -7,13 +7,13 @@ namespace SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggre
 
 public class Order : Entity<OrderId>
 {
-    public QuoteId QuoteId { get; set; }
-    public Code Code { get; set; }
-    public CustomerId CustomerId { get; set; }
-    public CustomerInfo CustomerInfo { get; set; }
-    public SenderInfo SenderInfo { get; set; }
-    public OrderStatus Status { get; set; }
-    public DateTimeOffset OrderDate { get; set; }
+    public QuoteId QuoteId { get; private set; }
+    public Code Code { get; private set; }
+    public CustomerId CustomerId { get; private set; }
+    public CustomerInfo CustomerInfo { get; private set; }
+    public SenderInfo SenderInfo { get; private set; }
+    public OrderStatus Status { get; private set; }
+    public DateTimeOffset OrderDate { get; private set; }
     private readonly List<OrderItem> _items = new();
     public IReadOnlyList<OrderItem> Items => _items.AsReadOnly();
 

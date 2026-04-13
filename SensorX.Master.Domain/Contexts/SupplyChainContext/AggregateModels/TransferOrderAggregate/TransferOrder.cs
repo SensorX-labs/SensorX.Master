@@ -6,13 +6,13 @@ namespace SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.Tran
 
 public class TransferOrder : Entity<TransferOrderId>
 {
-    public TransferOrderId Id { get; set; }
-    public Code Code { get; set; }
-    public WarehouseId SourceWarehouseId { get; set; }
-    public WarehouseId DestinationWarehouseId { get; set; }
-    public TransferOrderStatus Status { get; set; }
-    public string Note { get; set; }
-    public SupplyRequestId? SupplyRequestId { get; set; }
+    public TransferOrderId Id { get; private set; }
+    public Code Code { get; private set; }
+    public WarehouseId SourceWarehouseId { get; private set; }
+    public WarehouseId DestinationWarehouseId { get; private set; }
+    public TransferOrderStatus Status { get; private set; }
+    public string Note { get; private set; }
+    public SupplyRequestId? SupplyRequestId { get; private set; }
 
     private readonly List<TransferOrderItem> _items = new();
     public IReadOnlyList<TransferOrderItem> Items => _items.AsReadOnly();

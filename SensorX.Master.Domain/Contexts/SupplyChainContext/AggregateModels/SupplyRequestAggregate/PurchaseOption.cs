@@ -6,8 +6,8 @@ namespace SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.Supp
 
 public class PurchaseOption : Entity<PurchaseOptionId>
 {
-    public PurchaseOptionId Id { get; set; }
-    public ProductId ProductId { get; set; }
-    public Quantity Quantity { get; set; }
-    public string Note { get; set; }
+    public PurchaseOptionId Id { get; private set; }
+    public ProductId ProductId { get; private set; }
+    public Quantity Quantity { get; private set; }
+    public string Note { get; private set; }
 }
