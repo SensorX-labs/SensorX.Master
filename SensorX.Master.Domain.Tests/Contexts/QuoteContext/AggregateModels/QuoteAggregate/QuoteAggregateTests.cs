@@ -194,7 +194,7 @@ namespace SensorX.Master.Domain.Tests.Contexts.QuoteContext.AggregateModels.Quot
         {
             return new CustomerInfo(
                 "Recipient Name",
-                "0123456789",
+                Phone.Create("0123456789"),
                 "Company XYZ",
                 Email.From("test@test.com"),
                 "123 Street",

@@ -34,7 +34,9 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             // mapping them explicitly to avoid prefix if preferred, or keeping prefix.
             // As with QuoteConfiguration, we explicitly set column names.
             c.Property(p => p.RecipientName).HasColumnName("CustomerRecipientName");
-            c.Property(p => p.RecipientPhone).HasColumnName("CustomerRecipientPhone");
+            c.Property(p => p.RecipientPhone)
+                .HasConversion(p => p.Value, v => Phone.From(v))
+                .HasColumnName("CustomerRecipientPhone");
             c.Property(p => p.CompanyName).HasColumnName("CustomerCompanyName");
             c.Property(p => p.Email).HasConversion(e => e.Value, v => Email.From(v)).HasColumnName("CustomerEmail");
             c.Property(p => p.Address).HasColumnName("CustomerAddress");

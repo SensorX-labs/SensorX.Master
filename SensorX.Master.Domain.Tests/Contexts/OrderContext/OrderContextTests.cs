@@ -18,7 +18,7 @@ public class OrderContextTests
         var customerInfo = new CustomerInfo
         (
             "Nguyễn Văn A",
-            "0123456789",
+            Phone.Create("0123456789"),
             "Company",
             Email.From("test@test.com"),
             "Hà Nội",
@@ -123,7 +123,7 @@ public class OrderContextTests
         var customerInfo = new CustomerInfo
         (
             "Test",
-            "0123456789",
+            Phone.Create("0123456789"),
             "Test Company",
             Email.From("a@b.com"),
             "Test Address",
