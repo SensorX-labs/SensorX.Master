@@ -4,13 +4,11 @@ using SensorX.Master.Domain.ValueObjects;
 
 namespace SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.SupplyRequestAggregate;
 
-public class PurchaseOption : Entity<PurchaseOptionId> , ICreationTrackable , IUpdateTrackable
+public class PurchaseOption : Entity<PurchaseOptionId>  
 {
     public ProductId ProductId { get; private set; } = null!;
     public Quantity Quantity { get; private set; } = null!;
     public string Note { get; private set; } = null!;
-    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
-    public DateTimeOffset? UpdatedAt { get; set; }
 
     private PurchaseOption() : base() { }
 

@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
-using SensorX.Master.Domain.Contexts.QuoteContext.ValueObjects;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
 
@@ -34,7 +33,9 @@ public class QuoteConfiguration : IEntityTypeConfiguration<Quote>
             c.Property(p => p.RecipientName).HasColumnName("RecipientName");
             c.Property(p => p.RecipientPhone).HasColumnName("RecipientPhone");
             c.Property(p => p.CompanyName).HasColumnName("CompanyName");
-            c.Property(p => p.Email).HasColumnName("Email");
+            c.Property(p => p.Email)
+                .HasConversion(e => e.Value, v => Email.From(v))
+                .HasColumnName("Email");
             c.Property(p => p.Address).HasColumnName("Address");
             c.Property(p => p.TaxCode).HasColumnName("TaxCode");
         });
