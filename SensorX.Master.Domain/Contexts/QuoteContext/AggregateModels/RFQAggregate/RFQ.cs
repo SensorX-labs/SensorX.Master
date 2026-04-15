@@ -6,6 +6,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
 {
     public class RFQ : Entity<RFQId>, IAggregateRoot, ICreationTrackable, IUpdateTrackable
     {
+        private RFQ() : base() { }
         public RFQ(
             RFQId id,
             Code code,
