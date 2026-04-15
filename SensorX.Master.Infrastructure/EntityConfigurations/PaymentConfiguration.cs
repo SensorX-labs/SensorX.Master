@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAggregate;
+using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
 using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.PaymentAggregate;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
@@ -27,5 +28,13 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
 
         builder.Property(p => p.Amount)
             .HasConversion(m => m.Amount, v => Money.FromVnd(v));
+        builder.HasOne<Order>()
+            .WithMany()
+            .HasForeignKey(p => p.OrderId)
+            .OnDelete(DeleteBehavior.NoAction);
+        builder.HasOne<Invoice>()
+            .WithMany()
+            .HasForeignKey(p => p.InvoiceId)
+            .OnDelete(DeleteBehavior.NoAction);
     }
 }
