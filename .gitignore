@@ -8,7 +8,7 @@
 **/*.app
 **/*.so
 **/*.dylib
-appsettings.json
+
 # MSBuild cache
 *.assets.cache
 
@@ -63,4 +63,3 @@ coverage/
 
 ## Config dump
 appsettings.Development.json
-appsettings.*.json.local

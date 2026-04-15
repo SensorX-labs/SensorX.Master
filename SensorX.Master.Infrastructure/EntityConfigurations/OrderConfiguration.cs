@@ -34,7 +34,9 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             // mapping them explicitly to avoid prefix if preferred, or keeping prefix.
             // As with QuoteConfiguration, we explicitly set column names.
             c.Property(p => p.RecipientName).HasColumnName("CustomerRecipientName");
-            c.Property(p => p.RecipientPhone).HasColumnName("CustomerRecipientPhone");
+            c.Property(p => p.RecipientPhone)
+                .HasConversion(p => p.Value, v => Phone.From(v))
+                .HasColumnName("CustomerRecipientPhone");
             c.Property(p => p.CompanyName).HasColumnName("CustomerCompanyName");
             c.Property(p => p.Email).HasConversion(e => e.Value, v => Email.From(v)).HasColumnName("CustomerEmail");
             c.Property(p => p.Address).HasColumnName("CustomerAddress");
@@ -72,5 +74,10 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             item.Property(i => i.TaxRate)
                 .HasConversion(p => p.Value, v => Percent.From(v));
         });
+
+        builder.HasOne<Quote>()
+            .WithMany()
+            .HasForeignKey(o => o.QuoteId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -1,12 +1,13 @@
-using SensorX.Master.Infrastructure.DI;
-using SensorX.Master.WebApi.Configurations;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using SensorX.Master.Infrastructure.Persistences;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using SensorX.Master.Infrastructure.DI;
+using SensorX.Master.Infrastructure.Persistences;
+using SensorX.Master.WebApi;
+using SensorX.Master.WebApi.Configurations;
 
 var builder = WebApplication.CreateBuilder(args);
-
 // Cấu hình Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -27,12 +28,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddServices();
+builder.Services.AddServices(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    // Yêu cầu .NET tự động chuyển đổi giữa String và Enum
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
+builder.Services.AddSwaggerGen(options =>
+{
+    options.UseInlineDefinitionsForEnums();
+});
 
 var app = builder.Build();
 
@@ -53,7 +62,7 @@ if (autoApplyMigration)
         {
             app.Logger.LogWarning(
                 ex,
-                "Master API migration attempt {Attempt}/{MaxRetries} failed. Retrying in 5 seconds...",
+                "Data API migration attempt {Attempt}/{MaxRetries} failed. Retrying in 5 seconds...",
                 attempt,
                 maxMigrationRetries);
             await Task.Delay(TimeSpan.FromSeconds(5));
@@ -72,5 +81,6 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.Run();
+app.MapApi();
 
+app.Run();

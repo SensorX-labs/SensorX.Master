@@ -31,7 +31,9 @@ public class RFQConfiguration : IEntityTypeConfiguration<RFQ>
         builder.OwnsOne(r => r.CustomerInfo, c =>
         {
             c.Property(p => p.RecipientName).HasColumnName("RecipientName");
-            c.Property(p => p.RecipientPhone).HasColumnName("RecipientPhone");
+            c.Property(p => p.RecipientPhone)
+                .HasConversion(p => p.Value, v => Phone.From(v))
+                .HasColumnName("RecipientPhone");
             c.Property(p => p.CompanyName).HasColumnName("CompanyName");
             c.Property(p => p.Email).HasConversion(e => e.Value, v => Email.From(v)).HasColumnName("Email");
             c.Property(p => p.Address).HasColumnName("Address");
