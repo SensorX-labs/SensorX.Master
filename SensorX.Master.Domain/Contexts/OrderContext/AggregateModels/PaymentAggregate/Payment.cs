@@ -1,12 +1,12 @@
 using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAggregate;
-using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
+
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
 
 namespace SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.PaymentAggregate;
 
-public class Payment : Entity<PaymentId>
+public class Payment : Entity<PaymentId>, IAggregateRoot, ICreationTrackable, IUpdateTrackable
 {
     public InvoiceId InvoiceId { get; private set; }
     public OrderId OrderId { get; private set; }
@@ -16,6 +16,8 @@ public class Payment : Entity<PaymentId>
     public DateTimeOffset TransactionDate { get; private set; }
     public string BankTransactionId { get; private set; }
     public string TransferContent { get; private set; }
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? UpdatedAt { get; set; }
 
     private Payment() : base() { }
 

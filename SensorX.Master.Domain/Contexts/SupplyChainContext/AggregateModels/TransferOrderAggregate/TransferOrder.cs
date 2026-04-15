@@ -4,7 +4,7 @@ using SensorX.Master.Domain.ValueObjects;
 
 namespace SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.TransferOrderAggregate;
 
-public class TransferOrder : Entity<TransferOrderId>
+public class TransferOrder : Entity<TransferOrderId>, IAggregateRoot, ICreationTrackable
 {
     public Code Code { get; private set; } = null!;
     public WarehouseId SourceWarehouseId { get; private set; } = null!;
@@ -15,6 +15,8 @@ public class TransferOrder : Entity<TransferOrderId>
 
     private readonly List<TransferOrderItem> _items = new();
     public IReadOnlyList<TransferOrderItem> Items => _items.AsReadOnly();
+
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;  
 
     private TransferOrder() : base() { }
 

@@ -1,10 +1,10 @@
-namespace SensorX.Master.Domain.Contexts.QuoteContext.ValueObjects
+namespace SensorX.Master.Domain.ValueObjects
 {
     public record CustomerInfo(
         string RecipientName,
         string RecipientPhone,
         string CompanyName,
-        string Email,
+        Email Email,
         string Address,
         string TaxCode
     );

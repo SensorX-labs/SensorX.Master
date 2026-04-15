@@ -16,21 +16,21 @@ public class OrderContextTests
     {
         // Arrange
         var customerInfo = new CustomerInfo
-        {
-            RecipientName = "Nguyễn Văn A",
-            RecipientPhone = "0123456789",
-            CompanyName = "Company",
-            Email = Email.From("test@test.com"),
-            Address = "Hà Nội",
-            TaxCode = "123456"
-        };
-        
+        (
+            "Nguyễn Văn A",
+            "0123456789",
+            "Company",
+            Email.From("test@test.com"),
+            "Hà Nội",
+            "123456"
+        );
+
         var senderInfo = new SenderInfo
         {
             Name = "Sender Name",
             Email = Email.From("sender@test.com")
         };
-        
+
         var order = new Order(
             new OrderId(Guid.NewGuid()),
             new QuoteId(Guid.NewGuid()),
@@ -89,7 +89,7 @@ public class OrderContextTests
     {
         // Arrange
         var order = CreateSampleOrder();
-        
+
         // Act
         var invoice = _orderService.CreateInvoiceFromOrder(order);
 
@@ -121,21 +121,21 @@ public class OrderContextTests
     private Order CreateSampleOrder()
     {
         var customerInfo = new CustomerInfo
-        {
-            RecipientName = "Test",
-            RecipientPhone = "0123456789",
-            CompanyName = "Test Company",
-            Email = Email.From("a@b.com"),
-            Address = "Test Address",
-            TaxCode = "123456"
-        };
-        
+        (
+            "Test",
+            "0123456789",
+            "Test Company",
+            Email.From("a@b.com"),
+            "Test Address",
+            "123456"
+        );
+
         var senderInfo = new SenderInfo
         {
             Name = "Sender",
             Email = Email.From("sender@test.com")
         };
-        
+
         var order = new Order(
             new OrderId(Guid.NewGuid()),
             new QuoteId(Guid.NewGuid()),

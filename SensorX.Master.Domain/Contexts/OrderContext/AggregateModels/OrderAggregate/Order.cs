@@ -5,7 +5,7 @@ using SensorX.Master.Domain.ValueObjects;
 
 namespace SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
 
-public class Order : Entity<OrderId>
+public class Order : Entity<OrderId>, IAggregateRoot, ICreationTrackable, IUpdateTrackable
 {
     public QuoteId QuoteId { get; private set; } = null!;
     public Code Code { get; private set; } = null!;
@@ -16,6 +16,9 @@ public class Order : Entity<OrderId>
     public DateTimeOffset OrderDate { get; private set; }
     private readonly List<OrderItem> _items = new();
     public IReadOnlyList<OrderItem> Items => _items.AsReadOnly();
+
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? UpdatedAt { get; set; }
 
     private Order() : base() { }
 

@@ -5,7 +5,7 @@ using SensorX.Master.Domain.ValueObjects;
 
 namespace SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAggregate;
 
-public class Invoice : Entity<InvoiceId>
+public class Invoice : Entity<InvoiceId>, IAggregateRoot, ICreationTrackable, IUpdateTrackable
 {
     public Code Code { get; private set; } = null!;
     public OrderId OrderId { get; private set; } = null!;
@@ -21,6 +21,9 @@ public class Invoice : Entity<InvoiceId>
     public InvoiceStatus Status { get; private set; }
     private readonly List<InvoiceItem> _items = new();
     public IReadOnlyList<InvoiceItem> Items => _items.AsReadOnly();
+
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? UpdatedAt { get; set; }
 
     private Invoice() : base() { }
 
