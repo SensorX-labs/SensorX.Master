@@ -2,7 +2,6 @@ using SensorX.Master.Domain.Common.Exceptions;
 using SensorX.Master.Domain.Contexts.QuoteContext;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
-using SensorX.Master.Domain.Contexts.QuoteContext.ValueObjects;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
 using Xunit;
@@ -197,7 +196,7 @@ namespace SensorX.Master.Domain.Tests.Contexts.QuoteContext.AggregateModels.Quot
                 "Recipient Name",
                 "0123456789",
                 "Company XYZ",
-                "test@test.com",
+                Email.From("test@test.com"),
                 "123 Street",
                 "TAX123"
             );

@@ -75,6 +75,14 @@ public record Money
     /// </summary>
     public static bool operator >(Money a, Money b) => b < a;
 
+    public static bool operator <=(Money a, Money b)
+    {
+        CheckSameCurrency(a, b);
+        return a.Amount <= b.Amount;
+    }
+
+    public static bool operator >=(Money a, Money b) => b <= a;
+
     private static void CheckSameCurrency(Money a, Money b)
     {
         if (a.Currency != b.Currency)

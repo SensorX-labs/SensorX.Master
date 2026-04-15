@@ -190,6 +190,133 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                     b.ToTable("OutboxState");
                 });
 
+            modelBuilder.Entity("SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAggregate.Invoice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("AmountPaid")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("GrandTotal")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("InvoiceNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("InvoiceSymbol")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("IssueAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("SubTotal")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("TaxAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("TaxAuthorityCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Invoices", (string)null);
+                });
+
+            modelBuilder.Entity("SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate.Order", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("OrderDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("QuoteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Orders", (string)null);
+                });
+
+            modelBuilder.Entity("SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.PaymentAggregate.Payment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("BankTransactionId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("InvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Method")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("TransactionDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TransferContent")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Payments", (string)null);
+                });
+
             modelBuilder.Entity("SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate.Quote", b =>
                 {
                     b.Property<Guid>("Id")
@@ -229,6 +356,111 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                     b.ToTable("Quotes", (string)null);
                 });
 
+            modelBuilder.Entity("SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate.RFQ", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StaffId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("RFQs", (string)null);
+                });
+
+            modelBuilder.Entity("SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.SupplyRequestAggregate.SupplyRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Note")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SupplyRequests", (string)null);
+                });
+
+            modelBuilder.Entity("SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.TransferOrderAggregate.TransferOrder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DestinationWarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Note")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("SourceWarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("SupplyRequestId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TransferOrders", (string)null);
+                });
+
+            modelBuilder.Entity("SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate.Warehouse", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Warehouses", (string)null);
+                });
+
             modelBuilder.Entity("MassTransit.EntityFrameworkCoreIntegration.OutboxMessage", b =>
                 {
                     b.HasOne("MassTransit.EntityFrameworkCoreIntegration.OutboxState", null)
@@ -241,8 +473,271 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                         .HasPrincipalKey("MessageId", "ConsumerId");
                 });
 
+            modelBuilder.Entity("SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAggregate.Invoice", b =>
+                {
+                    b.OwnsOne("SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAggregate.BillingInfo", "BillingInfo", b1 =>
+                        {
+                            b1.Property<Guid>("InvoiceId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Address")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("BillingAddress");
+
+                            b1.Property<string>("CompanyName")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("BillingCompanyName");
+
+                            b1.Property<string>("Email")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("BillingEmail");
+
+                            b1.Property<string>("TaxCode")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("BillingTaxCode");
+
+                            b1.HasKey("InvoiceId");
+
+                            b1.ToTable("Invoices");
+
+                            b1.WithOwner()
+                                .HasForeignKey("InvoiceId");
+                        });
+
+                    b.OwnsMany("SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAggregate.InvoiceItem", "Items", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTimeOffset>("CreatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<Guid>("InvoiceId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<decimal>("LineAmount")
+                                .HasColumnType("numeric");
+
+                            b1.Property<Guid>("ProductId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("ProductName")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.Property<int>("Quantity")
+                                .HasColumnType("integer");
+
+                            b1.Property<decimal>("TaxAmount")
+                                .HasColumnType("numeric");
+
+                            b1.Property<decimal>("TaxRate")
+                                .HasColumnType("numeric");
+
+                            b1.Property<decimal>("TotalLineAmount")
+                                .HasColumnType("numeric");
+
+                            b1.Property<string>("Unit")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.Property<decimal>("UnitPrice")
+                                .HasColumnType("numeric");
+
+                            b1.Property<DateTimeOffset?>("UpdatedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("InvoiceId");
+
+                            b1.ToTable("InvoiceItems", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("InvoiceId");
+                        });
+
+                    b.Navigation("BillingInfo")
+                        .IsRequired();
+
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate.Order", b =>
+                {
+                    b.OwnsOne("SensorX.Master.Domain.ValueObjects.CustomerInfo", "CustomerInfo", b1 =>
+                        {
+                            b1.Property<Guid>("OrderId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Address")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CustomerAddress");
+
+                            b1.Property<string>("CompanyName")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CustomerCompanyName");
+
+                            b1.Property<string>("Email")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CustomerEmail");
+
+                            b1.Property<string>("RecipientName")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CustomerRecipientName");
+
+                            b1.Property<string>("RecipientPhone")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CustomerRecipientPhone");
+
+                            b1.Property<string>("TaxCode")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CustomerTaxCode");
+
+                            b1.HasKey("OrderId");
+
+                            b1.ToTable("Orders");
+
+                            b1.WithOwner()
+                                .HasForeignKey("OrderId");
+                        });
+
+                    b.OwnsMany("SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate.OrderItem", "Items", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Manufacturer")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.Property<string>("Note")
+                                .HasColumnType("text");
+
+                            b1.Property<Guid>("OrderId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("ProductCode")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.Property<Guid>("ProductId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("ProductName")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.Property<int>("Quantity")
+                                .HasColumnType("integer");
+
+                            b1.Property<decimal>("TaxRate")
+                                .HasColumnType("numeric");
+
+                            b1.Property<string>("Unit")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.Property<decimal>("UnitPrice")
+                                .HasColumnType("numeric");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("OrderId");
+
+                            b1.ToTable("OrderItems", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("OrderId");
+                        });
+
+                    b.OwnsOne("SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate.SenderInfo", "SenderInfo", b1 =>
+                        {
+                            b1.Property<Guid>("OrderId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Email")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("SenderEmail");
+
+                            b1.Property<string>("Name")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("SenderName");
+
+                            b1.HasKey("OrderId");
+
+                            b1.ToTable("Orders");
+
+                            b1.WithOwner()
+                                .HasForeignKey("OrderId");
+                        });
+
+                    b.Navigation("CustomerInfo")
+                        .IsRequired();
+
+                    b.Navigation("Items");
+
+                    b.Navigation("SenderInfo")
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate.Quote", b =>
                 {
+                    b.OwnsOne("SensorX.Master.Domain.ValueObjects.CustomerInfo", "CustomerInfo", b1 =>
+                        {
+                            b1.Property<Guid>("QuoteId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Address")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("Address");
+
+                            b1.Property<string>("CompanyName")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CompanyName");
+
+                            b1.Property<string>("Email")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("Email");
+
+                            b1.Property<string>("RecipientName")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("RecipientName");
+
+                            b1.Property<string>("RecipientPhone")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("RecipientPhone");
+
+                            b1.Property<string>("TaxCode")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("TaxCode");
+
+                            b1.HasKey("QuoteId");
+
+                            b1.ToTable("Quotes");
+
+                            b1.WithOwner()
+                                .HasForeignKey("QuoteId");
+                        });
+
                     b.OwnsMany("SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate.QuoteItem", "LineItems", b1 =>
                         {
                             b1.Property<Guid>("Id")
@@ -315,9 +810,20 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                                 .HasForeignKey("QuoteId");
                         });
 
-                    b.OwnsOne("SensorX.Master.Domain.Contexts.QuoteContext.ValueObjects.CustomerInfo", "CustomerInfo", b1 =>
+                    b.Navigation("CustomerInfo")
+                        .IsRequired();
+
+                    b.Navigation("LineItems");
+
+                    b.Navigation("Response")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate.RFQ", b =>
+                {
+                    b.OwnsOne("SensorX.Master.Domain.ValueObjects.CustomerInfo", "CustomerInfo", b1 =>
                         {
-                            b1.Property<Guid>("QuoteId")
+                            b1.Property<Guid>("RFQId")
                                 .HasColumnType("uuid");
 
                             b1.Property<string>("Address")
@@ -350,21 +856,165 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("TaxCode");
 
-                            b1.HasKey("QuoteId");
+                            b1.HasKey("RFQId");
 
-                            b1.ToTable("Quotes");
+                            b1.ToTable("RFQs");
 
                             b1.WithOwner()
-                                .HasForeignKey("QuoteId");
+                                .HasForeignKey("RFQId");
+                        });
+
+                    b.OwnsMany("SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate.RFQItem", "Items", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Manufacturer")
+                                .HasColumnType("text");
+
+                            b1.Property<string>("ProductCode")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.Property<Guid>("ProductId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("ProductName")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.Property<int>("Quantity")
+                                .HasColumnType("integer");
+
+                            b1.Property<Guid>("RFQId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Unit")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("RFQId");
+
+                            b1.ToTable("RFQItems", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("RFQId");
                         });
 
                     b.Navigation("CustomerInfo")
                         .IsRequired();
 
-                    b.Navigation("LineItems");
+                    b.Navigation("Items");
+                });
 
-                    b.Navigation("Response")
-                        .IsRequired();
+            modelBuilder.Entity("SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.SupplyRequestAggregate.SupplyRequest", b =>
+                {
+                    b.OwnsMany("SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.SupplyRequestAggregate.PurchaseOption", "PurchaseOptions", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Note")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.Property<Guid>("ProductId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("Quantity")
+                                .HasColumnType("integer");
+
+                            b1.Property<Guid>("SupplyRequestId")
+                                .HasColumnType("uuid");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("SupplyRequestId");
+
+                            b1.ToTable("PurchaseOptions", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("SupplyRequestId");
+                        });
+
+                    b.OwnsMany("SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.SupplyRequestAggregate.SupplyRequestItem", "Items", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("ProductId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("RequestedQuantity")
+                                .HasColumnType("integer");
+
+                            b1.Property<Guid>("SupplyRequestId")
+                                .HasColumnType("uuid");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("SupplyRequestId");
+
+                            b1.ToTable("SupplyRequestItems", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("SupplyRequestId");
+                        });
+
+                    b.Navigation("Items");
+
+                    b.Navigation("PurchaseOptions");
+                });
+
+            modelBuilder.Entity("SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.TransferOrderAggregate.TransferOrder", b =>
+                {
+                    b.OwnsMany("SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.TransferOrderAggregate.TransferOrderItem", "Items", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("ManufactureName")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.Property<string>("Note")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.Property<string>("ProductCode")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.Property<Guid>("ProductId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("ProductName")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.Property<int>("Quantity")
+                                .HasColumnType("integer");
+
+                            b1.Property<Guid>("TransferOrderId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Unit")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("TransferOrderId");
+
+                            b1.ToTable("TransferOrderItems", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("TransferOrderId");
+                        });
+
+                    b.Navigation("Items");
                 });
 #pragma warning restore 612, 618
         }
