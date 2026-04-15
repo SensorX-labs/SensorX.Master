@@ -28,13 +28,15 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
 
         builder.Property(p => p.Amount)
             .HasConversion(m => m.Amount, v => Money.FromVnd(v));
+            
         builder.HasOne<Order>()
             .WithMany()
             .HasForeignKey(p => p.OrderId)
-            .OnDelete(DeleteBehavior.NoAction);
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasOne<Invoice>()
             .WithMany()
             .HasForeignKey(p => p.InvoiceId)
-            .OnDelete(DeleteBehavior.NoAction);
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

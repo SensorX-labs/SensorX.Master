@@ -73,5 +73,10 @@ public class QuoteConfiguration : IEntityTypeConfiguration<Quote>
             item.Property(i => i.TaxRate)
                 .HasConversion(p => p.Value, v => Percent.From(v));
         });
+
+        builder.HasOne<RFQ>()
+            .WithMany()
+            .HasForeignKey(q => q.RFQId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.SupplyRequestAggregate;
 using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.TransferOrderAggregate;
 using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate;
 using SensorX.Master.Domain.StrongIDs;
@@ -52,13 +53,15 @@ public class TransferOrderConfiguration : IEntityTypeConfiguration<TransferOrder
             item.Property(i => i.Quantity)
                 .HasConversion(qty => qty.Value, v => new Quantity(v));
         });
-        builder.HasOne<Warehouse>()
-            .WithMany()
-            .HasForeignKey(to => to.SourceWarehouseId)
-            .OnDelete(DeleteBehavior.NoAction);
+
         builder.HasOne<Warehouse>()
             .WithMany()
             .HasForeignKey(to => to.DestinationWarehouseId)
             .OnDelete(DeleteBehavior.NoAction);
+
+        builder.HasOne<SupplyRequest>()
+            .WithOne()
+            .HasForeignKey<TransferOrder>(to => to.SupplyRequestId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

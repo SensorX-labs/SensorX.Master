@@ -72,5 +72,10 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             item.Property(i => i.TaxRate)
                 .HasConversion(p => p.Value, v => Percent.From(v));
         });
+
+        builder.HasOne<Quote>()
+            .WithMany()
+            .HasForeignKey(o => o.QuoteId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

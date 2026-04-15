@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.SupplyRequestAggregate;
+using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
 
@@ -54,5 +55,10 @@ public class SupplyRequestConfiguration : IEntityTypeConfiguration<SupplyRequest
             po.Property(p => p.Quantity)
                 .HasConversion(qty => qty.Value, v => new Quantity(v));
         });
+
+        builder.HasOne<Warehouse>()
+            .WithMany()
+            .HasForeignKey(sr => sr.WarehouseId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
