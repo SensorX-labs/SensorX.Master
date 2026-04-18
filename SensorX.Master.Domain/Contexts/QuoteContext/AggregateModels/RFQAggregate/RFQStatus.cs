@@ -7,5 +7,6 @@ public enum RFQStatus
     Accepted,
     Rejected,
     Responded,
-    Converted
+    Converted,
+    Cancelled
 }
