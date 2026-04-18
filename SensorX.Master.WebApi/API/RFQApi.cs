@@ -8,6 +8,7 @@ using SensorX.Master.Application.Commands.RFQs.AssignRFQ;
 using SensorX.Master.Application.Commands.RFQs.AcceptRFQ;
 using SensorX.Master.Application.Commands.RFQs.RejectRFQ;
 using SensorX.Master.Application.Queries.RFQs.GetRFQById;
+using SensorX.Master.Application.Queries.RFQs.GetPageListRFQ;
 
 namespace SensorX.Master.WebApi.API
 {
@@ -22,6 +23,7 @@ namespace SensorX.Master.WebApi.API
             api.MapPost("accept", AcceptRFQ).WithOpenApi();
             api.MapPost("reject", RejectRFQ).WithOpenApi();
             api.MapGet("{id:guid}", GetRFQById).WithOpenApi();
+            api.MapGet("", GetPageListRFQ).WithOpenApi();
             
             return api;
         }
@@ -79,6 +81,17 @@ namespace SensorX.Master.WebApi.API
             return result.IsSuccess 
                 ? TypedResults.Ok(result) 
                 : TypedResults.BadRequest(result.Error ?? "Lỗi khi lấy RFQ");
+        }
+
+        private static async Task<Results<Ok<Result<PaginatedResult<GetPageListRFQResponse>>>, BadRequest<string>>> GetPageListRFQ(
+            [AsParameters] GetPageListRFQQuery query,
+            [FromServices] IMediator mediator
+        )
+        {
+            var result = await mediator.Send(query);
+            return result.IsSuccess 
+                ? TypedResults.Ok(result) 
+                : TypedResults.BadRequest(result.Error ?? "Lỗi khi lấy danh sách RFQ");
         }
     }
 }

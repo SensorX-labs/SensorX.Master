@@ -23,4 +23,6 @@ public class EfRepository<T>(AppDbContext dbContext) : RepositoryBase<T>(dbConte
         DbContext.Set<T>().UpdateRange(entities);
         return Task.CompletedTask;
     }
+
+    public IQueryable<T> AsQueryable() => DbContext.Set<T>().AsQueryable();
 }
