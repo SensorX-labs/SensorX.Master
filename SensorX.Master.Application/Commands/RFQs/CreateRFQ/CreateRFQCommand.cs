@@ -7,7 +7,6 @@ namespace SensorX.Master.Application.Commands.RFQs.CreateRFQ
 {
     public class CreateRFQCommand : IRequest<Result<Guid>>
     {
-        public Guid StaffId { get; set; }
         public Guid CustomerId { get; set; }
         
         // flat customer info

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using SensorX.Master.Application.Common.ResponseClient;
 using SensorX.Master.Application.Commands.RFQs.CreateRFQ;
+using SensorX.Master.Application.Commands.RFQs.AssignRFQ;
 
 namespace SensorX.Master.WebApi.API
 {
@@ -13,7 +14,7 @@ namespace SensorX.Master.WebApi.API
             var api = app.MapGroup("rfq").WithTags("RFQ");
 
             api.MapPost("", CreateRFQ).WithOpenApi();
-            
+            api.MapPost("assign", AssignRFQ).WithOpenApi();
             return api;
         }
 
@@ -26,6 +27,17 @@ namespace SensorX.Master.WebApi.API
             return result.IsSuccess 
                 ? TypedResults.Ok(result) 
                 : TypedResults.BadRequest(result.Error ?? "Lỗi khi tạo RFQ");
+        }
+
+        private static async Task<Results<Ok<Result<Guid>>, BadRequest<string>>> AssignRFQ(
+            [FromBody] AssignRFQCommand command,
+            [FromServices] IMediator mediator
+        )
+        {
+            var result = await mediator.Send(command);
+            return result.IsSuccess 
+                ? TypedResults.Ok(result) 
+                : TypedResults.BadRequest(result.Error ?? "Lỗi khi gán RFQ");
         }
     }
 }
