@@ -1,6 +1,7 @@
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
+using SensorX.Master.Domain.Common.Exceptions;
 
 namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate
 {

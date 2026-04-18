@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using SensorX.Master.Application.Common.ResponseClient;
@@ -6,6 +7,7 @@ using SensorX.Master.Application.Commands.RFQs.CreateRFQ;
 using SensorX.Master.Application.Commands.RFQs.AssignRFQ;
 using SensorX.Master.Application.Commands.RFQs.AcceptRFQ;
 using SensorX.Master.Application.Commands.RFQs.RejectRFQ;
+using SensorX.Master.Application.Queries.RFQs.GetRFQById;
 
 namespace SensorX.Master.WebApi.API
 {
@@ -19,6 +21,8 @@ namespace SensorX.Master.WebApi.API
             api.MapPost("assign", AssignRFQ).WithOpenApi();
             api.MapPost("accept", AcceptRFQ).WithOpenApi();
             api.MapPost("reject", RejectRFQ).WithOpenApi();
+            api.MapGet("{id:guid}", GetRFQById).WithOpenApi();
+            
             return api;
         }
 
@@ -64,6 +68,17 @@ namespace SensorX.Master.WebApi.API
             return result.IsSuccess 
                 ? TypedResults.Ok(result) 
                 : TypedResults.BadRequest(result.Error ?? "Lỗi khi từ chối RFQ");
+        }
+
+        private static async Task<Results<Ok<Result<GetRFQByIdResponse>>, BadRequest<string>>> GetRFQById(
+            [FromRoute] Guid id,
+            [FromServices] IMediator mediator
+        )
+        {
+            var result = await mediator.Send(new GetRFQByIdQuery { RFQId = id });
+            return result.IsSuccess 
+                ? TypedResults.Ok(result) 
+                : TypedResults.BadRequest(result.Error ?? "Lỗi khi lấy RFQ");
         }
     }
 }
