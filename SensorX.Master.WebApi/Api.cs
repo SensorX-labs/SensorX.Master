@@ -10,6 +10,7 @@ public static class Api
         var api = app.MapGroup("api");
         // viết api cho master
         api.MapRFQApi();
+        api.MapQuoteApi();
         return api;
     }
 }

@@ -1,6 +1,6 @@
-namespace SensorX.Master.Application.Common.Dtos.Requests.RFQs
+namespace SensorX.Master.Application.Commands.RFQs.CreateRFQ
 {
-    public class RFQItem
+    public class RFQItemDto
     {
         public Guid ProductId { get; set; }
         public string ProductName { get; set; }

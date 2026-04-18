@@ -6,7 +6,7 @@ using SensorX.Master.Domain.ValueObjects;
 
 namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate
 {
-    public class Quote : Entity<QuoteId>, ICreationTrackable, IUpdateTrackable
+    public class Quote : Entity<QuoteId>, IAggregateRoot, ICreationTrackable, IUpdateTrackable
     {
         private Quote() : base() { }
 
@@ -18,7 +18,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
             CustomerInfo customerInfo,
             string? note,
             QuoteStatus status,
-            QuoteResponse response,
+            QuoteResponse? response,
             DateTimeOffset quoteDate,
             string reasonReject
         ) : base(id)
@@ -40,7 +40,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         public CustomerInfo CustomerInfo { get; private set; }
         public string? Note { get; private set; }
         public QuoteStatus Status { get; private set; }
-        public QuoteResponse Response { get; private set; }
+        public QuoteResponse? Response { get; private set; }
         public DateTimeOffset QuoteDate { get; private set; }
         public string ReasonReject { get; private set; }
 

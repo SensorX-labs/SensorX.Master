@@ -18,7 +18,8 @@ namespace SensorX.Master.Application.Commands.RFQs.CreateRFQ
             {
                 return Result<Guid>.Failure("Danh sách sản phẩm không được để trống.");
             }
-            // Nếu cùng sản phẩm thì cộng dồn số lượng
+
+            // Gộp số lượng nếu trùng sản phẩm
             var groupedItems = request.Items
                 .GroupBy(i => i.ProductId)
                 .Select(g => new {
@@ -50,6 +51,7 @@ namespace SensorX.Master.Application.Commands.RFQs.CreateRFQ
                 foreach (var group in groupedItems)
                 {
                     var itemDto = group.Info;
+                    // RFQItem ở đây là Domain Entity
                     var rfqItem = new RFQItem(
                         RFQItemId.New(),
                         new ProductId(group.ProductId),
@@ -61,15 +63,20 @@ namespace SensorX.Master.Application.Commands.RFQs.CreateRFQ
                     );
                     rfq.AddItem(rfqItem);
                 }
+
+                await _rfqRepository.Add(rfq, cancellationToken);
+                await _rfqRepository.SaveChangesAsync(cancellationToken);
+                
+                return Result<Guid>.Success(rfq.Id.Value);
             }
             catch (DomainException ex)
             {
                 return Result<Guid>.Failure($"Dữ liệu không hợp lệ: {ex.Message}");
             }
-
-            await _rfqRepository.AddAsync(rfq);
-            await _rfqRepository.SaveChangesAsync();
-            return Result<Guid>.Success(rfq.Id.Value);
+            catch (Exception ex)
+            {
+                return Result<Guid>.Failure($"Lỗi hệ thống: {ex.Message}");
+            }
         }
     }
 }

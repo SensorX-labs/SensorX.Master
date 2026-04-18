@@ -1,7 +1,6 @@
 using SensorX.Master.Application.Common.ResponseClient;
 using MediatR;
 using System.Collections.Generic;
-using SensorX.Master.Application.Common.Dtos.Requests.RFQs;
 
 namespace SensorX.Master.Application.Commands.RFQs.CreateRFQ
 {
@@ -17,6 +16,6 @@ namespace SensorX.Master.Application.Commands.RFQs.CreateRFQ
         public string Address { get; set; }
         public string TaxCode { get; set; }
 
-        public List<RFQItem> Items { get; set; }
+        public List<RFQItemDto> Items { get; set; }
     }
 }
