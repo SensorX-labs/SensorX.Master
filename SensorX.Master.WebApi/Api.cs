@@ -1,4 +1,5 @@
 using SensorX.Master.WebApi;
+using SensorX.Master.WebApi.API;
 
 namespace SensorX.Master.WebApi;
 
@@ -8,6 +9,7 @@ public static class Api
     {
         var api = app.MapGroup("api");
         // viết api cho master
+        api.MapRFQApi();
         return api;
     }
 }
