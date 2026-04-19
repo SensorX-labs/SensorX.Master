@@ -26,12 +26,12 @@ public class GetPageListRFQHandler(
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
-                var searchTerm = request.SearchTerm.Trim().ToLower();
+                var searchTerm = $"%{request.SearchTerm.Trim()}%";
                 query = query.Where(r =>
-                    r.Code.Value.ToLower().Contains(searchTerm) ||
-                    r.CustomerInfo.RecipientName.ToLower().Contains(searchTerm) ||
-                    r.CustomerInfo.RecipientPhone.Value.ToLower().Contains(searchTerm) ||
-                    r.CustomerInfo.CompanyName.ToLower().Contains(searchTerm)
+                    EF.Functions.ILike((string)(object)r.Code, searchTerm) ||
+                    EF.Functions.ILike(r.CustomerInfo.RecipientName, searchTerm) ||
+                    EF.Functions.ILike((string)(object)r.CustomerInfo.RecipientPhone, searchTerm) ||
+                    EF.Functions.ILike(r.CustomerInfo.CompanyName, searchTerm)
                 );
             }
 

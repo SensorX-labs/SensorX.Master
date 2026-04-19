@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using SensorX.Master.Application.Commands.Quotes.CreateQuote;
 using SensorX.Master.Application.Queries.Quotes.GetDetailQuoteById;
+using SensorX.Master.Application.Queries.Quotes.GetPageListQuote;
 using SensorX.Master.Application.Common.ResponseClient;
 
 namespace SensorX.Master.WebApi.API
@@ -24,6 +25,11 @@ namespace SensorX.Master.WebApi.API
 
             api.MapGet("{quoteId:guid}", GetDetailQuoteById).WithOpenApi(operation => {
                 operation.Summary = "Lấy chi tiết báo giá";
+                return operation;
+            });
+
+            api.MapGet("", GetPageListQuote).WithOpenApi(operation => {
+                operation.Summary = "Lấy danh sách báo giá có phân trang";
                 return operation;
             });
 
@@ -50,6 +56,17 @@ namespace SensorX.Master.WebApi.API
             return result.IsSuccess 
                 ? TypedResults.Ok(result) 
                 : TypedResults.BadRequest(result.Error ?? "Lỗi khi lấy chi tiết báo giá");
+        }
+
+        private static async Task<Results<Ok<Result<PaginatedResult<GetPageListQuoteResponse>>>, BadRequest<string>>> GetPageListQuote(
+            [AsParameters] GetPageListQuoteQuery query,
+            [FromServices] IMediator mediator
+        )
+        {
+            var result = await mediator.Send(query);
+            return result.IsSuccess 
+                ? TypedResults.Ok(result) 
+                : TypedResults.BadRequest(result.Error ?? "Lỗi khi lấy danh sách báo giá");
         }
     }
 }
