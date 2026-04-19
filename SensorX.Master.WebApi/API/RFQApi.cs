@@ -18,12 +18,30 @@ namespace SensorX.Master.WebApi.API
         {
             var api = app.MapGroup("rfq").WithTags("RFQ");
 
-            api.MapPost("", CreateRFQ).WithOpenApi();
-            api.MapPost("assign", AssignRFQ).WithOpenApi();
-            api.MapPost("accept", AcceptRFQ).WithOpenApi();
-            api.MapPost("reject", RejectRFQ).WithOpenApi();
-            api.MapGet("{id:guid}", GetRFQById).WithOpenApi();
-            api.MapGet("", GetPageListRFQ).WithOpenApi();
+            api.MapPost("", CreateRFQ).WithOpenApi(operation => {
+                operation.Summary = "Tạo yêu cầu báo giá mới";
+                return operation;
+            });
+            api.MapPost("assign", AssignRFQ).WithOpenApi(operation => {
+                operation.Summary = "Gán nhân viên xử lý RFQ";
+                return operation;
+            });
+            api.MapPost("accept", AcceptRFQ).WithOpenApi(operation => {
+                operation.Summary = "Chấp nhận RFQ";
+                return operation;
+            });
+            api.MapPost("reject", RejectRFQ).WithOpenApi(operation => {
+                operation.Summary = "Từ chối RFQ";
+                return operation;
+            });
+            api.MapGet("{id:guid}", GetRFQById).WithOpenApi(operation => {
+                operation.Summary = "Lấy chi tiết yêu cầu báo giá (RFQ)";
+                return operation;
+            });
+            api.MapGet("", GetPageListRFQ).WithOpenApi(operation => {
+                operation.Summary = "Lấy danh sách RFQ có phân trang và tìm kiếm";
+                return operation;
+            });
             
             return api;
         }

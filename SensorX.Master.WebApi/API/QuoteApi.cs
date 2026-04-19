@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using SensorX.Master.Application.Commands.Quotes.CreateQuote;
+using SensorX.Master.Application.Queries.Quotes.GetDetailQuoteById;
 using SensorX.Master.Application.Common.ResponseClient;
 
 namespace SensorX.Master.WebApi.API
@@ -21,6 +22,11 @@ namespace SensorX.Master.WebApi.API
                 return operation;
             });
 
+            api.MapGet("{quoteId:guid}", GetDetailQuoteById).WithOpenApi(operation => {
+                operation.Summary = "Lấy chi tiết báo giá";
+                return operation;
+            });
+
             return api;
         }
 
@@ -33,6 +39,17 @@ namespace SensorX.Master.WebApi.API
             return result.IsSuccess 
                 ? TypedResults.Ok(result) 
                 : TypedResults.BadRequest(result.Error ?? "Lỗi khi tạo báo giá");
+        }
+
+        private static async Task<Results<Ok<Result<GetDetailQuoteByIdResponse>>, BadRequest<string>>> GetDetailQuoteById(
+            [FromRoute] Guid quoteId,
+            [FromServices] IMediator mediator
+        )
+        {
+            var result = await mediator.Send(new GetDetailQuoteByIdQuery(quoteId));
+            return result.IsSuccess 
+                ? TypedResults.Ok(result) 
+                : TypedResults.BadRequest(result.Error ?? "Lỗi khi lấy chi tiết báo giá");
         }
     }
 }
