@@ -10,7 +10,7 @@ namespace SensorX.Master.Application.Common.ResponseClient
         {
             if (isSuccess && error != null)
                 throw new InvalidOperationException();
-            if (!isSuccess && value != null)
+            if (!isSuccess && error == null) // Bắt buộc phải có lỗi nếu không thành công
                 throw new InvalidOperationException();
 
             IsSuccess = isSuccess;

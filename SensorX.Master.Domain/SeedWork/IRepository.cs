@@ -8,4 +8,5 @@ public interface IRepository<T> : IRepositoryBase<T> where T : class, IAggregate
     public Task Update(T entity, CancellationToken cancellationToken);
     public Task Delete(T entity, CancellationToken cancellationToken);
     public Task UpdateRange(IEnumerable<T> entities, CancellationToken cancellationToken);
+    public IQueryable<T> AsQueryable();
 }

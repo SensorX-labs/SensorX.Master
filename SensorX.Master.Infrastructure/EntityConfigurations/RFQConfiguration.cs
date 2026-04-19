@@ -23,7 +23,9 @@ public class RFQConfiguration : IEntityTypeConfiguration<RFQ>
             .HasConversion(c => c.Value, v => Code.From(v));
 
         builder.Property(r => r.StaffId)
-            .HasConversion(id => id.Value, v => new StaffId(v));
+            .HasConversion(
+                id => id == null ? (Guid?)null : id.Value,
+                v => v == null ? null : new StaffId(v.Value));
 
         builder.Property(r => r.CustomerId)
             .HasConversion(id => id.Value, v => new CustomerId(v));

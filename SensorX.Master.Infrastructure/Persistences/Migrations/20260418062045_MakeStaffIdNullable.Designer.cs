@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SensorX.Master.Infrastructure.Persistences;
@@ -11,9 +12,11 @@ using SensorX.Master.Infrastructure.Persistences;
 namespace SensorX.Master.Infrastructure.Persistences.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260418062045_MakeStaffIdNullable")]
+    partial class MakeStaffIdNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -857,7 +860,8 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
 
                     b.Navigation("LineItems");
 
-                    b.Navigation("Response");
+                    b.Navigation("Response")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate.RFQ", b =>
