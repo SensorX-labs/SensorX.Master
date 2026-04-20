@@ -21,7 +21,7 @@ namespace SensorX.Master.Application.Commands.RFQs.AssignRFQ
             }
 
             var staffId = new StaffId(request.StaffId);
-            rfq.Assign(staffId);
+            rfq.ForceAssign(staffId);
 
             await _rfqRepository.UpdateAsync(rfq, cancellationToken);
             await _rfqRepository.SaveChangesAsync(cancellationToken);
