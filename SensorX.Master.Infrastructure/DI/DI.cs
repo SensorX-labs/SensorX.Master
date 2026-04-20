@@ -6,6 +6,7 @@ using SensorX.Master.Application.Common.Interfaces;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Infrastructure.Persistences;
 using SensorX.Master.Infrastructure.Services;
+using SensorX.Master.Application.Consumers;
 
 namespace SensorX.Master.Infrastructure.DI
 {
@@ -18,6 +19,9 @@ namespace SensorX.Master.Infrastructure.DI
 
             services.AddMassTransit(x =>
             {
+                // Đăng ký Consumer chạy ngầm
+                x.AddConsumer<QuoteCreatedConsumer>();
+
                 // Đăng ký Entity Framework Outbox
                 x.AddEntityFrameworkOutbox<AppDbContext>(o =>
                 {
@@ -28,27 +32,31 @@ namespace SensorX.Master.Infrastructure.DI
                     o.UseBusOutbox();
                 });
 
-                x.UsingInMemory((context, cfg) =>
+                x.UsingRabbitMq((context, cfg) =>
                 {
+                    var rabbitMqSettings = configuration.GetSection("RabbitMq");
+                    var host = rabbitMqSettings["Host"] ?? "localhost";
+                    var port = ushort.Parse(rabbitMqSettings["Port"] ?? "5672");
+                    var virtualHost = rabbitMqSettings["VirtualHost"] ?? "/";
+
+                    cfg.Host(host, port, virtualHost, h =>
+                    {
+                        h.Username(rabbitMqSettings["Username"] ?? "guest");
+                        h.Password(rabbitMqSettings["Password"] ?? "guest");
+                    });
+
                     cfg.ConfigureEndpoints(context);
                 });
 
-                // Cấu hình RabbitMQ (hoặc broker khác)
-                // x.UsingRabbitMq((context, cfg) =>
-                // {
-                //     cfg.Host("localhost", "/", h =>
-                //     {
-                //         h.Username("guest");
-                //         h.Password("guest");
-                //     });
 
-                //     cfg.ConfigureEndpoints(context);
-                // });
             });
 
             services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<ICurrentUser, CurrentUser>();
+
+            // Đăng ký HttpClient cho Data Service
+            services.AddHttpClient<IDataServiceClient, DataServiceClient>();
 
             return services;
         }

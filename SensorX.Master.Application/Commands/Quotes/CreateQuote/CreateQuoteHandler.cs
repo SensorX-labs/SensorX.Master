@@ -1,5 +1,7 @@
+using MassTransit;
 using MediatR;
 using SensorX.Master.Application.Common.ResponseClient;
+using SensorX.Master.Application.IntegrationEvents;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 using SensorX.Master.Domain.Contexts.QuoteContext;
@@ -11,7 +13,8 @@ using SensorX.Master.Domain.Common.Exceptions;
 namespace SensorX.Master.Application.Commands.Quotes.CreateQuote;
 
 public class CreateQuoteHandler(
-    IRepository<Quote> _quoteRepository
+    IRepository<Quote> _quoteRepository,
+    IPublishEndpoint _publishEndpoint
 ) : IRequestHandler<CreateQuoteCommand, Result<Guid>>
 {
     public async Task<Result<Guid>> Handle(CreateQuoteCommand request, CancellationToken cancellationToken)
@@ -79,6 +82,13 @@ public class CreateQuoteHandler(
             }
 
             await _quoteRepository.Add(quote, cancellationToken);
+            
+            await _publishEndpoint.Publish(new QuoteCreatedIntegrationEvent
+            {
+                QuoteId = quote.Id.Value,
+                OccurredOn = DateTimeOffset.UtcNow
+            }, cancellationToken);
+
             await _quoteRepository.SaveChangesAsync(cancellationToken);
 
             return Result<Guid>.Success(quote.Id.Value);

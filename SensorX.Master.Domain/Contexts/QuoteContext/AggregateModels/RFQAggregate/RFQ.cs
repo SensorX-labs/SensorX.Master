@@ -32,16 +32,6 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
         private readonly List<RFQItem> _items = new();
         public IReadOnlyList<RFQItem> Items => _items.AsReadOnly();
 
-        // gán nhân viên
-        public void Assign(StaffId staffId)
-        {
-            if (Status != RFQStatus.Pending)
-                throw new DomainException("Chỉ có thể gán nhân viên khi RFQ đang chờ xử lý.");
-
-            StaffId = staffId;
-            UpdatedAt = DateTimeOffset.UtcNow;
-        }
-
         // nhân viên chấp nhận xử lý
         public void Accept()
         {
@@ -76,9 +66,6 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
         // ép gán nhân viên từ trạng thái Rejected
         public void ForceAssign(StaffId staffId)
         {
-            if (Status != RFQStatus.Rejected)
-                throw new DomainException("Force Assign chỉ dùng khi RFQ đã bị từ chối.");
-
             StaffId = staffId;
             Status = RFQStatus.Accepted;
             UpdatedAt = DateTimeOffset.UtcNow;
