@@ -2,33 +2,33 @@ using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 
 namespace SensorX.Master.Application.Queries.RFQs.GetRFQById;
 
-public class GetRFQByIdResponse
-{
-    public Guid Id { get; set; }
-    public string Code { get; set; }
-    public Guid? StaffId { get; set; }
-    public Guid CustomerId { get; set; }
-    public string Status { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
+public record GetRFQByIdResponse
+(
+    Guid Id,
+    string Code,
+    Guid? StaffId,
+    Guid CustomerId,
+    string Status,
+    DateTimeOffset CreatedAt,
 
     // Flat Customer Info
-    public string RecipientName { get; set; }
-    public string RecipientPhone { get; set; }
-    public string CompanyName { get; set; }
-    public string Email { get; set; }
-    public string Address { get; set; }
-    public string TaxCode { get; set; }
+    string RecipientName,
+    string RecipientPhone,
+    string CompanyName,
+    string Email,
+    string Address,
+    string TaxCode,
 
-    public List<RFQItemResponse> Items { get; set; } = new();
-}
+    List<RFQItemResponse> Items
+);
 
-public class RFQItemResponse
-{
-    public Guid Id { get; set; }
-    public Guid ProductId { get; set; }
-    public string ProductName { get; set; }
-    public string ProductCode { get; set; }
-    public int Quantity { get; set; }
-    public string Manufacturer { get; set; }
-    public string Unit { get; set; }
-}
+public record RFQItemResponse
+(
+    Guid Id,
+    Guid ProductId,
+    string ProductName,
+    string ProductCode,
+    int Quantity,
+    string? Manufacturer,
+    string Unit
+);

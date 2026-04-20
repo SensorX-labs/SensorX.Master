@@ -1,20 +1,20 @@
+using MediatR;
 using SensorX.Master.Application.Common.ResponseClient;
+using SensorX.Master.Domain.Common.Exceptions;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 using SensorX.Master.Domain.SeedWork;
-using SensorX.Master.Domain.ValueObjects;
 using SensorX.Master.Domain.StrongIDs;
-using SensorX.Master.Domain.Common.Exceptions;
-using MediatR;
+using SensorX.Master.Domain.ValueObjects;
 
 namespace SensorX.Master.Application.Commands.RFQs.CreateRFQ
 {
     public class CreateRFQCommandHandler(
-        IRepository<RFQ> _rfqRepository 
+        IRepository<RFQ> _rfqRepository
     ) : IRequestHandler<CreateRFQCommand, Result<Guid>>
     {
         public async Task<Result<Guid>> Handle(CreateRFQCommand request, CancellationToken cancellationToken)
         {
-            if (request.Items == null || !request.Items.Any())
+            if (request.Items == null || request.Items.Count == 0)
             {
                 return Result<Guid>.Failure("Danh sách sản phẩm không được để trống.");
             }
@@ -22,7 +22,8 @@ namespace SensorX.Master.Application.Commands.RFQs.CreateRFQ
             // Gộp số lượng nếu trùng sản phẩm
             var groupedItems = request.Items
                 .GroupBy(i => i.ProductId)
-                .Select(g => new {
+                .Select(g => new
+                {
                     ProductId = g.Key,
                     Info = g.First(),
                     TotalQuantity = g.Sum(x => x.Quantity)
@@ -46,37 +47,25 @@ namespace SensorX.Master.Application.Commands.RFQs.CreateRFQ
                 RFQStatus.Pending
             );
 
-            try 
+            foreach (var group in groupedItems)
             {
-                foreach (var group in groupedItems)
-                {
-                    var itemDto = group.Info;
-                    // RFQItem ở đây là Domain Entity
-                    var rfqItem = new RFQItem(
-                        RFQItemId.New(),
-                        new ProductId(group.ProductId),
-                        itemDto.ProductName,
-                        new Quantity(group.TotalQuantity),
-                        Code.From(itemDto.ProductCode),
-                        itemDto.Manufacturer,
-                        itemDto.Unit
-                    );
-                    rfq.AddItem(rfqItem);
-                }
+                var itemDto = group.Info;
+                // RFQItem ở đây là Domain Entity
+                var rfqItem = new RFQItem(
+                    RFQItemId.New(),
+                    new ProductId(group.ProductId),
+                    itemDto.ProductName,
+                    new Quantity(group.TotalQuantity),
+                    Code.From(itemDto.ProductCode),
+                    itemDto.Manufacturer,
+                    itemDto.Unit
+                );
+                rfq.AddItem(rfqItem);
+            }
 
-                await _rfqRepository.Add(rfq, cancellationToken);
-                await _rfqRepository.SaveChangesAsync(cancellationToken);
-                
-                return Result<Guid>.Success(rfq.Id.Value);
-            }
-            catch (DomainException ex)
-            {
-                return Result<Guid>.Failure($"Dữ liệu không hợp lệ: {ex.Message}");
-            }
-            catch (Exception ex)
-            {
-                return Result<Guid>.Failure($"Lỗi hệ thống: {ex.Message}");
-            }
+            await _rfqRepository.AddAsync(rfq, cancellationToken);
+
+            return Result<Guid>.Success(rfq.Id.Value);
         }
     }
 }

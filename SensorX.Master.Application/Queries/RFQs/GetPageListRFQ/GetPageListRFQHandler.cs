@@ -1,5 +1,7 @@
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+using SensorX.Master.Application.Common.Interfaces;
+using SensorX.Master.Application.Common.Pagination;
+using SensorX.Master.Application.Common.QueryExtensions.Search;
 using SensorX.Master.Application.Common.ResponseClient;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 using SensorX.Master.Domain.SeedWork;
@@ -7,80 +9,61 @@ using SensorX.Master.Domain.SeedWork;
 namespace SensorX.Master.Application.Queries.RFQs.GetPageListRFQ;
 
 public class GetPageListRFQHandler(
-    IRepository<RFQ> _rfqRepository
-) : IRequestHandler<GetPageListRFQQuery, Result<PaginatedResult<GetPageListRFQResponse>>>
+    IQueryBuilder<RFQ> _RFQQueryBuilder,
+    IQueryExecutor _queryExecutor
+) : IRequestHandler<GetPageListRFQQuery, Result<RFQCursorPagedResult>>
 {
-    public async Task<Result<PaginatedResult<GetPageListRFQResponse>>> Handle(
+    public async Task<Result<RFQCursorPagedResult>> Handle(
         GetPageListRFQQuery request,
         CancellationToken cancellationToken)
     {
         try
         {
-            // Đảm bảo giá trị hợp lệ cho phân trang
-            var pageIndex = request.PageIndex <= 0 ? 1 : request.PageIndex;
-            var pageSize = request.PageSize <= 0 ? 10 : request.PageSize;
+            var sourceQuery = _RFQQueryBuilder.QueryAsNoTracking.ApplySearch(request.SearchTerm);
+            var pagedQuery = sourceQuery.ApplyCursorPagination(
+                request,
+                x => x.CreatedAt,
+                x => x.Id.Value
+            )
+            .OrderByDescending(x => x.CreatedAt)
+            .ThenByDescending(x => x.Id.Value);
 
-            var query = _rfqRepository.AsQueryable()
-                .Include(r => r.Items)
-                .AsNoTracking();
+            var dtoQuery = pagedQuery.Select(x => new GetPageListRFQResponse(
+                x.Id.Value,
+                x.Code.Value,
+                x.Status.ToString(),
+                x.CustomerInfo.RecipientName,
+                x.CustomerInfo.RecipientPhone.Value,
+                x.CustomerInfo.CompanyName,
+                x.CreatedAt,
+                x.StaffId != null ? x.StaffId.Value : null,
+                x.CustomerId.Value,
+                x.Items.Count
+            ));
 
-            if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+            var items = await _queryExecutor.ToListAsync(dtoQuery
+                .Take(request.PageSize + 1), cancellationToken);
+
+            var hasNext = items.Count > request.PageSize;
+            if (hasNext) items.RemoveAt(request.PageSize);
+
+            var result = new RFQCursorPagedResult
             {
-                var searchTerm = $"%{request.SearchTerm.Trim()}%";
-                query = query.Where(r =>
-                    EF.Functions.ILike((string)(object)r.Code, searchTerm) ||
-                    EF.Functions.ILike(r.CustomerInfo.RecipientName, searchTerm) ||
-                    EF.Functions.ILike((string)(object)r.CustomerInfo.RecipientPhone, searchTerm) ||
-                    EF.Functions.ILike(r.CustomerInfo.CompanyName, searchTerm)
-                );
-            }
+                Items = items,
+                HasNext = hasNext,
+                HasPrevious = request.IsPrevious,
+                FirstCreatedAt = items.FirstOrDefault()?.CreatedAt,
+                FirstId = items.FirstOrDefault()?.Id,
+                LastCreatedAt = items.LastOrDefault()?.CreatedAt,
+                LastId = items.LastOrDefault()?.Id
+            };
 
-            if (request.CustomerId.HasValue)
-            {
-                query = query.Where(r => r.CustomerId.Value == request.CustomerId.Value);
-            }
-
-            if (request.StaffId.HasValue)
-            {
-                query = query.Where(r => r.StaffId != null && r.StaffId.Value == request.StaffId.Value);
-            }
-
-            var totalCount = await query.CountAsync(cancellationToken);
-
-            var skip = (pageIndex - 1) * pageSize;
-            var rfqs = await query
-                .OrderByDescending(r => r.CreatedAt)
-                .Skip(skip)
-                .Take(pageSize)
-                .ToListAsync(cancellationToken);
-
-            var rfqDtos = rfqs.Select(r => new GetPageListRFQResponse
-            {
-                Id = r.Id.Value,
-                Code = r.Code.Value,
-                Status = r.Status.ToString(),
-                RecipientName = r.CustomerInfo.RecipientName,
-                RecipientPhone = r.CustomerInfo.RecipientPhone.Value,
-                CompanyName = r.CustomerInfo.CompanyName,
-                CreatedAt = r.CreatedAt,
-                StaffId = r.StaffId?.Value,
-                CustomerId = r.CustomerId.Value,
-                ItemCount = r.Items.Count
-            }).ToList();
-
-            var paginatedResult = new PaginatedResult<GetPageListRFQResponse>(
-                rfqDtos,
-                totalCount,
-                pageIndex,
-                pageSize
-            );
-
-            return Result<PaginatedResult<GetPageListRFQResponse>>.Success(paginatedResult);
+            return Result<RFQCursorPagedResult>.Success(result);
         }
         catch (Exception ex)
         {
-            return Result<PaginatedResult<GetPageListRFQResponse>>.Failure(
-                $"Lỗi khi lấy danh sách RFQ: {ex.Message}");
+            return Result<RFQCursorPagedResult>.Failure(
+                $"Lỗi khi lấy danh sách khách hàng: {ex.Message}");
         }
     }
 }

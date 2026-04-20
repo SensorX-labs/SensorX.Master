@@ -1,15 +1,19 @@
+using SensorX.Master.Application.Common.Pagination;
+
 namespace SensorX.Master.Application.Queries.RFQs.GetPageListRFQ;
 
-public class GetPageListRFQResponse
-{
-    public Guid Id { get; set; }
-    public string Code { get; set; }
-    public string Status { get; set; }
-    public string RecipientName { get; set; }
-    public string RecipientPhone { get; set; }
-    public string CompanyName { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
-    public Guid? StaffId { get; set; }
-    public Guid CustomerId { get; set; }
-    public int ItemCount { get; set; }
-}
+public record GetPageListRFQResponse
+(
+    Guid Id,
+    string Code,
+    string Status,
+    string RecipientName,
+    string RecipientPhone,
+    string CompanyName,
+    DateTimeOffset CreatedAt,
+    Guid? StaffId,
+    Guid CustomerId,
+    int ItemCount
+);
+
+public class RFQCursorPagedResult : CursorPagedResult<GetPageListRFQResponse> { }

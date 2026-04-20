@@ -13,22 +13,12 @@ namespace SensorX.Master.Application.Commands.RFQs.RejectRFQ
         {
             var rfqId = new RFQId(request.RFQId);
             var rfq = await _rfqRepository.GetByIdAsync(rfqId, cancellationToken);
-            if (rfq == null)
-            {
+            if (rfq is null)
                 return Result<Guid>.Failure("Không tìm thấy RFQ");
-            }
 
-            try 
-            {
-                rfq.StaffReject();
-                await _rfqRepository.UpdateAsync(rfq, cancellationToken);
-                await _rfqRepository.SaveChangesAsync(cancellationToken);
-                return Result<Guid>.Success(rfq.Id.Value);
-            }
-            catch (SensorX.Master.Domain.Common.Exceptions.DomainException ex)
-            {
-                return Result<Guid>.Failure(ex.Message);
-            }
+            rfq.StaffReject();
+            await _rfqRepository.UpdateAsync(rfq, cancellationToken);
+            return Result<Guid>.Success(rfq.Id.Value);
         }
     }
 }

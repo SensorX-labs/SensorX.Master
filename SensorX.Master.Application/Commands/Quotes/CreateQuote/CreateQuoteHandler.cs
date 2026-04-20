@@ -1,20 +1,17 @@
-using MassTransit;
 using MediatR;
 using SensorX.Master.Application.Common.ResponseClient;
-using SensorX.Master.Application.IntegrationEvents;
+using SensorX.Master.Domain.Common.Exceptions;
+using SensorX.Master.Domain.Contexts.QuoteContext;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
-using SensorX.Master.Domain.Contexts.QuoteContext;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
-using SensorX.Master.Domain.Common.Exceptions;
 
 namespace SensorX.Master.Application.Commands.Quotes.CreateQuote;
 
 public class CreateQuoteHandler(
-    IRepository<Quote> _quoteRepository,
-    IPublishEndpoint _publishEndpoint
+    IRepository<Quote> _quoteRepository
 ) : IRequestHandler<CreateQuoteCommand, Result<Guid>>
 {
     public async Task<Result<Guid>> Handle(CreateQuoteCommand request, CancellationToken cancellationToken)
@@ -34,7 +31,7 @@ public class CreateQuoteHandler(
             // thông tin báo giá
             var quoteId = QuoteId.New();
             var quoteCode = Code.Create("QTE");
-            
+
             var quote = new Quote(
                 quoteId,
                 quoteCode,
@@ -49,7 +46,7 @@ public class CreateQuoteHandler(
             );
 
             // thông tin sản phẩm
-            if (request.Items == null || !request.Items.Any())
+            if (request.Items == null || request.Items.Count == 0)
             {
                 return Result<Guid>.Failure("Báo giá phải có ít nhất một sản phẩm.");
             }
@@ -81,16 +78,7 @@ public class CreateQuoteHandler(
                 quote.AddItem(quoteItem);
             }
 
-            await _quoteRepository.Add(quote, cancellationToken);
-            
-            await _publishEndpoint.Publish(new QuoteCreatedIntegrationEvent
-            {
-                QuoteId = quote.Id.Value,
-                OccurredOn = DateTimeOffset.UtcNow
-            }, cancellationToken);
-
-            await _quoteRepository.SaveChangesAsync(cancellationToken);
-
+            await _quoteRepository.AddAsync(quote, cancellationToken);
             return Result<Guid>.Success(quote.Id.Value);
         }
         catch (DomainException ex)

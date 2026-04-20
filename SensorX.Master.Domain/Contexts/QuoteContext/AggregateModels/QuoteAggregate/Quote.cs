@@ -1,5 +1,6 @@
 using SensorX.Master.Domain.Common.Exceptions;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
+using SensorX.Master.Domain.Events;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
@@ -8,7 +9,9 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
 {
     public class Quote : Entity<QuoteId>, IAggregateRoot, ICreationTrackable, IUpdateTrackable
     {
+#pragma warning disable CS8618 // EF Core requires parameterless constructor
         private Quote() : base() { }
+#pragma warning restore CS8618
 
         public Quote(
             QuoteId id,
@@ -32,6 +35,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
             Response = response;
             QuoteDate = quoteDate;
             ReasonReject = reasonReject;
+            AddDomainEvent(new QuoteCreatedEvent(Id.Value));
         }
 
         public Code Code { get; private set; }

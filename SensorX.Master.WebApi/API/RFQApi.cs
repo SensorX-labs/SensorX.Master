@@ -2,13 +2,13 @@ using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using SensorX.Master.Application.Common.ResponseClient;
-using SensorX.Master.Application.Commands.RFQs.CreateRFQ;
-using SensorX.Master.Application.Commands.RFQs.AssignRFQ;
 using SensorX.Master.Application.Commands.RFQs.AcceptRFQ;
+using SensorX.Master.Application.Commands.RFQs.AssignRFQ;
+using SensorX.Master.Application.Commands.RFQs.CreateRFQ;
 using SensorX.Master.Application.Commands.RFQs.RejectRFQ;
-using SensorX.Master.Application.Queries.RFQs.GetRFQById;
+using SensorX.Master.Application.Common.ResponseClient;
 using SensorX.Master.Application.Queries.RFQs.GetPageListRFQ;
+using SensorX.Master.Application.Queries.RFQs.GetRFQById;
 
 namespace SensorX.Master.WebApi.API
 {
@@ -18,31 +18,37 @@ namespace SensorX.Master.WebApi.API
         {
             var api = app.MapGroup("rfq").WithTags("RFQ");
 
-            api.MapPost("", CreateRFQ).WithOpenApi(operation => {
+            api.MapPost("", CreateRFQ).WithOpenApi(operation =>
+            {
                 operation.Summary = "Tạo yêu cầu báo giá mới";
                 return operation;
             });
-            api.MapPost("assign", AssignRFQ).WithOpenApi(operation => {
+            api.MapPost("assign", AssignRFQ).WithOpenApi(operation =>
+            {
                 operation.Summary = "Gán nhân viên xử lý RFQ";
                 return operation;
             });
-            api.MapPost("accept", AcceptRFQ).WithOpenApi(operation => {
+            api.MapPost("accept", AcceptRFQ).WithOpenApi(operation =>
+            {
                 operation.Summary = "Chấp nhận RFQ";
                 return operation;
             });
-            api.MapPost("reject", RejectRFQ).WithOpenApi(operation => {
+            api.MapPost("reject", RejectRFQ).WithOpenApi(operation =>
+            {
                 operation.Summary = "Từ chối RFQ";
                 return operation;
             });
-            api.MapGet("{id:guid}", GetRFQById).WithOpenApi(operation => {
+            api.MapGet("{id:guid}", GetRFQById).WithOpenApi(operation =>
+            {
                 operation.Summary = "Lấy chi tiết yêu cầu báo giá (RFQ)";
                 return operation;
             });
-            api.MapGet("", GetPageListRFQ).WithOpenApi(operation => {
+            api.MapGet("", GetPageListRFQ).WithOpenApi(operation =>
+            {
                 operation.Summary = "Lấy danh sách RFQ có phân trang và tìm kiếm";
                 return operation;
             });
-            
+
             return api;
         }
 
@@ -52,8 +58,8 @@ namespace SensorX.Master.WebApi.API
         )
         {
             var result = await mediator.Send(command);
-            return result.IsSuccess 
-                ? TypedResults.Ok(result) 
+            return result.IsSuccess
+                ? TypedResults.Ok(result)
                 : TypedResults.BadRequest(result.Error ?? "Lỗi khi tạo RFQ");
         }
 
@@ -63,8 +69,8 @@ namespace SensorX.Master.WebApi.API
         )
         {
             var result = await mediator.Send(command);
-            return result.IsSuccess 
-                ? TypedResults.Ok(result) 
+            return result.IsSuccess
+                ? TypedResults.Ok(result)
                 : TypedResults.BadRequest(result.Error ?? "Lỗi khi gán RFQ");
         }
 
@@ -74,8 +80,8 @@ namespace SensorX.Master.WebApi.API
         )
         {
             var result = await mediator.Send(command);
-            return result.IsSuccess 
-                ? TypedResults.Ok(result) 
+            return result.IsSuccess
+                ? TypedResults.Ok(result)
                 : TypedResults.BadRequest(result.Error ?? "Lỗi khi duyệt RFQ");
         }
 
@@ -85,8 +91,8 @@ namespace SensorX.Master.WebApi.API
         )
         {
             var result = await mediator.Send(command);
-            return result.IsSuccess 
-                ? TypedResults.Ok(result) 
+            return result.IsSuccess
+                ? TypedResults.Ok(result)
                 : TypedResults.BadRequest(result.Error ?? "Lỗi khi từ chối RFQ");
         }
 
@@ -95,20 +101,20 @@ namespace SensorX.Master.WebApi.API
             [FromServices] IMediator mediator
         )
         {
-            var result = await mediator.Send(new GetRFQByIdQuery { RFQId = id });
-            return result.IsSuccess 
-                ? TypedResults.Ok(result) 
+            var result = await mediator.Send(new GetRFQByIdQuery(id));
+            return result.IsSuccess
+                ? TypedResults.Ok(result)
                 : TypedResults.BadRequest(result.Error ?? "Lỗi khi lấy RFQ");
         }
 
-        private static async Task<Results<Ok<Result<PaginatedResult<GetPageListRFQResponse>>>, BadRequest<string>>> GetPageListRFQ(
+        private static async Task<Results<Ok<Result<RFQCursorPagedResult>>, BadRequest<string>>> GetPageListRFQ(
             [AsParameters] GetPageListRFQQuery query,
             [FromServices] IMediator mediator
         )
         {
             var result = await mediator.Send(query);
-            return result.IsSuccess 
-                ? TypedResults.Ok(result) 
+            return result.IsSuccess
+                ? TypedResults.Ok(result)
                 : TypedResults.BadRequest(result.Error ?? "Lỗi khi lấy danh sách RFQ");
         }
     }

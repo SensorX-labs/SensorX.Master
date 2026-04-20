@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SensorX.Master.Application.Common.Interfaces;
+using SensorX.Master.Application.Events.IntegrationEvents.QuoteAnalysis;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Infrastructure.Persistences;
 using SensorX.Master.Infrastructure.Services;
-using SensorX.Master.Application.Consumers;
 
 namespace SensorX.Master.Infrastructure.DI
 {
@@ -20,15 +20,12 @@ namespace SensorX.Master.Infrastructure.DI
             services.AddMassTransit(x =>
             {
                 // Đăng ký Consumer chạy ngầm
-                x.AddConsumer<QuoteCreatedConsumer>();
+                x.AddConsumer<QuoteAnalysisIntegrationEvent>();
 
                 // Đăng ký Entity Framework Outbox
                 x.AddEntityFrameworkOutbox<AppDbContext>(o =>
                 {
-                    // Sử dụng Postgres
                     o.UsePostgres();
-
-                    // Quan trọng: Báo cho MassTransit biết hãy đóng vai trò là Outbox
                     o.UseBusOutbox();
                 });
 
@@ -51,7 +48,9 @@ namespace SensorX.Master.Infrastructure.DI
 
             });
 
-            services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
+            services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            services.AddScoped(typeof(IQueryBuilder<>), typeof(QueryBuilder<>));
+            services.AddScoped<IQueryExecutor, QueryExecutor>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<ICurrentUser, CurrentUser>();
 
