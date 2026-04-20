@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SensorX.Master.Application.Common.Interfaces;
-using SensorX.Master.Application.Events.Consumers.QuoteCreatedAiEnrichment;
+using SensorX.Master.Application.Events.IntegrationEvents.QuoteAnalysis;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Infrastructure.Persistences;
 using SensorX.Master.Infrastructure.Services;
@@ -20,7 +20,7 @@ namespace SensorX.Master.Infrastructure.DI
             services.AddMassTransit(x =>
             {
                 // Đăng ký Consumer chạy ngầm
-                x.AddConsumer<QuoteCreatedConsumer>();
+                x.AddConsumer<QuoteAnalysisIntegrationEvent>();
 
                 // Đăng ký Entity Framework Outbox
                 x.AddEntityFrameworkOutbox<AppDbContext>(o =>
