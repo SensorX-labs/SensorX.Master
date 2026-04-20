@@ -1,4 +1,5 @@
 using MediatR;
+using SensorX.Master.Application.Common.Interfaces;
 using SensorX.Master.Application.Common.ResponseClient;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 using SensorX.Master.Domain.SeedWork;
@@ -6,45 +7,47 @@ using SensorX.Master.Domain.SeedWork;
 namespace SensorX.Master.Application.Queries.RFQs.GetRFQById;
 
 public class GetRFQByIdHandler(
-    IRepository<RFQ> _rfqRepository
+    IQueryBuilder<RFQ> _rfqQueryBuilder,
+    IQueryExecutor _queryExecutor
 ) : IRequestHandler<GetRFQByIdQuery, Result<GetRFQByIdResponse>>
 {
     public async Task<Result<GetRFQByIdResponse>> Handle(GetRFQByIdQuery request, CancellationToken cancellationToken)
     {
-        var rfq = await _rfqRepository.GetByIdAsync(new RFQId(request.RFQId), cancellationToken);
-        if (rfq == null)
+        var query = _rfqQueryBuilder.QueryAsNoTracking
+                        .Where(q => q.Id == new RFQId(request.RFQId))
+                        .Select(q => new GetRFQByIdResponse
+                        (
+                            q.Id.Value,
+                            q.Code.Value,
+                            q.StaffId != null ? q.StaffId.Value : null,
+                            q.CustomerId.Value,
+                            q.Status.ToString(),
+                            q.CreatedAt,
+                            // Map Customer Info
+                            q.CustomerInfo.RecipientName,
+                            q.CustomerInfo.RecipientPhone.Value,
+                            q.CustomerInfo.CompanyName,
+                            q.CustomerInfo.Email.Value,
+                            q.CustomerInfo.Address,
+                            q.CustomerInfo.TaxCode,
+                            // Map Items
+                            q.Items.Select(i => new RFQItemResponse
+                            (
+                                i.Id.Value,
+                                i.ProductId.Value,
+                                i.ProductName,
+                                i.ProductCode.Value,
+                                i.Quantity.Value,
+                                i.Manufacturer,
+                                i.Unit
+                            )).ToList()
+                        ));
+
+        var response = await _queryExecutor.FirstOrDefaultAsync(query, cancellationToken);
+        if (response == null)
         {
             return Result<GetRFQByIdResponse>.Failure("Không tìm thấy RFQ");
         }
-
-        var response = new GetRFQByIdResponse
-        {
-            Id = rfq.Id.Value,
-            Code = rfq.Code.Value,
-            StaffId = rfq.StaffId?.Value,
-            CustomerId = rfq.CustomerId.Value,
-            Status = rfq.Status.ToString(),
-            CreatedAt = rfq.CreatedAt,
-            // Map Customer Info
-            RecipientName = rfq.CustomerInfo.RecipientName,
-            RecipientPhone = rfq.CustomerInfo.RecipientPhone.Value,
-            CompanyName = rfq.CustomerInfo.CompanyName,
-            Email = rfq.CustomerInfo.Email.Value,
-            Address = rfq.CustomerInfo.Address,
-            TaxCode = rfq.CustomerInfo.TaxCode,
-            // Map Items
-            Items = rfq.Items.Select(i => new RFQItemResponse
-            {
-                Id = i.Id.Value,
-                ProductId = i.ProductId.Value,
-                ProductName = i.ProductName,
-                ProductCode = i.ProductCode.Value,
-                Quantity = i.Quantity.Value,
-                Manufacturer = i.Manufacturer,
-                Unit = i.Unit
-            }).ToList()
-        };
-
         return Result<GetRFQByIdResponse>.Success(response);
     }
 }

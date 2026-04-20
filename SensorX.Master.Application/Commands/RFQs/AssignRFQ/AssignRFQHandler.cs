@@ -14,17 +14,14 @@ namespace SensorX.Master.Application.Commands.RFQs.AssignRFQ
         {
             var rfqId = new RFQId(request.RFQId);
             var rfq = await _rfqRepository.GetByIdAsync(rfqId, cancellationToken);
-            
+
             if (rfq is null)
-            {
                 return Result<Guid>.Failure("Không tìm thấy RFQ");
-            }
 
             var staffId = new StaffId(request.StaffId);
-            rfq.Assign(staffId);
+            rfq.ForceAssign(staffId);
 
             await _rfqRepository.UpdateAsync(rfq, cancellationToken);
-            await _rfqRepository.SaveChangesAsync(cancellationToken);
 
             return Result<Guid>.Success(rfq.Id.Value);
         }

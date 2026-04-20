@@ -1,49 +1,49 @@
 namespace SensorX.Master.Application.Queries.Quotes.GetDetailQuoteById;
 
-public class GetDetailQuoteByIdResponse
-{
-    public Guid Id { get; set; }
-    public string Code { get; set; } = string.Empty;
-    public Guid RFQId { get; set; }
-    public Guid CustomerId { get; set; }
-    public string Status { get; set; } = string.Empty;
-    public DateTimeOffset QuoteDate { get; set; }
-    public string? Note { get; set; }
-    public string? ReasonReject { get; set; }
+public record GetDetailQuoteByIdResponse
+(
+    Guid Id,
+    string Code,
+    Guid RFQId,
+    Guid CustomerId,
+    string Status,
+    DateTimeOffset QuoteDate,
+    string? Note,
+    string? ReasonReject,
 
     // thong tin khách hàng
-    public string RecipientName { get; set; } = string.Empty;
-    public string RecipientPhone { get; set; } = string.Empty;
-    public string CompanyName { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string Address { get; set; } = string.Empty;
-    public string TaxCode { get; set; } = string.Empty;
+    string RecipientName,
+    string RecipientPhone,
+    string CompanyName,
+    string Email,
+    string Address,
+    string TaxCode,
 
     // feedback
-    public string? CustomerResponseType { get; set; }
-    public string? ShippingAddress { get; set; }
-    public string? PaymentTerm { get; set; }
-    public string? CustomerFeedback { get; set; }
+    string? CustomerResponseType,
+    string? ShippingAddress,
+    string? PaymentTerm,
+    string? CustomerFeedback,
 
-    public decimal Subtotal { get; set; }
-    public decimal TotalTax { get; set; }
-    public decimal GrandTotal { get; set; }
+    decimal Subtotal,
+    decimal TotalTax,
+    decimal GrandTotal,
 
-    public List<QuoteItemResponse> Items { get; set; } = new();
-}
+    List<QuoteItemResponse> Items
+);
 
-public class QuoteItemResponse
-{
-    public Guid Id { get; set; }
-    public Guid ProductId { get; set; }
-    public string ProductCode { get; set; } = string.Empty;
-    public string Manufacturer { get; set; } = string.Empty;
-    public string Unit { get; set; } = string.Empty;
-    public int Quantity { get; set; }
-    public decimal UnitPrice { get; set; }
-    public decimal TaxRate { get; set; }
-    
-    public decimal LineAmount { get; set; }
-    public decimal TaxAmount { get; set; }
-    public decimal TotalLineAmount { get; set; }
-}
+public record QuoteItemResponse
+(
+    Guid Id,
+    Guid ProductId,
+    string ProductCode,
+    string Manufacturer,
+    string Unit,
+    int Quantity,
+    decimal UnitPrice,
+    decimal TaxRate,
+
+    decimal LineAmount,
+    decimal TaxAmount,
+    decimal TotalLineAmount
+);

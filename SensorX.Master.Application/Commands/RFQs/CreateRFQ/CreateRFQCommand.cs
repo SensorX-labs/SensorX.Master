@@ -1,21 +1,26 @@
-using SensorX.Master.Application.Common.ResponseClient;
-using MediatR;
 using System.Collections.Generic;
+using MediatR;
+using SensorX.Master.Application.Common.ResponseClient;
 
 namespace SensorX.Master.Application.Commands.RFQs.CreateRFQ
 {
-    public class CreateRFQCommand : IRequest<Result<Guid>>
-    {
-        public Guid CustomerId { get; set; }
-        
-        // flat customer info
-        public string RecipientName { get; set; }
-        public string RecipientPhone { get; set; }
-        public string CompanyName { get; set; }
-        public string Email { get; set; }
-        public string Address { get; set; }
-        public string TaxCode { get; set; }
+    public record CreateRFQCommand(
+        Guid CustomerId,
+        string RecipientName,
+        string RecipientPhone,
+        string CompanyName,
+        string Email,
+        string Address,
+        string TaxCode,
+        List<RFQItemDto> Items
+    ) : IRequest<Result<Guid>>;
 
-        public List<RFQItemDto> Items { get; set; }
-    }
+    public record RFQItemDto(
+        Guid ProductId,
+        string ProductName,
+        int Quantity,
+        string ProductCode,
+        string Manufacturer,
+        string Unit
+    );
 }
