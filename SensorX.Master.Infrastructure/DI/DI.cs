@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SensorX.Master.Application.Common.Interfaces;
+using SensorX.Master.Application.Events.Consumers.QuoteCreatedAiEnrichment;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Infrastructure.Persistences;
 using SensorX.Master.Infrastructure.Services;
-using SensorX.Master.Application.Consumers;
 
 namespace SensorX.Master.Infrastructure.DI
 {
@@ -25,10 +25,7 @@ namespace SensorX.Master.Infrastructure.DI
                 // Đăng ký Entity Framework Outbox
                 x.AddEntityFrameworkOutbox<AppDbContext>(o =>
                 {
-                    // Sử dụng Postgres
                     o.UsePostgres();
-
-                    // Quan trọng: Báo cho MassTransit biết hãy đóng vai trò là Outbox
                     o.UseBusOutbox();
                 });
 

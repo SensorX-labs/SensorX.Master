@@ -1,55 +1,38 @@
 using MassTransit;
 using Microsoft.Extensions.Logging;
 using SensorX.Master.Application.Common.Interfaces;
-using SensorX.Master.Application.IntegrationEvents;
+using SensorX.Master.Application.Common.Models.DataServiceModels;
+using SensorX.Master.Application.Events.DomainEvents.QuoteCreated;
+using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAggregate;
+using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
-using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
-using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAggregate;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
-using Microsoft.EntityFrameworkCore;
-using SensorX.Master.Application.Common.Models.DataServiceModels;
 
-namespace SensorX.Master.Application.Consumers;
+namespace SensorX.Master.Application.Events.IntegrationEvents.QuoteAnalysis;
 
-public class QuoteCreatedConsumer : IConsumer<QuoteCreatedIntegrationEvent>
+public class QuoteAnalysisIntegrationEvent(
+    IDataServiceClient _dataClient,
+    IQueryBuilder<Quote> _quoteRepository,
+    IQueryBuilder<Order> _orderRepository,
+    IQueryBuilder<RFQ> _rfqRepository,
+    IQueryBuilder<Invoice> _invoiceRepository,
+    IQueryExecutor _queryExecutor,
+    IPublishEndpoint _publishEndpoint,
+    ILogger<QuoteAnalysisIntegrationEvent> _logger
+) : IConsumer<IQuoteCreatedEvent>
 {
-    private readonly IDataServiceClient _dataClient;
-    private readonly IRepository<Quote> _quoteRepository;
-    private readonly IRepository<Order> _orderRepository;
-    private readonly IRepository<RFQ> _rfqRepository;
-    private readonly IRepository<Invoice> _invoiceRepository;
-    private readonly IPublishEndpoint _publishEndpoint;
-    private readonly ILogger<QuoteCreatedConsumer> _logger;
-
-    public QuoteCreatedConsumer(
-        IDataServiceClient dataClient,
-        IRepository<Quote> quoteRepository,
-        IRepository<Order> orderRepository,
-        IRepository<RFQ> rfqRepository,
-        IRepository<Invoice> invoiceRepository,
-        IPublishEndpoint publishEndpoint,
-        ILogger<QuoteCreatedConsumer> logger)
-    {
-        _dataClient = dataClient;
-        _quoteRepository = quoteRepository;
-        _orderRepository = orderRepository;
-        _rfqRepository = rfqRepository;
-        _invoiceRepository = invoiceRepository;
-        _publishEndpoint = publishEndpoint;
-        _logger = logger;
-    }
-
-    public async Task Consume(ConsumeContext<QuoteCreatedIntegrationEvent> context)
+    public async Task Consume(ConsumeContext<IQuoteCreatedEvent> context)
     {
         var eventData = context.Message;
         _logger.LogInformation(">>> [AI-Enrichment] Bắt đầu tổng hợp dữ liệu báo giá có tính liên kết cao: {QuoteId}", eventData.QuoteId);
-        
+
         try
         {
-            var quote = await _quoteRepository.GetByIdAsync(new QuoteId(eventData.QuoteId));
-            if (quote == null) return;
+            var quoteQuery = _quoteRepository.QueryAsNoTracking.Where(x => x.Id == new QuoteId(eventData.QuoteId));
+            var quote = await _queryExecutor.FirstOrDefaultAsync(quoteQuery);
+            if (quote is null) return;
 
             // 1. Thu thập dữ liệu
             var productIds = quote.LineItems.Select(x => x.ProductId.Value).ToArray();
@@ -57,12 +40,17 @@ public class QuoteCreatedConsumer : IConsumer<QuoteCreatedIntegrationEvent>
             var pricingPolicyTask = _dataClient.GetProductPricingAsync(productIds);
             var staffMetricsTask = _dataClient.GetEmployeeMetricsAsync(Guid.Empty); // TODO: Salesperson ID
 
-            var orders = await _orderRepository.AsQueryable().Where(x => x.CustomerId == quote.CustomerId).ToListAsync();
-            var rfqs = await _rfqRepository.AsQueryable().Where(x => x.CustomerId == quote.CustomerId).ToListAsync();
-            var invoices = await (from inv in _invoiceRepository.AsQueryable()
-                                 join ord in _orderRepository.AsQueryable() on inv.OrderId equals ord.Id
-                                 where ord.CustomerId == quote.CustomerId
-                                 select inv).ToListAsync();
+            var ordersQuery = _orderRepository.QueryAsNoTracking.Where(x => x.CustomerId == quote.CustomerId);
+            var orders = await _queryExecutor.ToListAsync(ordersQuery);
+
+            var rfqsQuery = _rfqRepository.QueryAsNoTracking.Where(x => x.CustomerId == quote.CustomerId);
+            var rfqs = await _queryExecutor.ToListAsync(rfqsQuery);
+
+            var invoicesQuery = from inv in _invoiceRepository.QueryAsNoTracking
+                                join ord in _orderRepository.QueryAsNoTracking on inv.OrderId equals ord.Id
+                                where ord.CustomerId == quote.CustomerId
+                                select inv;
+            var invoices = await _queryExecutor.ToListAsync(invoicesQuery);
 
             await Task.WhenAll(customerHistoryTask, pricingPolicyTask, staffMetricsTask);
 
@@ -77,8 +65,8 @@ public class QuoteCreatedConsumer : IConsumer<QuoteCreatedIntegrationEvent>
                 var policy = extPricing.FirstOrDefault(p => p.ProductId == item.ProductId.Value);
                 decimal floorPrice = policy?.FloorPrice ?? 0;
                 decimal suggestedPrice = policy?.SuggestedPrice ?? 0;
-                
-                decimal margin = item.UnitPrice.Amount > 0 
+
+                decimal margin = item.UnitPrice.Amount > 0
                     ? Math.Round(((item.UnitPrice.Amount - floorPrice) / item.UnitPrice.Amount) * 100, 2)
                     : 0;
 
@@ -90,7 +78,7 @@ public class QuoteCreatedConsumer : IConsumer<QuoteCreatedIntegrationEvent>
                     Policy: new ItemPricingPolicyData(
                         SuggestedPrice: suggestedPrice,
                         FloorPrice: floorPrice,
-                        Tiers: policy?.PriceTiers?.Select(t => new SensorX.Master.Application.IntegrationEvents.PriceTierData(t.Quantity, t.Price)).ToList() ?? []
+                        Tiers: policy?.PriceTiers?.Select(t => new PriceTierData(t.Quantity, t.Price)).ToList() ?? []
                     ),
                     Margin: margin
                 ));
@@ -98,17 +86,18 @@ public class QuoteCreatedConsumer : IConsumer<QuoteCreatedIntegrationEvent>
 
             // 3. Phân tích Khách hàng & Sales
             var totalOrders = orders.Count;
-            var lastOrderDays = orders.OrderByDescending(o => o.OrderDate).FirstOrDefault() is Order o 
-                ? (DateTimeOffset.UtcNow - o.OrderDate).Days : 365;
-            var overdueInvoices = invoices.Count(i => (i.Status == InvoiceStatus.Unpaid || i.Status == InvoiceStatus.PartiallyPaid) 
-                                                      && (DateTimeOffset.UtcNow - i.IssueAt).Days > 30);
+            var lastOrderDays = orders.OrderByDescending(o => o.OrderDate)
+                                      .FirstOrDefault() is Order o ? (DateTimeOffset.UtcNow - o.OrderDate).Days : 365;
+            var overdueInvoices = invoices.Count(i => (i.Status == InvoiceStatus.Unpaid
+                                                        || i.Status == InvoiceStatus.PartiallyPaid
+                                                    ) && (DateTimeOffset.UtcNow - i.IssueAt).Days > 30);
             var staffTenureYears = extStaff.Data != null ? (DateTime.UtcNow.Year - extStaff.Data.CreatedAt.Year) : 0;
 
             // 4. Đóng gói Bundle Final
             var bundle = new QuoteAnalysisDataBundle
-            {
-                QuoteId = quote.Code.Value,
-                Customer = new CustomerAnalysisData(
+            (
+                QuoteId: quote.Code.Value,
+                Customer: new CustomerAnalysisData(
                     IsExisting: totalOrders > 0 || (extCustomer.Data != null && (DateTime.UtcNow - extCustomer.Data.CreatedDate).Days > 60),
                     TotalOrders: totalOrders,
                     LastOrderDaysAgo: lastOrderDays,
@@ -117,7 +106,7 @@ public class QuoteCreatedConsumer : IConsumer<QuoteCreatedIntegrationEvent>
                     RelationshipLevel: totalOrders > 5 ? "high" : "medium",
                     RfqsWithoutOrders: rfqs.Count(r => r.Status == RFQStatus.Rejected)
                 ),
-                Quote = new QuoteOverviewData(
+                Quote: new QuoteOverviewData(
                     TotalAmount: quote.GetGrandTotal().Amount,
                     TotalSuggestedPrice: extPricing.Sum(p => p.SuggestedPrice),
                     TotalFloorPrice: extPricing.Sum(p => p.FloorPrice),
@@ -127,19 +116,19 @@ public class QuoteCreatedConsumer : IConsumer<QuoteCreatedIntegrationEvent>
                     Items: analyzedItems, // Danh sách items chứa đầy đủ thông tin bên trong
                     Complexity: quote.LineItems.Count > 5 ? "high" : "low"
                 ),
-                Context = new ContextData(
+                Context: new ContextData(
                     Urgency: "medium",
                     Competition: true,
                     CustomerRequestedQuote: quote.RFQId != null,
                     DeadlineDays: 7
                 ),
-                Sales = new SalesAnalysisData(
+                Sales: new SalesAnalysisData(
                     ExperienceYears: staffTenureYears,
                     WinRate: 0.75,
                     RecentPerformance: staffTenureYears > 2 ? "senior" : "junior"
                 ),
-                CustomerMessage = quote.Note ?? "Không có ghi chú.",
-            };
+                CustomerMessage: quote.Note ?? "Không có ghi chú."
+            );
 
             await _publishEndpoint.Publish(bundle);
             _logger.LogInformation(">>> [AI-Enrichment] Hoàn tất Bundle có tính liên kết cao cho Báo giá {QuoteCode}.", quote.Code.Value);
