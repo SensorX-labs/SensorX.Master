@@ -43,6 +43,16 @@ builder.Services.AddSwaggerGen(options =>
     options.UseInlineDefinitionsForEnums();
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 var app = builder.Build();
 
 var autoApplyMigration = builder.Configuration.GetValue("Migration:AutoApply", true);
@@ -77,6 +87,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();
