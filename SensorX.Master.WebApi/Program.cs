@@ -90,11 +90,18 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseExceptionHandler();
+
 app.UseHttpsRedirection();
 
 app.UseCors("AllowAll");
 
 app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapApi();
+
+app.Run();
 app.UseAuthorization();
 
 app.MapApi();
