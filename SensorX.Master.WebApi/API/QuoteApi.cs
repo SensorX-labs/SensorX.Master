@@ -47,7 +47,7 @@ namespace SensorX.Master.WebApi.API
             var result = await mediator.Send(command);
             return result.IsSuccess
                 ? TypedResults.Ok(result)
-                : TypedResults.BadRequest(result.Error ?? "Lỗi khi tạo báo giá");
+                : TypedResults.BadRequest(result.Message ?? "Lỗi khi tạo báo giá");
         }
 
         private static async Task<Results<Ok<Result<GetDetailQuoteByIdResponse>>, BadRequest<string>>> GetDetailQuoteById(
@@ -58,10 +58,10 @@ namespace SensorX.Master.WebApi.API
             var result = await mediator.Send(new GetDetailQuoteByIdQuery(quoteId));
             return result.IsSuccess
                 ? TypedResults.Ok(result)
-                : TypedResults.BadRequest(result.Error ?? "Lỗi khi lấy chi tiết báo giá");
+                : TypedResults.BadRequest(result.Message ?? "Lỗi khi lấy chi tiết báo giá");
         }
 
-        private static async Task<Results<Ok<Result<QuoteCursorPagedResult>>, BadRequest<string>>> GetPageListQuote(
+        private static async Task<Results<Ok<Result<QuoteOffsetPagedResult>>, BadRequest<string>>> GetPageListQuote(
             [AsParameters] GetPageListQuoteQuery query,
             [FromServices] IMediator mediator
         )
@@ -69,7 +69,7 @@ namespace SensorX.Master.WebApi.API
             var result = await mediator.Send(query);
             return result.IsSuccess
                 ? TypedResults.Ok(result)
-                : TypedResults.BadRequest(result.Error ?? "Lỗi khi lấy danh sách báo giá");
+                : TypedResults.BadRequest(result.Message ?? "Lỗi khi lấy danh sách báo giá");
         }
     }
 }

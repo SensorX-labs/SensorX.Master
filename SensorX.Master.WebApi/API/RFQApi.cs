@@ -60,7 +60,7 @@ namespace SensorX.Master.WebApi.API
             var result = await mediator.Send(command);
             return result.IsSuccess
                 ? TypedResults.Ok(result)
-                : TypedResults.BadRequest(result.Error ?? "Lỗi khi tạo RFQ");
+                : TypedResults.BadRequest(result.Message ?? "Lỗi khi tạo RFQ");
         }
 
         private static async Task<Results<Ok<Result<Guid>>, BadRequest<string>>> AssignRFQ(
@@ -71,7 +71,7 @@ namespace SensorX.Master.WebApi.API
             var result = await mediator.Send(command);
             return result.IsSuccess
                 ? TypedResults.Ok(result)
-                : TypedResults.BadRequest(result.Error ?? "Lỗi khi gán RFQ");
+                : TypedResults.BadRequest(result.Message ?? "Lỗi khi gán RFQ");
         }
 
         private static async Task<Results<Ok<Result<Guid>>, BadRequest<string>>> AcceptRFQ(
@@ -82,7 +82,7 @@ namespace SensorX.Master.WebApi.API
             var result = await mediator.Send(command);
             return result.IsSuccess
                 ? TypedResults.Ok(result)
-                : TypedResults.BadRequest(result.Error ?? "Lỗi khi duyệt RFQ");
+                : TypedResults.BadRequest(result.Message ?? "Lỗi khi duyệt RFQ");
         }
 
         private static async Task<Results<Ok<Result<Guid>>, BadRequest<string>>> RejectRFQ(
@@ -93,7 +93,7 @@ namespace SensorX.Master.WebApi.API
             var result = await mediator.Send(command);
             return result.IsSuccess
                 ? TypedResults.Ok(result)
-                : TypedResults.BadRequest(result.Error ?? "Lỗi khi từ chối RFQ");
+                : TypedResults.BadRequest(result.Message ?? "Lỗi khi từ chối RFQ");
         }
 
         private static async Task<Results<Ok<Result<GetRFQByIdResponse>>, BadRequest<string>>> GetRFQById(
@@ -104,10 +104,10 @@ namespace SensorX.Master.WebApi.API
             var result = await mediator.Send(new GetRFQByIdQuery(id));
             return result.IsSuccess
                 ? TypedResults.Ok(result)
-                : TypedResults.BadRequest(result.Error ?? "Lỗi khi lấy RFQ");
+                : TypedResults.BadRequest(result.Message ?? "Lỗi khi lấy RFQ");
         }
 
-        private static async Task<Results<Ok<Result<RFQCursorPagedResult>>, BadRequest<string>>> GetPageListRFQ(
+        private static async Task<Results<Ok<Result<RFQOffsetPagedResult>>, BadRequest<string>>> GetPageListRFQ(
             [AsParameters] GetPageListRFQQuery query,
             [FromServices] IMediator mediator
         )
@@ -115,7 +115,7 @@ namespace SensorX.Master.WebApi.API
             var result = await mediator.Send(query);
             return result.IsSuccess
                 ? TypedResults.Ok(result)
-                : TypedResults.BadRequest(result.Error ?? "Lỗi khi lấy danh sách RFQ");
+                : TypedResults.BadRequest(result.Message ?? "Lỗi khi lấy danh sách RFQ");
         }
     }
 }

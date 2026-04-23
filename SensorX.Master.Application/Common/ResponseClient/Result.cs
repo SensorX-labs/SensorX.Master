@@ -4,44 +4,41 @@ namespace SensorX.Master.Application.Common.ResponseClient
     {
         public bool IsSuccess { get; }
         public T? Value { get; }
-        public string? Error { get; }
+        public string? Message { get; }
 
-        protected Result(bool isSuccess, T? value, string? error)
+        protected Result(bool isSuccess, T? value, string? message)
         {
-            if (isSuccess && error != null)
+            if (!isSuccess && value != null && !value.Equals(default(T)))
                 throw new InvalidOperationException();
-            if (!isSuccess && error == null) // Bắt buộc phải có lỗi nếu không thành công
+            if (!isSuccess && message == null)
                 throw new InvalidOperationException();
 
             IsSuccess = isSuccess;
             Value = value;
-            Error = error;
+            Message = message;
         }
 
-        public static Result<T> Success(T value) => new(true, value, null);
-        public static Result<T> Failure(string error) => new(false, default, error);
+        public static Result<T> Success(T value, string message = "Success") => new(true, value, message);
+        public static Result<T> Failure(string message) => new(false, default, message);
         public static implicit operator bool(Result<T>? result) => result is not null && result.IsSuccess;
     }
 
     public class Result
     {
         public bool IsSuccess { get; }
-        public string? Error { get; }
+        public string? Message { get; }
 
-        protected Result(bool isSuccess, string? error)
+        protected Result(bool isSuccess, string? message)
         {
-            if (isSuccess && error != null)
-                throw new InvalidOperationException();
-            if (!isSuccess && error == null)
+            if (!isSuccess && message == null)
                 throw new InvalidOperationException();
 
             IsSuccess = isSuccess;
-            Error = error;
+            Message = message;
         }
 
-        public static Result Success() => new(true, null);
-        public static Result Failure(string error) => new(false, error);
+        public static Result Success(string message = "Success") => new(true, message);
+        public static Result Failure(string message) => new(false, message);
         public static implicit operator bool(Result? result) => result is not null && result.IsSuccess;
     }
 }
-

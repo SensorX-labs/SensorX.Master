@@ -1,4 +1,4 @@
-using SensorX.Master.Application.Common.Pagination;
+using SensorX.Master.Application.Common.QueryExtensions.OffsetPagination;
 
 namespace SensorX.Master.Application.Queries.Quotes.GetPageListQuote;
 
@@ -16,4 +16,4 @@ public record GetPageListQuoteResponse(
 );
 
 
-public class QuoteCursorPagedResult : CursorPagedResult<GetPageListQuoteResponse> { }
+public class QuoteOffsetPagedResult : OffsetPagedResult<GetPageListQuoteResponse> { }

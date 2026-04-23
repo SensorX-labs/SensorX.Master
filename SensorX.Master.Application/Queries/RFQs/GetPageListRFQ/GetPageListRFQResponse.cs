@@ -1,4 +1,4 @@
-using SensorX.Master.Application.Common.Pagination;
+using SensorX.Master.Application.Common.QueryExtensions.OffsetPagination;
 
 namespace SensorX.Master.Application.Queries.RFQs.GetPageListRFQ;
 
@@ -16,4 +16,4 @@ public record GetPageListRFQResponse
     int ItemCount
 );
 
-public class RFQCursorPagedResult : CursorPagedResult<GetPageListRFQResponse> { }
+public class RFQOffsetPagedResult : OffsetPagedResult<GetPageListRFQResponse> { }
