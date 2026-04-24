@@ -1,10 +1,11 @@
 using Bogus;
+using Microsoft.EntityFrameworkCore;
+using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
-using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
-using Microsoft.EntityFrameworkCore;
+using SensorX.Master.Domain.Contexts.QuoteContext;
 
 namespace SensorX.Master.Infrastructure.Persistences;
 
@@ -32,15 +33,30 @@ public static class BogusSeeder
                 var staffId = StaffId.New();
                 var code = Code.Create("RFQ");
                 var description = f.Lorem.Sentence();
-                var customerInfo = new CustomerInfo(f.Name.FullName(), f.Phone.PhoneNumber("0#########"), f.Address.FullAddress(), f.Company.CompanyName(), f.Random.Replace("#########"));
-                
-                var rfq = RFQ.Create(id, customerId, staffId, code, description, customerInfo);
-                
+                var customerInfo = new CustomerInfo(
+                    f.Name.FullName(),
+                    Phone.Create(f.Phone.PhoneNumber("0#########")),
+                    f.Company.CompanyName(),
+                    Email.From(f.Internet.Email()),
+                    f.Address.FullAddress(),
+                    f.Random.Replace("#########")
+                );
+
+                var rfq = new RFQ(id, code, staffId, customerId, customerInfo, RFQStatus.Pending);
+
                 for (int i = 0; i < f.Random.Number(1, 5); i++)
                 {
-                    rfq.AddItem(ProductId.New(), f.Commerce.ProductName(), Quantity.Create(f.Random.Number(1, 100)), f.Lorem.Word());
+                    rfq.AddItem(new RFQItem(
+                        RFQItemId.New(),
+                        ProductId.New(),
+                        f.Commerce.ProductName(),
+                        new Quantity(f.Random.Number(1, 100)),
+                        Code.Create("PRD"),
+                        f.Company.CompanyName(),
+                        f.Commerce.ProductAdjective()
+                    ));
                 }
-                
+
                 return rfq;
             });
 
@@ -57,7 +73,7 @@ public static class BogusSeeder
         }
 
         var rfqs = await context.Set<RFQ>().Take(10).ToListAsync();
-        
+
         var quoteFaker = new Faker<Quote>("vi")
             .CustomInstantiator(f =>
             {
@@ -65,7 +81,7 @@ public static class BogusSeeder
                 var id = QuoteId.New();
                 var code = Code.Create("QT");
                 var quoteDate = f.Date.PastOffset(1).ToUniversalTime();
-                
+
                 var quote = new Quote(
                     id,
                     code,
@@ -79,10 +95,19 @@ public static class BogusSeeder
                     ""
                 );
 
-                foreach(var item in rfq.Items)
+                foreach (var item in rfq.Items)
                 {
-                    var price = Money.Create(f.Random.Decimal(100000, 1000000), "VND");
-                    quote.AddItem(new QuoteItem(QuoteItemId.New(), item.ProductId, item.ProductName, item.Quantity, price, Percent.Create(10)));
+                    var price = Money.FromVnd(f.Random.Decimal(100000, 1000000));
+                    quote.AddItem(new QuoteItem(
+                        QuoteItemId.New(),
+                        item.ProductId,
+                        item.ProductCode,
+                        item.Manufacturer ?? "",
+                        item.Unit,
+                        item.Quantity,
+                        price,
+                        Percent.From(10)
+                    ));
                 }
 
                 return quote;
@@ -110,7 +135,7 @@ public static class BogusSeeder
                 var id = OrderId.New();
                 var code = Code.Create("ORD");
                 var orderDate = f.Date.PastOffset(1).ToUniversalTime();
-                var senderInfo = new SenderInfo("SensorX HQ", "0241234567", "Hanoi, Vietnam");
+                var senderInfo = new SenderInfo { Name = "SensorX HQ", Email = Email.From("hq@sensorx.com") };
 
                 var order = new Order(
                     id,
@@ -123,9 +148,20 @@ public static class BogusSeeder
                     orderDate
                 );
 
-                foreach(var item in quote.LineItems)
+                foreach (var item in quote.LineItems)
                 {
-                    order.AddItem(new OrderItem(OrderItemId.New(), item.ProductId, item.ProductName, item.Quantity, item.Price, item.TaxPercent));
+                    order.AddItem(new OrderItem(
+                        OrderItemId.New(),
+                        item.ProductId,
+                        item.ProductCode,
+                        item.ProductCode.Value, // Using product code as name since QuoteItem doesn't have name
+                        item.Manufacturer,
+                        item.Unit,
+                        item.Quantity,
+                        item.UnitPrice,
+                        item.TaxRate,
+                        null
+                    ));
                 }
 
                 return order;
