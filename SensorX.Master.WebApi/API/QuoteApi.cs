@@ -1,13 +1,12 @@
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using SensorX.Master.Application.Commands.Quotes.CreateQuote;
-using SensorX.Master.Application.Common.ResponseClient;
 using SensorX.Master.Application.Queries.Quotes.GetDetailQuoteById;
 using SensorX.Master.Application.Queries.Quotes.GetPageListQuote;
+using SensorX.Master.WebApi.Extensions;
 
 namespace SensorX.Master.WebApi.API
 {
@@ -39,37 +38,31 @@ namespace SensorX.Master.WebApi.API
             return api;
         }
 
-        private static async Task<Results<Ok<Result<Guid>>, BadRequest<string>>> CreateQuote(
+        private static async Task<IResult> CreateQuote(
             [FromBody] CreateQuoteCommand command,
             [FromServices] IMediator mediator
         )
         {
             var result = await mediator.Send(command);
-            return result.IsSuccess
-                ? TypedResults.Ok(result)
-                : TypedResults.BadRequest(result.Error ?? "Lỗi khi tạo báo giá");
+            return result.ToResult();
         }
 
-        private static async Task<Results<Ok<Result<GetDetailQuoteByIdResponse>>, BadRequest<string>>> GetDetailQuoteById(
+        private static async Task<IResult> GetDetailQuoteById(
             [FromRoute] Guid quoteId,
             [FromServices] IMediator mediator
         )
         {
             var result = await mediator.Send(new GetDetailQuoteByIdQuery(quoteId));
-            return result.IsSuccess
-                ? TypedResults.Ok(result)
-                : TypedResults.BadRequest(result.Error ?? "Lỗi khi lấy chi tiết báo giá");
+            return result.ToResult();
         }
 
-        private static async Task<Results<Ok<Result<QuoteCursorPagedResult>>, BadRequest<string>>> GetPageListQuote(
+        private static async Task<IResult> GetPageListQuote(
             [AsParameters] GetPageListQuoteQuery query,
             [FromServices] IMediator mediator
         )
         {
             var result = await mediator.Send(query);
-            return result.IsSuccess
-                ? TypedResults.Ok(result)
-                : TypedResults.BadRequest(result.Error ?? "Lỗi khi lấy danh sách báo giá");
+            return result.ToResult();
         }
     }
 }

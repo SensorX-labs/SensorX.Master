@@ -1,32 +1,30 @@
 using MediatR;
 using SensorX.Master.Application.Common.Interfaces;
-using SensorX.Master.Application.Common.Pagination;
+using SensorX.Master.Application.Common.QueryExtensions.OffsetPagination;
 using SensorX.Master.Application.Common.QueryExtensions.Search;
 using SensorX.Master.Application.Common.ResponseClient;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
-using SensorX.Master.Domain.SeedWork;
 
 namespace SensorX.Master.Application.Queries.RFQs.GetPageListRFQ;
 
 public class GetPageListRFQHandler(
     IQueryBuilder<RFQ> _RFQQueryBuilder,
     IQueryExecutor _queryExecutor
-) : IRequestHandler<GetPageListRFQQuery, Result<RFQCursorPagedResult>>
+) : IRequestHandler<GetPageListRFQQuery, Result<RFQOffsetPagedResult>>
 {
-    public async Task<Result<RFQCursorPagedResult>> Handle(
+    public async Task<Result<RFQOffsetPagedResult>> Handle(
         GetPageListRFQQuery request,
         CancellationToken cancellationToken)
     {
         try
         {
             var sourceQuery = _RFQQueryBuilder.QueryAsNoTracking.ApplySearch(request.SearchTerm);
-            var pagedQuery = sourceQuery.ApplyCursorPagination(
-                request,
-                x => x.CreatedAt,
-                x => x.Id.Value
-            )
-            .OrderByDescending(x => x.CreatedAt)
-            .ThenByDescending(x => x.Id.Value);
+            var totalCount = await _queryExecutor.CountAsync(sourceQuery, cancellationToken);
+
+            var pagedQuery = sourceQuery
+                .OrderByDescending(x => x.CreatedAt)
+                .ThenByDescending(x => x.Id)
+                .ApplyOffsetPagination(request);
 
             var dtoQuery = pagedQuery.Select(x => new GetPageListRFQResponse(
                 x.Id.Value,
@@ -41,29 +39,22 @@ public class GetPageListRFQHandler(
                 x.Items.Count
             ));
 
-            var items = await _queryExecutor.ToListAsync(dtoQuery
-                .Take(request.PageSize + 1), cancellationToken);
+            var items = await _queryExecutor.ToListAsync(dtoQuery, cancellationToken);
 
-            var hasNext = items.Count > request.PageSize;
-            if (hasNext) items.RemoveAt(request.PageSize);
-
-            var result = new RFQCursorPagedResult
+            var result = new RFQOffsetPagedResult
             {
                 Items = items,
-                HasNext = hasNext,
-                HasPrevious = request.IsPrevious,
-                FirstCreatedAt = items.FirstOrDefault()?.CreatedAt,
-                FirstId = items.FirstOrDefault()?.Id,
-                LastCreatedAt = items.LastOrDefault()?.CreatedAt,
-                LastId = items.LastOrDefault()?.Id
+                TotalCount = totalCount,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
             };
 
-            return Result<RFQCursorPagedResult>.Success(result);
+            return Result<RFQOffsetPagedResult>.Success(result);
         }
         catch (Exception ex)
         {
-            return Result<RFQCursorPagedResult>.Failure(
-                $"Lỗi khi lấy danh sách khách hàng: {ex.Message}");
+            return Result<RFQOffsetPagedResult>.Failure(
+                $"Lỗi khi lấy danh sách yêu cầu báo giá: {ex.Message}");
         }
     }
 }

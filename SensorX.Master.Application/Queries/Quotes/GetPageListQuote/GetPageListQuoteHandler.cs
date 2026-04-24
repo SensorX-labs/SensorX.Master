@@ -1,30 +1,28 @@
 using MediatR;
 using SensorX.Master.Application.Common.Interfaces;
-using SensorX.Master.Application.Common.Pagination;
+using SensorX.Master.Application.Common.QueryExtensions.OffsetPagination;
 using SensorX.Master.Application.Common.QueryExtensions.Search;
 using SensorX.Master.Application.Common.ResponseClient;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
-using SensorX.Master.Domain.SeedWork;
 
 namespace SensorX.Master.Application.Queries.Quotes.GetPageListQuote;
 
 public class GetPageListQuoteHandler(
     IQueryBuilder<Quote> _quoteQueryBuilder,
     IQueryExecutor _queryExecutor
-) : IRequestHandler<GetPageListQuoteQuery, Result<QuoteCursorPagedResult>>
+) : IRequestHandler<GetPageListQuoteQuery, Result<QuoteOffsetPagedResult>>
 {
-    public async Task<Result<QuoteCursorPagedResult>> Handle(
+    public async Task<Result<QuoteOffsetPagedResult>> Handle(
         GetPageListQuoteQuery request,
         CancellationToken cancellationToken)
     {
         var sourceQuery = _quoteQueryBuilder.QueryAsNoTracking.ApplySearch(request.SearchTerm);
-        var pagedQuery = sourceQuery.ApplyCursorPagination(
-            request,
-            x => x.CreatedAt,
-            x => x.Id.Value
-        )
-        .OrderByDescending(x => x.CreatedAt)
-        .ThenByDescending(x => x.Id.Value);
+        var totalCount = await _queryExecutor.CountAsync(sourceQuery, cancellationToken);
+
+        var pagedQuery = sourceQuery
+            .OrderByDescending(x => x.CreatedAt)
+            .ThenByDescending(x => x.Id)
+            .ApplyOffsetPagination(request);
 
         var dtoQuery = pagedQuery.Select(x => new GetPageListQuoteResponse(
             x.Id.Value,
@@ -39,23 +37,16 @@ public class GetPageListQuoteHandler(
             x.CreatedAt
         ));
 
-        var items = await _queryExecutor.ToListAsync(dtoQuery
-            .Take(request.PageSize + 1), cancellationToken);
+        var items = await _queryExecutor.ToListAsync(dtoQuery, cancellationToken);
 
-        var hasNext = items.Count > request.PageSize;
-        if (hasNext) items.RemoveAt(request.PageSize);
-
-        var result = new QuoteCursorPagedResult
+        var result = new QuoteOffsetPagedResult
         {
             Items = items,
-            HasNext = hasNext,
-            HasPrevious = request.IsPrevious,
-            FirstCreatedAt = items.FirstOrDefault()?.CreatedAt,
-            FirstId = items.FirstOrDefault()?.Id,
-            LastCreatedAt = items.LastOrDefault()?.CreatedAt,
-            LastId = items.LastOrDefault()?.Id
+            TotalCount = totalCount,
+            PageNumber = request.PageNumber,
+            PageSize = request.PageSize
         };
 
-        return Result<QuoteCursorPagedResult>.Success(result);
+        return Result<QuoteOffsetPagedResult>.Success(result);
     }
 }

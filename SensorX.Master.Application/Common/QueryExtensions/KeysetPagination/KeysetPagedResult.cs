@@ -1,6 +1,6 @@
-namespace SensorX.Master.Application.Common.Pagination;
+namespace SensorX.Master.Application.Common.QueryExtensions.KeysetPagination;
 
-public class CursorPagedResult<T>
+public class KeysetPagedResult<T>
 {
     public List<T> Items { get; set; } = [];
 
