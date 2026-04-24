@@ -16,7 +16,7 @@ jobs:
       - name: Set image name
         run: |
           REPO_NAME=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
-          echo "IMAGE_NAME=ducdz2903/$REPO_NAME" >> $GITHUB_ENV
+          echo "IMAGE_NAME=ducdz2903/sensorx-master-api" >> $GITHUB_ENV
 
       - name: Login Docker Hub
         uses: docker/login-action@v3
