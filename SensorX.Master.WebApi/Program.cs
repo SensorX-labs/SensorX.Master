@@ -6,6 +6,7 @@ using SensorX.Master.Infrastructure.DI;
 using SensorX.Master.Infrastructure.Persistences;
 using SensorX.Master.WebApi;
 using SensorX.Master.WebApi.Configurations;
+using SensorX.Master.WebApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 // Cấu hình Authentication
@@ -97,6 +98,7 @@ app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 
 app.UseAuthentication();
+app.UseUserContext();
 app.UseAuthorization();
 
 app.MapApi();
