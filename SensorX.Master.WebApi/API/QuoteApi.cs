@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using SensorX.Master.Application.Commands.Quotes.AcceptQuote;
+using SensorX.Master.Application.Commands.Quotes.ApproveQuote;
+using SensorX.Master.Application.Commands.Quotes.SubmitQuoteForApproval;
 using SensorX.Master.Application.Commands.Quotes.CreateQuote;
 using SensorX.Master.Application.Queries.Quotes.GetDetailQuoteById;
 using SensorX.Master.Application.Queries.Quotes.GetPageListQuote;
@@ -35,6 +38,24 @@ namespace SensorX.Master.WebApi.API
                 return operation;
             });
 
+            api.MapPost("{quoteId:guid}/submit-for-approval", SubmitQuoteForApproval).WithOpenApi(operation =>
+            {
+                operation.Summary = "Gửi báo giá để chờ duyệt";
+                return operation;
+            });
+
+            api.MapPost("{quoteId:guid}/approve", ApproveQuote).WithOpenApi(operation =>
+            {
+                operation.Summary = "Phê duyệt báo giá";
+                return operation;
+            });
+
+            api.MapPost("{quoteId:guid}/accept", AcceptQuote).WithOpenApi(operation =>
+            {
+                operation.Summary = "Khách hàng chấp nhận báo giá";
+                return operation;
+            });
+
             return api;
         }
 
@@ -62,6 +83,34 @@ namespace SensorX.Master.WebApi.API
         )
         {
             var result = await mediator.Send(query);
+            return result.ToResult();
+        }
+
+        private static async Task<IResult> SubmitQuoteForApproval(
+            [FromRoute] Guid quoteId,
+            [FromServices] IMediator mediator
+        )
+        {
+            var result = await mediator.Send(new SubmitQuoteForApprovalCommand(quoteId));
+            return result.ToResult();
+        }
+
+        private static async Task<IResult> ApproveQuote(
+            [FromRoute] Guid quoteId,
+            [FromServices] IMediator mediator
+        )
+        {
+            var result = await mediator.Send(new ApproveQuoteCommand(quoteId));
+            return result.ToResult();
+        }
+
+        private static async Task<IResult> AcceptQuote(
+            [FromRoute] Guid quoteId,
+            [FromBody] AcceptQuoteCommand command,
+            [FromServices] IMediator mediator
+        )
+        {
+            var result = await mediator.Send(command.WithId(quoteId));
             return result.ToResult();
         }
     }

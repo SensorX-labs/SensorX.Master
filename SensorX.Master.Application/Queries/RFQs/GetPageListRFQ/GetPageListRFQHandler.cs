@@ -10,9 +10,9 @@ namespace SensorX.Master.Application.Queries.RFQs.GetPageListRFQ;
 public class GetPageListRFQHandler(
     IQueryBuilder<RFQ> _RFQQueryBuilder,
     IQueryExecutor _queryExecutor
-) : IRequestHandler<GetPageListRFQQuery, Result<RFQOffsetPagedResult>>
+) : IRequestHandler<GetPageListRFQQuery, Result<OffsetPagedResult<GetPageListRFQResponse>>>
 {
-    public async Task<Result<RFQOffsetPagedResult>> Handle(
+    public async Task<Result<OffsetPagedResult<GetPageListRFQResponse>>> Handle(
         GetPageListRFQQuery request,
         CancellationToken cancellationToken)
     {
@@ -41,7 +41,7 @@ public class GetPageListRFQHandler(
 
             var items = await _queryExecutor.ToListAsync(dtoQuery, cancellationToken);
 
-            var result = new RFQOffsetPagedResult
+            var result = new OffsetPagedResult<GetPageListRFQResponse>
             {
                 Items = items,
                 TotalCount = totalCount,
@@ -49,11 +49,11 @@ public class GetPageListRFQHandler(
                 PageSize = request.PageSize
             };
 
-            return Result<RFQOffsetPagedResult>.Success(result);
+            return Result<OffsetPagedResult<GetPageListRFQResponse>>.Success(result);
         }
         catch (Exception ex)
         {
-            return Result<RFQOffsetPagedResult>.Failure(
+            return Result<OffsetPagedResult<GetPageListRFQResponse>>.Failure(
                 $"Lỗi khi lấy danh sách yêu cầu báo giá: {ex.Message}");
         }
     }

@@ -10,9 +10,9 @@ namespace SensorX.Master.Application.Queries.Quotes.GetPageListQuote;
 public class GetPageListQuoteHandler(
     IQueryBuilder<Quote> _quoteQueryBuilder,
     IQueryExecutor _queryExecutor
-) : IRequestHandler<GetPageListQuoteQuery, Result<QuoteOffsetPagedResult>>
+) : IRequestHandler<GetPageListQuoteQuery, Result<OffsetPagedResult<GetPageListQuoteResponse>>>
 {
-    public async Task<Result<QuoteOffsetPagedResult>> Handle(
+    public async Task<Result<OffsetPagedResult<GetPageListQuoteResponse>>> Handle(
         GetPageListQuoteQuery request,
         CancellationToken cancellationToken)
     {
@@ -39,7 +39,7 @@ public class GetPageListQuoteHandler(
 
         var items = await _queryExecutor.ToListAsync(dtoQuery, cancellationToken);
 
-        var result = new QuoteOffsetPagedResult
+        var result = new OffsetPagedResult<GetPageListQuoteResponse>
         {
             Items = items,
             TotalCount = totalCount,
@@ -47,6 +47,6 @@ public class GetPageListQuoteHandler(
             PageSize = request.PageSize
         };
 
-        return Result<QuoteOffsetPagedResult>.Success(result);
+        return Result<OffsetPagedResult<GetPageListQuoteResponse>>.Success(result);
     }
 }
