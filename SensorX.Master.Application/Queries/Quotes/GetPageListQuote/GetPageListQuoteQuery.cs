@@ -6,4 +6,4 @@ namespace SensorX.Master.Application.Queries.Quotes.GetPageListQuote;
 
 public record GetPageListQuoteQuery(
     string? SearchTerm
-) : OffsetPagedQuery, IRequest<Result<QuoteOffsetPagedResult>>;
+) : OffsetPagedQuery, IRequest<Result<OffsetPagedResult<GetPageListQuoteResponse>>>;

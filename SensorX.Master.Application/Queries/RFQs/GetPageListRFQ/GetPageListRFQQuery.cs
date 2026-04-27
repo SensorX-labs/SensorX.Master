@@ -6,4 +6,4 @@ namespace SensorX.Master.Application.Queries.RFQs.GetPageListRFQ;
 
 public record GetPageListRFQQuery(
     string? SearchTerm
-) : OffsetPagedQuery, IRequest<Result<RFQOffsetPagedResult>>;
+) : OffsetPagedQuery, IRequest<Result<OffsetPagedResult<GetPageListRFQResponse>>>;

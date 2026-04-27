@@ -14,6 +14,4 @@ public record GetPageListRFQResponse
     Guid? StaffId,
     Guid CustomerId,
     int ItemCount
-);
-
-public class RFQOffsetPagedResult : OffsetPagedResult<GetPageListRFQResponse> { }
+);

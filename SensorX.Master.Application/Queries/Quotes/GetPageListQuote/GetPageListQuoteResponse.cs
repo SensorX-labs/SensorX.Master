@@ -15,5 +15,4 @@ public record GetPageListQuoteResponse(
     DateTimeOffset CreatedAt
 );
 
-
-public class QuoteOffsetPagedResult : OffsetPagedResult<GetPageListQuoteResponse> { }
+
