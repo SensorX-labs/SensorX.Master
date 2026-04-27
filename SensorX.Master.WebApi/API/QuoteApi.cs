@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using SensorX.Master.Application.Commands.Quotes.ApproveQuote;
 using SensorX.Master.Application.Commands.Quotes.SubmitQuoteForApproval;
 using SensorX.Master.Application.Commands.Quotes.CreateQuote;
 using SensorX.Master.Application.Queries.Quotes.GetDetailQuoteById;
@@ -42,6 +43,12 @@ namespace SensorX.Master.WebApi.API
                 return operation;
             });
 
+            api.MapPost("{quoteId:guid}/approve", ApproveQuote).WithOpenApi(operation =>
+            {
+                operation.Summary = "Phê duyệt báo giá";
+                return operation;
+            });
+
             return api;
         }
 
@@ -78,6 +85,15 @@ namespace SensorX.Master.WebApi.API
         )
         {
             var result = await mediator.Send(new SubmitQuoteForApprovalCommand(quoteId));
+            return result.ToResult();
+        }
+
+        private static async Task<IResult> ApproveQuote(
+            [FromRoute] Guid quoteId,
+            [FromServices] IMediator mediator
+        )
+        {
+            var result = await mediator.Send(new ApproveQuoteCommand(quoteId));
             return result.ToResult();
         }
     }
