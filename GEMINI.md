@@ -5,6 +5,13 @@
 - **Architecture:** Clean Architecture / DDD
 - **Tech Stack:** .NET 9, EF Core, Npgsql, MediatR, MassTransit
 
+## Recent Changes (2026-04-26)
+- **Bogus Removal:** Completely removed the `Bogus` library and `BogusSeeder.cs` from the project as requested.
+- **Program.cs Cleanup:**
+    - Fixed `UseExceptionHandler()` crash by providing a delegate and adding `AddProblemDetails()`.
+    - Removed redundant duplicate `app.Run()` and middleware calls.
+    - Cleaned up the migration retry loop to exclude seeding logic.
+
 ## Recent Changes (2026-04-21)
 - **Infrastructure Standards Synchronization:** Established standard query patterns across `SensorX.Master`, `SensorX.Data`, and `SensorX.Warehouse`.
     - Added `IQueryBuilder<T>`: Exposes `IQueryable` sources (Tracking and No-Tracking) without executing them.
