@@ -74,17 +74,17 @@ public class DataServiceClient : IDataServiceClient
     {
         try
         {
-            var response = await _httpClient.GetAsync($"/api/staff/{employeeId}/metrics");
+            var response = await _httpClient.GetAsync($"/api/staff/{employeeId}");
             if (!response.IsSuccessStatusCode) 
-                return new StaffMetricsApiResponse { Success = false, Message = "Lỗi gọi API Staff" };
+                return new StaffMetricsApiResponse { IsSuccess = false, Message = "Lỗi gọi API Staff" };
 
             return await response.Content.ReadFromJsonAsync<StaffMetricsApiResponse>() 
-                   ?? new StaffMetricsApiResponse { Success = false };
+                   ?? new StaffMetricsApiResponse { IsSuccess = false };
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Lỗi gọi API Staff Metrics cho {Id}", employeeId);
-            return new StaffMetricsApiResponse { Success = false, Message = ex.Message };
+            _logger.LogError(ex, "Lỗi gọi API Staff cho {Id}", employeeId);
+            return new StaffMetricsApiResponse { IsSuccess = false, Message = ex.Message };
         }
     }
 }
