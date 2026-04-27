@@ -6,10 +6,10 @@ using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate
 namespace SensorX.Master.Application.Commands.Quotes.AcceptQuote;
 
 public record AcceptQuoteCommand(
-    QuoteResponseStatus ResponseType,
-    PaymentTerm PaymentTerm,
-    string ShippingAddress,
-    string? Feedback
+    QuoteResponseStatus ResponseType = QuoteResponseStatus.Accept,
+    PaymentTerm PaymentTerm = PaymentTerm.FullPayment,
+    string? ShippingAddress = null,
+    string? Feedback = null
 ) : IRequest<Result>
 {
     public Guid QuoteId { get; init; }

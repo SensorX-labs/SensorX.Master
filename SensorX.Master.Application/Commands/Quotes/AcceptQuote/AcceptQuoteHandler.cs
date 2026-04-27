@@ -27,7 +27,7 @@ public class AcceptQuoteHandler(
             {
                 ResponseType = request.ResponseType,
                 PaymentTerm = request.PaymentTerm,
-                ShippingAddress = request.ShippingAddress,
+                ShippingAddress = request.ShippingAddress ?? quote.CustomerInfo.Address,
                 Feedback = request.Feedback
             };
 
