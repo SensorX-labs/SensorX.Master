@@ -44,6 +44,8 @@ builder.Services.AddSwaggerGen(options =>
     options.UseInlineDefinitionsForEnums();
 });
 
+builder.Services.AddProblemDetails();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -68,9 +70,6 @@ if (autoApplyMigration)
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             await dbContext.Database.MigrateAsync();
 
-            // Seed fake data using Bogus
-            await BogusSeeder.SeedData(dbContext);
-
             break;
         }
         catch (Exception ex) when (attempt < maxMigrationRetries)
@@ -91,7 +90,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseExceptionHandler();
+app.UseExceptionHandler(opt => { });
 
 app.UseHttpsRedirection();
 
@@ -99,11 +98,6 @@ app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseUserContext();
-app.UseAuthorization();
-
-app.MapApi();
-
-app.Run();
 app.UseAuthorization();
 
 app.MapApi();

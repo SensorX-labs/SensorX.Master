@@ -189,5 +189,24 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
                 throw new DomainException("Quote is not in a valid state to be published.");
             }
         }
+
+        /// <summary>
+        /// Handles customer acceptance of the quote.
+        /// Transitions status to Ordered and records the response.
+        /// </summary>
+        public void Accept(QuoteResponse response)
+        {
+            if (Status is QuoteStatus.Sent)
+            {
+                RecordCustomerResponse(response);
+                Status = QuoteStatus.Ordered;
+                UpdatedAt = DateTimeOffset.UtcNow;
+                AddDomainEvent(new QuoteAcceptedEvent(Id.Value));
+            }
+            else
+            {
+                throw new DomainException("Quote is not in a valid state to be accepted.");
+            }
+        }
     }
 }

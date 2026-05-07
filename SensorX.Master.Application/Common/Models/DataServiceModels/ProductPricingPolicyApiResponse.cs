@@ -17,7 +17,7 @@ public class ProductPricingPolicyData
     public string ProductName { get; set; } = string.Empty;
     public string Manufacture { get; set; } = string.Empty;
     public string Unit { get; set; } = string.Empty;
-    public int ProductStatus { get; set; }
+    public string? ProductStatus { get; set; }
     
     public decimal FloorPrice { get; set; }
     public decimal SuggestedPrice { get; set; }

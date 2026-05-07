@@ -1,0 +1,46 @@
+using MediatR;
+using SensorX.Master.Application.Common.ResponseClient;
+using SensorX.Master.Domain.Common.Exceptions;
+using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
+using SensorX.Master.Domain.SeedWork;
+using SensorX.Master.Domain.StrongIDs;
+
+namespace SensorX.Master.Application.Commands.Quotes.AcceptQuote;
+
+public class AcceptQuoteHandler(
+    IRepository<Quote> _quoteRepository
+) : IRequestHandler<AcceptQuoteCommand, Result>
+{
+    public async Task<Result> Handle(AcceptQuoteCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var quoteId = new QuoteId(request.QuoteId);
+            var quote = await _quoteRepository.GetByIdAsync(quoteId, cancellationToken);
+
+            if (quote == null)
+            {
+                return Result.Failure("Không tìm thấy báo giá.");
+            }
+
+            var response = new QuoteResponse
+            {
+                ResponseType = request.ResponseType,
+                PaymentTerm = request.PaymentTerm,
+                ShippingAddress = request.ShippingAddress ?? quote.CustomerInfo.Address,
+                Feedback = request.Feedback
+            };
+
+            quote.Publish();
+            quote.Accept(response);
+
+            await _quoteRepository.UpdateAsync(quote, cancellationToken);
+
+            return Result.Success("Khách hàng đã chấp nhận báo giá thành công.");
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure($"Lỗi khi chấp nhận báo giá: {ex.Message}");
+        }
+    }
+}
