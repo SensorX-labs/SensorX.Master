@@ -2,6 +2,7 @@ using MediatR;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using SensorX.Master.Application.Common.DomainEvent;
+using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
 using SensorX.Master.Domain.SeedWork;
 
 namespace SensorX.Master.Infrastructure.Persistences;
@@ -9,6 +10,8 @@ namespace SensorX.Master.Infrastructure.Persistences;
 public class AppDbContext(DbContextOptions<AppDbContext> options, IMediator mediator) : DbContext(options)
 {
     private readonly IMediator _mediator = mediator;
+
+    public DbSet<Order> Orders => Set<Order>();
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         base.OnConfiguring(optionsBuilder);

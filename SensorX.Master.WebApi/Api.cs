@@ -11,6 +11,8 @@ public static class Api
         // viết api cho master
         api.MapRFQApi();
         api.MapQuoteApi();
+        api.MapOrderApi();
+        api.MapTransferOrderApi();
         return api;
     }
 }

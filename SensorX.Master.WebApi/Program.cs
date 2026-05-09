@@ -33,6 +33,8 @@ builder.Services.AddServices(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
 
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
@@ -70,6 +72,9 @@ if (autoApplyMigration)
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             await dbContext.Database.MigrateAsync();
 
+            // Seed fake data using Bogus - tạm comment để test
+            // await BogusSeeder.SeedData(dbContext);
+
             break;
         }
         catch (Exception ex) when (attempt < maxMigrationRetries)
@@ -90,7 +95,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseExceptionHandler(opt => { });
+// app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
 
