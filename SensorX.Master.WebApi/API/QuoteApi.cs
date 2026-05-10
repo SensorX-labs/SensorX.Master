@@ -1,13 +1,15 @@
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using SensorX.Master.Application.Commands.Quotes.AcceptQuote;
+using SensorX.Master.Application.Commands.Quotes.ApproveQuote;
+using SensorX.Master.Application.Commands.Quotes.SubmitQuoteForApproval;
 using SensorX.Master.Application.Commands.Quotes.CreateQuote;
-using SensorX.Master.Application.Common.ResponseClient;
 using SensorX.Master.Application.Queries.Quotes.GetDetailQuoteById;
 using SensorX.Master.Application.Queries.Quotes.GetPageListQuote;
+using SensorX.Master.WebApi.Extensions;
 
 namespace SensorX.Master.WebApi.API
 {
@@ -36,40 +38,80 @@ namespace SensorX.Master.WebApi.API
                 return operation;
             });
 
+            api.MapPost("{quoteId:guid}/submit-for-approval", SubmitQuoteForApproval).WithOpenApi(operation =>
+            {
+                operation.Summary = "Gửi báo giá để chờ duyệt";
+                return operation;
+            });
+
+            api.MapPost("{quoteId:guid}/approve", ApproveQuote).WithOpenApi(operation =>
+            {
+                operation.Summary = "Phê duyệt báo giá";
+                return operation;
+            });
+
+            api.MapPost("{quoteId:guid}/accept", AcceptQuote).WithOpenApi(operation =>
+            {
+                operation.Summary = "Khách hàng chấp nhận báo giá";
+                return operation;
+            });
+
             return api;
         }
 
-        private static async Task<Results<Ok<Result<Guid>>, BadRequest<string>>> CreateQuote(
+        private static async Task<IResult> CreateQuote(
             [FromBody] CreateQuoteCommand command,
             [FromServices] IMediator mediator
         )
         {
             var result = await mediator.Send(command);
-            return result.IsSuccess
-                ? TypedResults.Ok(result)
-                : TypedResults.BadRequest(result.Error ?? "Lỗi khi tạo báo giá");
+            return result.ToResult();
         }
 
-        private static async Task<Results<Ok<Result<GetDetailQuoteByIdResponse>>, BadRequest<string>>> GetDetailQuoteById(
+        private static async Task<IResult> GetDetailQuoteById(
             [FromRoute] Guid quoteId,
             [FromServices] IMediator mediator
         )
         {
             var result = await mediator.Send(new GetDetailQuoteByIdQuery(quoteId));
-            return result.IsSuccess
-                ? TypedResults.Ok(result)
-                : TypedResults.BadRequest(result.Error ?? "Lỗi khi lấy chi tiết báo giá");
+            return result.ToResult();
         }
 
-        private static async Task<Results<Ok<Result<QuoteCursorPagedResult>>, BadRequest<string>>> GetPageListQuote(
+        private static async Task<IResult> GetPageListQuote(
             [AsParameters] GetPageListQuoteQuery query,
             [FromServices] IMediator mediator
         )
         {
             var result = await mediator.Send(query);
-            return result.IsSuccess
-                ? TypedResults.Ok(result)
-                : TypedResults.BadRequest(result.Error ?? "Lỗi khi lấy danh sách báo giá");
+            return result.ToResult();
+        }
+
+        private static async Task<IResult> SubmitQuoteForApproval(
+            [FromRoute] Guid quoteId,
+            [FromServices] IMediator mediator
+        )
+        {
+            var result = await mediator.Send(new SubmitQuoteForApprovalCommand(quoteId));
+            return result.ToResult();
+        }
+
+        private static async Task<IResult> ApproveQuote(
+            [FromRoute] Guid quoteId,
+            [FromServices] IMediator mediator
+        )
+        {
+            var result = await mediator.Send(new ApproveQuoteCommand(quoteId));
+            return result.ToResult();
+        }
+
+        private static async Task<IResult> AcceptQuote(
+            [FromRoute] Guid quoteId,
+            [FromBody] AcceptQuoteCommand command,
+            [FromServices] IMediator mediator
+        )
+        {
+            var result = await mediator.Send(command.WithId(quoteId));
+            return result.ToResult();
         }
     }
 }

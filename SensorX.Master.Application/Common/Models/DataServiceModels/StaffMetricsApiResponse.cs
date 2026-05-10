@@ -1,11 +1,17 @@
+using System.Text.Json.Serialization;
+
 namespace SensorX.Master.Application.Common.Models.DataServiceModels;
 
 public class StaffMetricsApiResponse
 {
-    public bool Success { get; set; }
+    [JsonPropertyName("isSuccess")]
+    public bool IsSuccess { get; set; }
+    
+    [JsonPropertyName("message")]
     public string Message { get; set; } = string.Empty;
     
-    public StaffMetricsData? Data { get; set; }
+    [JsonPropertyName("value")]
+    public StaffMetricsData? Value { get; set; }
     
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 }

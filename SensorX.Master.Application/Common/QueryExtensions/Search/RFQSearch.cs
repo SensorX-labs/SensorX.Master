@@ -12,11 +12,13 @@ public static class RFQSearch
         if (string.IsNullOrWhiteSpace(searchTerm))
             return query;
 
-        var term = searchTerm.Trim();
+        var term = searchTerm.Trim().ToLower();
 
+        // CustomerInfo là owned type với cột string thuần túy -> EF Core dịch được
+        // Không dùng Code.Value vì Code là Value Object qua HasConversion -> không dịch được
         return query.Where(p =>
-            p.Code.Value.StartsWith(term) ||
-            p.CustomerInfo.CompanyName.StartsWith(term)
+            p.CustomerInfo.CompanyName.ToLower().Contains(term) ||
+            p.CustomerInfo.RecipientName.ToLower().Contains(term)
         );
     }
 }
