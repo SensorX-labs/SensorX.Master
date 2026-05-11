@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SensorX.Master.Application.Commands.RFQs.AcceptRFQ;
 using SensorX.Master.Application.Commands.RFQs.AssignRFQ;
-using SensorX.Master.Application.Commands.RFQs.CreateRFQ;
+using SensorX.Master.Application.Commands.RFQs.CustomerCreateRFQ;
 using SensorX.Master.Application.Commands.RFQs.RejectRFQ;
 using SensorX.Master.Application.Queries.RFQs.GetPageListRFQ;
 using SensorX.Master.Application.Queries.RFQs.GetRFQById;
@@ -52,7 +52,7 @@ namespace SensorX.Master.WebApi.API
         }
 
         private static async Task<IResult> CreateRFQ(
-            [FromBody] CreateRFQCommand command,
+            [FromBody] CustomerCreateRFQCommand command,
             [FromServices] IMediator mediator
         )
         {

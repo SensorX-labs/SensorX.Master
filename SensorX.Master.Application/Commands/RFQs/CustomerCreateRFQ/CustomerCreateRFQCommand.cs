@@ -2,9 +2,9 @@ using System.Collections.Generic;
 using MediatR;
 using SensorX.Master.Application.Common.ResponseClient;
 
-namespace SensorX.Master.Application.Commands.RFQs.CreateRFQ
+namespace SensorX.Master.Application.Commands.RFQs.CustomerCreateRFQ
 {
-    public record CreateRFQCommand(
+    public record CustomerCreateRFQCommand(
         Guid CustomerId,
         string RecipientName,
         string RecipientPhone,
@@ -12,10 +12,10 @@ namespace SensorX.Master.Application.Commands.RFQs.CreateRFQ
         string Email,
         string Address,
         string TaxCode,
-        List<RFQItemDto> Items
+        List<CustomerRFQItemDto> Items
     ) : IRequest<Result<Guid>>;
 
-    public record RFQItemDto(
+    public record CustomerRFQItemDto(
         Guid ProductId,
         string ProductName,
         int Quantity,

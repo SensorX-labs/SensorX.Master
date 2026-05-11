@@ -6,13 +6,13 @@ using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
 
-namespace SensorX.Master.Application.Commands.RFQs.CreateRFQ
+namespace SensorX.Master.Application.Commands.RFQs.CustomerCreateRFQ
 {
-    public class CreateRFQCommandHandler(
+    public class CustomerCreateRFQCommandHandler(
         IRepository<RFQ> _rfqRepository
-    ) : IRequestHandler<CreateRFQCommand, Result<Guid>>
+    ) : IRequestHandler<CustomerCreateRFQCommand, Result<Guid>>
     {
-        public async Task<Result<Guid>> Handle(CreateRFQCommand request, CancellationToken cancellationToken)
+        public async Task<Result<Guid>> Handle(CustomerCreateRFQCommand request, CancellationToken cancellationToken)
         {
             if (request.Items == null || request.Items.Count == 0)
             {
