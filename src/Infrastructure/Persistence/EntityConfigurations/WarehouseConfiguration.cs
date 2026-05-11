@@ -1,10 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate;
-using SensorX.Master.Domain.StrongIDs;
-using SensorX.Master.Domain.ValueObjects;
+using SensorX.Master.Domain.AggregatesModel;
 
-namespace SensorX.Master.Infrastructure.EntityConfigurations;
+namespace SensorX.Master.Infrastructure.Persistence.EntityConfigurations;
 
 public class WarehouseConfiguration : IEntityTypeConfiguration<Warehouse>
 {
@@ -15,7 +13,7 @@ public class WarehouseConfiguration : IEntityTypeConfiguration<Warehouse>
         builder.HasKey(w => w.Id);
 
         builder.Property(w => w.Id)
-            .HasConversion(id => id.Value, v => new WarehouseId(v))
+            .HasConversion(id => id.Value, v => new Domain.ValueObjects.WarehouseId(v))
             .ValueGeneratedNever();
 
         builder.Property(w => w.Name)
@@ -26,7 +24,7 @@ public class WarehouseConfiguration : IEntityTypeConfiguration<Warehouse>
             .HasMaxLength(500);
 
         builder.Property(w => w.ApiEndpointUrl)
-            .HasConversion(url => url.Value, v => ApiEndpointUrl.From(v))
+            .HasConversion(url => url.Value, v => new Domain.ValueObjects.ApiEndpointUrl(v))
             .IsRequired()
             .HasMaxLength(500);
 

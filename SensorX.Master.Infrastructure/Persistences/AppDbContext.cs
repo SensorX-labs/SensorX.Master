@@ -4,14 +4,16 @@ using Microsoft.EntityFrameworkCore;
 using SensorX.Master.Application.Common.DomainEvent;
 using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
 using SensorX.Master.Domain.SeedWork;
+using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate;
 
 namespace SensorX.Master.Infrastructure.Persistences;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options, IMediator mediator) : DbContext(options)
+public class AppDbContext(DbContextOptions<AppDbContext> options, IMediator? mediator = null) : DbContext(options)
 {
-    private readonly IMediator _mediator = mediator;
+    private readonly IMediator? _mediator = mediator;
 
     public DbSet<Order> Orders => Set<Order>();
+    public DbSet<Warehouse> Warehouses => Set<Warehouse>();
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         base.OnConfiguring(optionsBuilder);
@@ -28,28 +30,31 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, IMediator medi
     }
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        while (true)
+        if (_mediator != null)
         {
-            var entitiesWithEvents = ChangeTracker.Entries<IHasDomainEvents>()
-                .Select(e => e.Entity)
-                .Where(e => e.DomainEvents.Count > 0)
-                .ToList();
-
-            if (entitiesWithEvents.Count == 0) break;
-
-            foreach (var entity in entitiesWithEvents)
+            while (true)
             {
-                var domainEvents = entity.DomainEvents.ToArray();
-                entity.ClearDomainEvents();
+                var entitiesWithEvents = ChangeTracker.Entries<IHasDomainEvents>()
+                    .Select(e => e.Entity)
+                    .Where(e => e.DomainEvents.Count > 0)
+                    .ToList();
 
-                foreach (var domainEvent in domainEvents)
+                if (entitiesWithEvents.Count == 0) break;
+
+                foreach (var entity in entitiesWithEvents)
                 {
-                    var notification = (INotification)Activator.CreateInstance(
-                        typeof(DomainEventNotification<>).MakeGenericType(domainEvent.GetType()),
-                        domainEvent
-                    )!;
+                    var domainEvents = entity.DomainEvents.ToArray();
+                    entity.ClearDomainEvents();
 
-                    await _mediator.Publish(notification, cancellationToken);
+                    foreach (var domainEvent in domainEvents)
+                    {
+                        var notification = (INotification)Activator.CreateInstance(
+                            typeof(DomainEventNotification<>).MakeGenericType(domainEvent.GetType()),
+                            domainEvent
+                        )!;
+
+                        await _mediator.Publish(notification, cancellationToken);
+                    }
                 }
             }
         }
