@@ -15,7 +15,7 @@ public partial record Phone
         Value = value;
     }
 
-    public static Phone From(string vlaue) => new(vlaue);
+    public static Phone From(string value) => new(value);
 
     public static Phone Create(string value)
     {
@@ -33,5 +33,5 @@ public partial record Phone
     private static partial Regex GeneratedPhoneRegex();
 
     // Implicit conversion để dễ dàng gán string cho Phone (tùy chọn)
-    public static implicit operator string(Phone phone) => phone.Value;
+    public static implicit operator string(Phone? phone) => phone?.Value ?? string.Empty;
 }

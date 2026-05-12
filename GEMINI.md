@@ -49,6 +49,14 @@ This project is indexed by GitNexus as **SensorX.Master** (1415 symbols, 2967 re
 - **Architecture:** Clean Architecture / DDD
 - **Tech Stack:** .NET 9, EF Core, Npgsql, MediatR, MassTransit
 
+## Recent Changes (2026-05-12)
+- **Infrastructure Fixes:**
+    - Fixed null dereference warnings in `SaleStaffConfiguration.cs` and `CustomerConfiguration.cs` by adding null checks in `HasConversion`.
+    - Added missing `AccountId` mapping in `SaleStaffConfiguration.cs` to allow constructor binding during EF Core materialization.
+    - Added missing `Phone` mapping in `CustomerConfiguration.cs` to allow constructor binding.
+    - Fixed a typo in `Phone.From` parameter name.
+    - Fixed `StaffSnapshotConsumer.cs` to handle nullable phone strings from events safely.
+
 ## Recent Changes (2026-04-26)
 - **Bogus Removal:** Completely removed the `Bogus` library and `BogusSeeder.cs` from the project as requested.
 - **Program.cs Cleanup:**

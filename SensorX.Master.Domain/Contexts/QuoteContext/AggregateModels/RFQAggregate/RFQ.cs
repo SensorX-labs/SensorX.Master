@@ -1,7 +1,7 @@
+using SensorX.Master.Domain.Common.Exceptions;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
-using SensorX.Master.Domain.Common.Exceptions;
 
 namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate
 {
@@ -81,7 +81,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
             UpdatedAt = DateTimeOffset.UtcNow;
         }
 
-        // chuyển đổi thành báo giá
+        // Báo giá được chốt thì coi là đã chuyển đổi thành đơn
         public void MarkAsConverted()
         {
             if (Status != RFQStatus.Responded)

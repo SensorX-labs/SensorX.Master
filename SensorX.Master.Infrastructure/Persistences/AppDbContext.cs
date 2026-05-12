@@ -1,14 +1,16 @@
-using MediatR;
+using System.Text.Json;
 using MassTransit;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SensorX.Master.Application.Common.DomainEvent;
 using SensorX.Master.Domain.SeedWork;
 
 namespace SensorX.Master.Infrastructure.Persistences;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options, IMediator mediator) : DbContext(options)
+public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    private readonly IMediator _mediator = mediator;
+    public DbSet<DomainEventOutbox> DomainEventOutboxes { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         base.OnConfiguring(optionsBuilder);
@@ -22,35 +24,67 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, IMediator medi
         modelBuilder.AddInboxStateEntity();
         modelBuilder.AddOutboxMessageEntity();
         modelBuilder.AddOutboxStateEntity();
-    }
-    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-    {
-        while (true)
+
+        // Fix for PostgreSQL DateTimeOffset with offset issue
+        // Npgsql 6.0+ requires DateTimeOffset to be in UTC (offset 0) when saving to 'timestamp with time zone'
+        var dateTimeOffsetConverter = new ValueConverter<DateTimeOffset, DateTimeOffset>(
+            v => v.ToUniversalTime(),
+            v => v);
+
+        var nullableDateTimeOffsetConverter = new ValueConverter<DateTimeOffset?, DateTimeOffset?>(
+            v => v.HasValue ? v.Value.ToUniversalTime() : v,
+            v => v);
+
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
-            var entitiesWithEvents = ChangeTracker.Entries<IHasDomainEvents>()
-                .Select(e => e.Entity)
-                .Where(e => e.DomainEvents.Count > 0)
-                .ToList();
-
-            if (entitiesWithEvents.Count == 0) break;
-
-            foreach (var entity in entitiesWithEvents)
+            foreach (var property in entityType.GetProperties())
             {
-                var domainEvents = entity.DomainEvents.ToArray();
-                entity.ClearDomainEvents();
-
-                foreach (var domainEvent in domainEvents)
+                if (property.ClrType == typeof(DateTimeOffset))
                 {
-                    var notification = (INotification)Activator.CreateInstance(
-                        typeof(DomainEventNotification<>).MakeGenericType(domainEvent.GetType()),
-                        domainEvent
-                    )!;
-
-                    await _mediator.Publish(notification, cancellationToken);
+                    property.SetValueConverter(dateTimeOffsetConverter);
+                }
+                else if (property.ClrType == typeof(DateTimeOffset?))
+                {
+                    property.SetValueConverter(nullableDateTimeOffsetConverter);
                 }
             }
         }
+    }
 
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        // 1. Quét tìm các Aggregate có chứa Domain Event
+        var entitiesWithEvents = ChangeTracker.Entries<IHasDomainEvents>()
+            .Select(e => e.Entity)
+            .Where(e => e.DomainEvents.Count > 0)
+            .ToList();
+
+        // 2. Chuyển đổi Event thành Outbox Message
+        foreach (var entity in entitiesWithEvents)
+        {
+            var domainEvents = entity.DomainEvents.ToArray();
+
+            // Xóa event trong bộ nhớ để tránh bị lặp nếu SaveChanges chạy lại
+            entity.ClearDomainEvents();
+
+            foreach (var domainEvent in domainEvents)
+            {
+                var eventType = domainEvent.GetType();
+
+                var outboxMessage = new DomainEventOutbox
+                {
+                    // Lấy FullName bao gồm cả namespace để Deserialize chính xác
+                    EventType = eventType.AssemblyQualifiedName!,
+                    Content = JsonSerializer.Serialize(domainEvent, eventType)
+                };
+
+                // Add vào Context (chưa lưu xuống DB ngay, phải chờ base.SaveChangesAsync)
+                DomainEventOutboxes.Add(outboxMessage);
+            }
+        }
+
+        // 3. Thực thi Transaction lưu xuống DB
+        // Lúc này: Data nghiệp vụ + DomainEventOutbox + MassTransitOutbox (nếu có) sẽ được lưu CÙNG LÚC!
         return await base.SaveChangesAsync(cancellationToken);
     }
 }

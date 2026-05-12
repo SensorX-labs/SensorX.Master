@@ -26,7 +26,7 @@ public record Money
     public static Money Zero(string currency = "VND") => new(0, currency);
 
     // Các phép toán cơ bản (Overload operators)
-    
+
     /// <summary>
     /// Adds two money instances of the same currency.
     /// </summary>
@@ -75,12 +75,18 @@ public record Money
     /// </summary>
     public static bool operator >(Money a, Money b) => b < a;
 
+    /// <summary>
+    /// Compares two money instances for less-than-or-equal relationship.
+    /// </summary>
     public static bool operator <=(Money a, Money b)
     {
         CheckSameCurrency(a, b);
         return a.Amount <= b.Amount;
     }
 
+    /// <summary>
+    /// Compares two money instances for greater-than-or-equal relationship.
+    /// </summary>
     public static bool operator >=(Money a, Money b) => b <= a;
 
     private static void CheckSameCurrency(Money a, Money b)
