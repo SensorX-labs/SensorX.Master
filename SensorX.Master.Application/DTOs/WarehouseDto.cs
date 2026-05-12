@@ -8,7 +8,10 @@ public record WarehouseDto(
     bool IsActive,
     DateTimeOffset CreatedAt,
     DateTimeOffset? UpdatedAt
-);
+)
+{
+    public WarehouseDto() : this(Guid.Empty, string.Empty, null, string.Empty, false, default, null) {}
+}
 
 public record CreateWarehouseDto(
     string Name,
