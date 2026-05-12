@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SensorX.Master.Infrastructure.DI;
 using SensorX.Master.Infrastructure.Persistences;
-using SensorX.Master.WebApi;
+using SensorX.Master.WebApi.API;
 using SensorX.Master.WebApi.Configurations;
 using SensorX.Master.WebApi.Middleware;
 

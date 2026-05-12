@@ -64,7 +64,6 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
 
             Status = RFQStatus.Accepted;
             UpdatedAt = DateTimeOffset.UtcNow;
-            AddDomainEvent(new RFQAceptedEvent(Id, Code, StaffId));
         }
 
         // nhân viên từ chối xử lý
@@ -121,7 +120,6 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
 
             Status = RFQStatus.Converted;
             UpdatedAt = DateTimeOffset.UtcNow;
-            AddDomainEvent(new RFQMarkAsConvertedEvent(Id, Code));
         }
 
         public void AddItem(

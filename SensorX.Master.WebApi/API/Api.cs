@@ -1,7 +1,7 @@
-using SensorX.Master.WebApi;
-using SensorX.Master.WebApi.API;
+using SensorX.Master.WebApi.API.Commands;
+using SensorX.Master.WebApi.API.Queries;
 
-namespace SensorX.Master.WebApi;
+namespace SensorX.Master.WebApi.API;
 
 public static class Api
 {
@@ -9,7 +9,8 @@ public static class Api
     {
         var api = app.MapGroup("api");
         // viết api cho master
-        api.MapRFQApi();
+        api.MapRFQQueriesApi();
+        api.MapRFQCommandApi();
         api.MapQuoteApi();
         return api;
     }
