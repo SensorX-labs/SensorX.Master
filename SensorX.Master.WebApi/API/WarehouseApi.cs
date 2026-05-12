@@ -11,7 +11,7 @@ public static class WarehouseApi
 {
     public static IEndpointRouteBuilder MapWarehouseApi(this IEndpointRouteBuilder app)
     {
-        var api = app.MapGroup("api/warehouses").WithTags("Warehouses");
+        var api = app.MapGroup("warehouses").WithTags("Warehouses");
 
         api.MapPost("", CreateWarehouse)
             .WithOpenApi(op => { op.Summary = "Create a new warehouse"; return op; });

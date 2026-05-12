@@ -16,12 +16,12 @@ public static class OrderApi
 
         group.WithOpenApi();
 
-        group.MapGet("/", async (IMediator mediator)
+        group.MapGet("/", async ([FromServices] IMediator mediator)
             => Results.Ok(await mediator.Send(new GetOrdersQuery())))
             .WithName("GetOrders")
             .WithDescription("Get list of orders");
 
-        group.MapPost("/", async (IMediator mediator, CreateOrderCommand command)
+        group.MapPost("/", async ([FromServices] IMediator mediator, CreateOrderCommand command)
             => Results.Created($"/orders/{command.Code}", await mediator.Send(command)))
             .WithName("CreateOrder")
             .WithDescription("Create a new order");

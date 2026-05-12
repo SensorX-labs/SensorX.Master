@@ -14,7 +14,7 @@ public static class TransferOrderApi
 
         group.WithOpenApi();
 
-        group.MapPost("/", async (IMediator mediator, CreateTransferOrderCommand command)
+        group.MapPost("/", async ([FromServices] IMediator mediator, CreateTransferOrderCommand command)
             => Results.Created($"/transfer-orders/{command.Code}", await mediator.Send(command)))
             .WithName("CreateTransferOrder")
             .WithDescription("Create a new transfer order");
