@@ -13,15 +13,14 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
             Code code,
             StaffId? staffId,
             CustomerId customerId,
-            CustomerInfo customerInfo,
-            RFQStatus status
+            CustomerInfo customerInfo
         ) : base(id)
         {
             Code = code;
             StaffId = staffId;
             CustomerId = customerId;
             CustomerInfo = customerInfo;
-            Status = status;
+            Status = RFQStatus.Draft;
         }
 
         public Code Code { get; private set; }
@@ -29,84 +28,121 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
         public CustomerId CustomerId { get; private set; }
         public CustomerInfo CustomerInfo { get; private set; }
         public RFQStatus Status { get; private set; }
-        private readonly List<RFQItem> _items = new();
+        private readonly List<RFQItem> _items = [];
         public IReadOnlyList<RFQItem> Items => _items.AsReadOnly();
+
+        public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset? UpdatedAt { get; set; }
+
+        // khách hàng gửi RFQ
+        public void Send()
+        {
+            if (Status != RFQStatus.Draft)
+                throw new DomainException("RFQ đang ở trạng thái không hợp lệ.");
+
+            Status = RFQStatus.Pending;
+            UpdatedAt = DateTimeOffset.UtcNow;
+            AddDomainEvent(new RFQSendedEvent(Id, Code));
+        }
+
+        // gán nhân viên để xử lý RFQ
+        public void Assign(StaffId staffId)
+        {
+            if (Status != RFQStatus.Pending)
+                throw new DomainException("Chỉ có thể phân bổ RFQ ở trạng thái chờ phân bổ");
+
+            StaffId = staffId;
+            UpdatedAt = DateTimeOffset.UtcNow;
+            AddDomainEvent(new RFQAssignedEvent(Id, Code, StaffId));
+        }
 
         // nhân viên chấp nhận xử lý
         public void Accept()
         {
             if (Status != RFQStatus.Pending || StaffId == null)
-                throw new DomainException("Phải có nhân viên gán trước khi chấp nhận và RFQ phải đang chờ xử lý.");
+                throw new DomainException("Chỉ có thể tiếp nhận RFQ ở trạng thái chờ phân bổ");
 
             Status = RFQStatus.Accepted;
             UpdatedAt = DateTimeOffset.UtcNow;
+            AddDomainEvent(new RFQAceptedEvent(Id, Code, StaffId));
         }
 
         // nhân viên từ chối xử lý
-        public void StaffReject()
+        public void Reject()
         {
-            if (Status != RFQStatus.Pending)
-                throw new DomainException("Chỉ có thể từ chối khi RFQ đang chờ xử lý.");
+            if (Status != RFQStatus.Pending || StaffId == null)
+                throw new DomainException("Chỉ có thể từ chối RFQ ở trạng thái chờ phân bổ");
 
+            AddDomainEvent(new RFQRejectedEvent(Id, Code, StaffId));
             StaffId = null;
             UpdatedAt = DateTimeOffset.UtcNow;
         }
 
         // tất cả nhân viên từ chối
-        public void AllReject()
+        public void MaskAsAllRejected()
         {
             if (Status != RFQStatus.Pending)
-                throw new DomainException("Chỉ chuyển sang Rejected khi đang ở trạng thái Pending.");
+                throw new DomainException("Chỉ có thể xác nhận không có nhân viên nào xử lý khi ở trạng thái chờ phân bổ");
 
             Status = RFQStatus.Rejected;
             StaffId = null;
             UpdatedAt = DateTimeOffset.UtcNow;
+            AddDomainEvent(new RFQAllRejectedEvent(Id, Code));
         }
 
-        // ép gán nhân viên từ trạng thái Rejected
+        // Quản lý chỉ định nhân viên (ép gán)
         public void ForceAssign(StaffId staffId)
         {
+            if (Status != RFQStatus.Rejected)
+                throw new DomainException("Chỉ có thể chỉ định khi toàn bộ nhân viên đều từ chối phân bổ.");
+
             StaffId = staffId;
             Status = RFQStatus.Accepted;
             UpdatedAt = DateTimeOffset.UtcNow;
+            AddDomainEvent(new RFQForceAssignedEvent(Id, Code, StaffId));
         }
 
-        // phản hồi RFQ bằng Báo giá
-        public void Respond()
+        // Đã báo giá lại khách hàng
+        public void MarkAsResponded()
         {
             if (Status != RFQStatus.Accepted)
-                throw new DomainException("Chỉ có thể phản hồi khi RFQ đã được tiếp nhận.");
+                throw new DomainException("Ghi nhận phản hồi báo giá không thành công.");
 
             Status = RFQStatus.Responded;
             UpdatedAt = DateTimeOffset.UtcNow;
+            AddDomainEvent(new RFQMarkAsRespondedEvent(Id, Code));
         }
 
         // Báo giá được chốt thì coi là đã chuyển đổi thành đơn
         public void MarkAsConverted()
         {
             if (Status != RFQStatus.Responded)
-                throw new DomainException("Chỉ có thể chuyển đổi khi RFQ đã được phản hồi.");
+                throw new DomainException("Ghi nhận chuyển đổi yêu cầu báo giá không thành công.");
 
             Status = RFQStatus.Converted;
             UpdatedAt = DateTimeOffset.UtcNow;
+            AddDomainEvent(new RFQMarkAsConvertedEvent(Id, Code));
         }
 
-        // hủy bỏ RFQ
-        public void Cancel()
+        public void AddItem(
+            ProductId productId,
+            string productName,
+            Quantity quantity,
+            Code productCode,
+            string manufacturer,
+            string unit
+        )
         {
-            if (Status != RFQStatus.Responded)
-                throw new DomainException("Chỉ có thể hủy khi RFQ đã được phản hồi.");
-
-            Status = RFQStatus.Cancelled;
-            UpdatedAt = DateTimeOffset.UtcNow;
-        }
-
-        public void AddItem(RFQItem item)
-        {
+            var item = new RFQItem(
+                RFQItemId.New(),
+                productId,
+                productName,
+                quantity,
+                productCode,
+                manufacturer,
+                unit
+            );
             _items.Add(item);
         }
-
-        public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
-        public DateTimeOffset? UpdatedAt { get; set; }
     }
 }
