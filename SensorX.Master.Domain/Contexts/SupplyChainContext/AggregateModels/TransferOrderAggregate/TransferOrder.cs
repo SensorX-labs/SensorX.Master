@@ -30,7 +30,7 @@ public class TransferOrder : Entity<TransferOrderId>, IAggregateRoot, ICreationT
         Note = note;
         SupplyRequestId = supplyRequestId;
 
-        AddDomainEvent(new TransferOrderCreatedDomainEvent(Id.Value, code.Value));
+        AddDomainEvent(new TransferOrderCreatedDomainEvent(Id.Value, code.Value, sourceWarehouseId.Value));
     }
 
     public void Complete()

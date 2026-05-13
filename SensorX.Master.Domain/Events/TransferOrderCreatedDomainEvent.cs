@@ -5,5 +5,6 @@ namespace SensorX.Master.Domain.Events;
 
 public record TransferOrderCreatedDomainEvent(
     Guid TransferOrderId,
-    string TransferOrderCode
+    string TransferOrderCode,
+    Guid FromWarehouseId
 ) : IDomainEvent;

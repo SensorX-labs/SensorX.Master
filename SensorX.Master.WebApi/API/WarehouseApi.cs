@@ -40,6 +40,18 @@ public static class WarehouseApi
         return app;
     }
 
+    private record WarehouseInventoryItemDto(
+        Guid Id,
+        Guid ProductId,
+        string? ProductName,
+        string? ProductCode,
+        decimal PhysicalQuantity,
+        decimal AllocatedQuantity,
+        string? WarehouseName,
+        string? BrandZone,
+        string? RackCode
+    );
+
     private static async Task<IResult> GetTotalInventory(
         [FromServices] IWarehouseQueryService warehouseQueryService,
         [FromServices] IHttpClientFactory httpClientFactory,
@@ -51,11 +63,9 @@ public static class WarehouseApi
         var activeWarehouses = warehouses.Where(w => w.IsActive).ToList();
 
         var client = httpClientFactory.CreateClient();
-        var allItems = new List<object>();
-
         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-        foreach (var warehouse in activeWarehouses)
+        var fetchTasks = activeWarehouses.Select(async warehouse =>
         {
             try
             {
@@ -71,28 +81,59 @@ public static class WarehouseApi
                     var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken);
                     using var doc = await JsonDocument.ParseAsync(contentStream, cancellationToken: cancellationToken);
                     
+                    var items = new List<WarehouseInventoryItemDto>();
                     if (doc.RootElement.TryGetProperty("items", out var itemsElement) && itemsElement.ValueKind == JsonValueKind.Array)
                     {
                         foreach (var item in itemsElement.EnumerateArray())
                         {
-                            var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(item.GetRawText(), options) ?? new Dictionary<string, object>();
-                            dict["warehouseName"] = warehouse.Name;
-                            allItems.Add(dict);
+                            var dto = JsonSerializer.Deserialize<WarehouseInventoryItemDto>(item.GetRawText(), options);
+                            if (dto != null)
+                            {
+                                items.Add(dto with { WarehouseName = warehouse.Name });
+                            }
                         }
                     }
+                    return items;
                 }
                 else
                 {
                     logger.LogWarning("Failed to fetch inventory from warehouse {Name} at {Url}. Status: {Status}", warehouse.Name, url, response.StatusCode);
+                    return [];
                 }
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error fetching inventory from warehouse {Name}", warehouse.Name);
+                return [];
             }
-        }
+        });
 
-        return TypedResults.Ok(new { items = allItems, totalCount = allItems.Count });
+        var results = await Task.WhenAll(fetchTasks);
+        var flatItems = results.SelectMany(x => x).ToList();
+
+        var consolidatedItems = flatItems
+            .GroupBy(x => new { x.ProductId, x.ProductCode, x.ProductName })
+            .Select(g => new
+            {
+                productId = g.Key.ProductId,
+                productCode = g.Key.ProductCode,
+                productName = g.Key.ProductName,
+                totalPhysicalQuantity = g.Sum(x => x.PhysicalQuantity),
+                totalAllocatedQuantity = g.Sum(x => x.AllocatedQuantity),
+                totalSalableQuantity = g.Sum(x => x.PhysicalQuantity - x.AllocatedQuantity),
+                warehouses = g.Select(x => new
+                {
+                    warehouseName = x.WarehouseName,
+                    physicalQuantity = x.PhysicalQuantity,
+                    allocatedQuantity = x.AllocatedQuantity,
+                    salableQuantity = x.PhysicalQuantity - x.AllocatedQuantity,
+                    brandZone = x.BrandZone,
+                    rackCode = x.RackCode
+                }).ToList()
+            })
+            .ToList();
+
+        return TypedResults.Ok(new { items = consolidatedItems, totalCount = consolidatedItems.Count });
     }
 
     private static async Task<IResult> CreateWarehouse(

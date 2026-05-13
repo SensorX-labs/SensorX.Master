@@ -19,6 +19,9 @@ public class SupplyRequestConfiguration : IEntityTypeConfiguration<SupplyRequest
             .HasConversion(id => id.Value, v => new SupplyRequestId(v))
             .ValueGeneratedNever();
 
+        builder.Property(sr => sr.Code)
+            .HasConversion(c => c.Value, v => Code.From(v));
+
         builder.Property(sr => sr.WarehouseId)
             .HasConversion(id => id.Value, v => new WarehouseId(v));
 

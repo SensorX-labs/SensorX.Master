@@ -23,6 +23,7 @@ public class TransferOrderCreatedEventHandler(
         await publishEndpoint.Publish(new TransferOrderCreatedEvent
         {
             TransferOrderId = domainEvent.TransferOrderId,
+            FromWarehouseId = domainEvent.FromWarehouseId,
             TransferOrderCode = domainEvent.TransferOrderCode,
             CreatedAt = DateTimeOffset.UtcNow
         }, cancellationToken);
