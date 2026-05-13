@@ -141,6 +141,13 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
             string unit
         )
         {
+            var existingItem = _items.FirstOrDefault(x => x.ProductId == productId);
+            if (existingItem is not null)
+            {
+                existingItem.AddQuantity(quantity);
+                return;
+            }
+
             var item = new RFQItem(
                 RFQItemId.New(),
                 productId,
@@ -151,6 +158,15 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
                 unit
             );
             _items.Add(item);
+        }
+
+        public void RemoveItem(ProductId productId)
+        {
+            var item = _items.FirstOrDefault(x => x.ProductId == productId);
+            if (item is not null)
+            {
+                _items.Remove(item);
+            }
         }
     }
 }

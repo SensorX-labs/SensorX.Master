@@ -77,6 +77,6 @@ public class CustomerCreateRFQCommandHandler(
 
         await _rfqRepository.AddAsync(rfq, cancellationToken);
 
-        return Result<Guid>.Success(rfq.Id.Value);
+        return Result<Guid>.Success(rfq.Id.Value, "Thêm sản phẩm vào RFQ thành công.");
     }
 }

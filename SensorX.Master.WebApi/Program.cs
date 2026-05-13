@@ -26,6 +26,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 builder.Services.AddSwaggerGen(options =>
 {
     options.UseInlineDefinitionsForEnums();
+    options.CustomSchemaIds(x => x.FullName);
 });
 
 builder.Services.AddProblemDetails();

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using SensorX.Master.Application.Common.Interfaces;
 using SensorX.Master.Application.Queries.RFQs.GetMyRFQPage;
+using SensorX.Master.Application.Queries.RFQs.GetMyRFQPageDetail;
 using SensorX.Master.Application.Queries.RFQs.GetPageListRFQ;
 using SensorX.Master.Application.Queries.RFQs.GetRFQById;
 using SensorX.Master.WebApi.Configurations;
@@ -35,6 +36,12 @@ namespace SensorX.Master.WebApi.API.Queries
                 return operation;
             });
 
+            api.MapGet("my-rfq/{id:guid}", GetMyRFQPageDetail).WithOpenApi(operation =>
+            {
+                operation.Summary = "Lấy chi tiết RFQ của tôi (Trang của khách hàng)";
+                return operation;
+            });
+
             return api;
         }
 
@@ -58,10 +65,21 @@ namespace SensorX.Master.WebApi.API.Queries
 
         [AuthorizeRole(Role.Customer)]
         private static async Task<IResult> GetMyRFQPage(
-            [FromServices] ICurrentUser user
+            [AsParameters] GetMyRFQPageQuery query,
+            [FromServices] IMediator mediator
         )
         {
-            return Results.Ok(user);
+            var result = await mediator.Send(query);
+            return result.ToResult();
+        }
+        [AuthorizeRole(Role.Customer)]
+        private static async Task<IResult> GetMyRFQPageDetail(
+            [FromRoute] Guid id,
+            [FromServices] IMediator mediator
+        )
+        {
+            var result = await mediator.Send(new GetMyRFQPageDetailQuery(id));
+            return result.ToResult();
         }
     }
 }

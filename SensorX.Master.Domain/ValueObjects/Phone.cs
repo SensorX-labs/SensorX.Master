@@ -34,4 +34,6 @@ public partial record Phone
 
     // Implicit conversion để dễ dàng gán string cho Phone (tùy chọn)
     public static implicit operator string(Phone? phone) => phone?.Value ?? string.Empty;
+
+    public override string ToString() => Value;
 }

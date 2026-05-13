@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using SensorX.Master.Application.Commands.RFQs.CustomerAddProduct;
 using SensorX.Master.Application.Commands.RFQs.CustomerCreateRFQ;
 using SensorX.Master.Application.Commands.RFQs.CustomerSendRFQ;
 using SensorX.Master.Application.Commands.RFQs.ManagerForceAssignRFQ;
@@ -22,6 +23,12 @@ namespace SensorX.Master.WebApi.API.Commands
             api.MapPost("", CreateRFQ).WithOpenApi(operation =>
             {
                 operation.Summary = "Khách hàng tạo yêu cầu báo giá nháp (Draft)";
+                return operation;
+            });
+
+            api.MapPut("add-product/{id}", CustomerAddProduct).WithOpenApi(operation =>
+            {
+                operation.Summary = "Khách hàng thêm sản phẩm vào yêu cầu báo giá nháp (Draft)";
                 return operation;
             });
 
@@ -58,6 +65,18 @@ namespace SensorX.Master.WebApi.API.Commands
             [FromServices] IMediator mediator
         )
         {
+            var result = await mediator.Send(command);
+            return result.ToResult();
+        }
+
+        [AuthorizeRole(Role.Customer)]
+        private static async Task<IResult> CustomerAddProduct(
+            [FromRoute] Guid id,
+            [FromBody] CustomerAddProductCommand command,
+            [FromServices] IMediator mediator
+        )
+        {
+            command = command with { Id = id };
             var result = await mediator.Send(command);
             return result.ToResult();
         }

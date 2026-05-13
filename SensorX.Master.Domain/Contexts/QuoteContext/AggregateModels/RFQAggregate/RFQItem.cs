@@ -5,7 +5,7 @@ using SensorX.Master.Domain.ValueObjects;
 namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate
 {
     public class RFQItem : Entity<RFQItemId>
-    
+
     {
         private RFQItem() : base() { }
 
@@ -24,5 +24,15 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
         public Code ProductCode { get; private set; }
         public string? Manufacturer { get; private set; }
         public string Unit { get; private set; }
+
+        public void UpdateQuantity(Quantity quantity)
+        {
+            Quantity = quantity;
+        }
+
+        public void AddQuantity(Quantity quantity)
+        {
+            Quantity += quantity;
+        }
     }
 }
