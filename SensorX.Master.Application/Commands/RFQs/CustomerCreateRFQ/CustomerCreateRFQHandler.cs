@@ -14,7 +14,8 @@ public class CustomerCreateRFQCommandHandler(
     IRepository<RFQ> _rfqRepository,
     IQueryBuilder<Customer> _customerBuilder,
     IQueryBuilder<Product> _productBuilder,
-    IQueryExecutor _queryExecutor
+    IQueryExecutor _queryExecutor,
+    ICurrentUser _currentUser
 ) : IRequestHandler<CustomerCreateRFQCommand, Result<Guid>>
 {
     public async Task<Result<Guid>> Handle(CustomerCreateRFQCommand request, CancellationToken cancellationToken)
@@ -29,7 +30,7 @@ public class CustomerCreateRFQCommandHandler(
             .GroupBy(i => i.ProductId)
             .ToDictionary(g => g.Key, g => g.Sum(x => x.Quantity));
 
-        var customerQuery = _customerBuilder.QueryAsNoTracking.Where(c => c.Id == request.CustomerId);
+        var customerQuery = _customerBuilder.QueryAsNoTracking.Where(c => c.AccountId == _currentUser.UserId);
         var customer = await _queryExecutor.FirstOrDefaultAsync(customerQuery, cancellationToken);
         if (customer == null)
         {
@@ -54,7 +55,7 @@ public class CustomerCreateRFQCommandHandler(
             RFQId.New(),
             Code.Create("RFQ"),
             null,
-            new CustomerId(request.CustomerId),
+            new CustomerId(customer.Id),
             customerInfo
         );
 
