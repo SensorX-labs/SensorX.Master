@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using SensorX.Master.Infrastructure.DI;
 using SensorX.Master.Infrastructure.Persistences;
 using SensorX.Master.WebApi.API;
@@ -9,25 +8,10 @@ using SensorX.Master.WebApi.Configurations;
 using SensorX.Master.WebApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
-// Cấu hình Authentication
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.Authority = builder.Configuration["Jwt:Authority"];
-        options.Audience = builder.Configuration["Jwt:Audience"];
-        options.RequireHttpsMetadata = builder.Configuration.GetValue<bool>("Jwt:RequireHttpsMetadata");
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = false, // Thường Gateway đã validate rồi
-            NameClaimType = "name",
-            RoleClaimType = "role"
-        };
-    });
-
+// Cấu hình Authentication & Authorization (Tin tưởng Gateway)
+builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
+builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, AuthorizationResultHandler>();
 
 builder.Services.AddServices(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -97,7 +81,7 @@ app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 
 app.UseAuthentication();
-app.UseUserContext();
+app.UseMiddleware<UserContextMiddleware>();
 app.UseAuthorization();
 
 app.MapApi();

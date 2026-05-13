@@ -4,6 +4,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SensorX.Master.Application.Common.DomainEvent;
+using SensorX.Master.Application.Common.ReadModel;
 using SensorX.Master.Domain.SeedWork;
 
 namespace SensorX.Master.Infrastructure.Persistences;
@@ -20,7 +21,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
-
+        // modelBuilder.Entity<SaleStaff>().Property<uint>("Version").IsRowVersion();
         modelBuilder.AddInboxStateEntity();
         modelBuilder.AddOutboxMessageEntity();
         modelBuilder.AddOutboxStateEntity();

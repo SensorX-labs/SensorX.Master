@@ -4,9 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using SensorX.Master.Application.Commands.RFQs.CustomerCreateRFQ;
 using SensorX.Master.Application.Commands.RFQs.CustomerSendRFQ;
+using SensorX.Master.Application.Commands.RFQs.ManagerForceAssignRFQ;
 using SensorX.Master.Application.Commands.RFQs.StaffAcceptRFQ;
 using SensorX.Master.Application.Commands.RFQs.StaffRejectRFQ;
-using SensorX.Master.Application.Commands.RFQs.ManagerForceAssignRFQ;
+using SensorX.Master.Application.Common.Interfaces;
+using SensorX.Master.WebApi.Configurations;
 using SensorX.Master.WebApi.Extensions;
 
 namespace SensorX.Master.WebApi.API.Commands
@@ -15,7 +17,7 @@ namespace SensorX.Master.WebApi.API.Commands
     {
         public static RouteGroupBuilder MapRFQCommandApi(this IEndpointRouteBuilder app)
         {
-            var api = app.MapGroup("rfq").WithTags("RFQ");
+            var api = app.MapGroup("rfq").WithTags("RFQ Command Api");
 
             api.MapPost("", CreateRFQ).WithOpenApi(operation =>
             {
@@ -50,6 +52,7 @@ namespace SensorX.Master.WebApi.API.Commands
             return api;
         }
 
+        [AuthorizeRole(Role.Customer)]
         private static async Task<IResult> CreateRFQ(
             [FromBody] CustomerCreateRFQCommand command,
             [FromServices] IMediator mediator
@@ -59,6 +62,7 @@ namespace SensorX.Master.WebApi.API.Commands
             return result.ToResult();
         }
 
+        [AuthorizeRole(Role.Customer)]
         private static async Task<IResult> SendRFQ(
             [FromBody] CustomerSendRFQCommand command,
             [FromServices] IMediator mediator
@@ -68,6 +72,7 @@ namespace SensorX.Master.WebApi.API.Commands
             return result.ToResult();
         }
 
+        [AuthorizeRole(Role.Manager)]
         private static async Task<IResult> ForceAssignRFQ(
             [FromBody] ManagerForceAssignRFQCommand command,
             [FromServices] IMediator mediator
@@ -77,6 +82,7 @@ namespace SensorX.Master.WebApi.API.Commands
             return result.ToResult();
         }
 
+        [AuthorizeRole(Role.SaleStaff)]
         private static async Task<IResult> AcceptRFQ(
             [FromBody] StaffAcceptRFQCommand command,
             [FromServices] IMediator mediator
@@ -86,6 +92,7 @@ namespace SensorX.Master.WebApi.API.Commands
             return result.ToResult();
         }
 
+        [AuthorizeRole(Role.SaleStaff)]
         private static async Task<IResult> RejectRFQ(
             [FromBody] StaffRejectRFQCommand command,
             [FromServices] IMediator mediator

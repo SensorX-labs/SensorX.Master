@@ -28,8 +28,12 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
         public CustomerId CustomerId { get; private set; }
         public CustomerInfo CustomerInfo { get; private set; }
         public RFQStatus Status { get; private set; }
+
         private readonly List<RFQItem> _items = [];
         public IReadOnlyList<RFQItem> Items => _items.AsReadOnly();
+
+        // private readonly List<StaffId> _rejectedByStaffIds = [];
+        // public IReadOnlyList<StaffId> RejectedByStaffIds => _rejectedByStaffIds.AsReadOnly();
 
         public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
         public DateTimeOffset? UpdatedAt { get; set; }
@@ -72,6 +76,12 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
             if (Status != RFQStatus.Pending || StaffId == null)
                 throw new DomainException("Chỉ có thể từ chối RFQ ở trạng thái chờ phân bổ");
 
+            // // LƯU VẾT: Nhớ mặt ông nhân viên vừa từ chối
+            // if (!_rejectedByStaffIds.Contains(StaffId))
+            // {
+            //     _rejectedByStaffIds.Add(StaffId);
+            // }
+
             AddDomainEvent(new RFQRejectedEvent(Id, Code, StaffId));
             StaffId = null;
             UpdatedAt = DateTimeOffset.UtcNow;
@@ -92,8 +102,8 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
         // Quản lý chỉ định nhân viên (ép gán)
         public void ForceAssign(StaffId staffId)
         {
-            if (Status != RFQStatus.Rejected)
-                throw new DomainException("Chỉ có thể chỉ định khi toàn bộ nhân viên đều từ chối phân bổ.");
+            if (Status != RFQStatus.Rejected && Status != RFQStatus.Pending)
+                throw new DomainException("Trạng thái RFQ không hợp lệ. Không thể chỉ định phân bổ.");
 
             StaffId = staffId;
             Status = RFQStatus.Accepted;

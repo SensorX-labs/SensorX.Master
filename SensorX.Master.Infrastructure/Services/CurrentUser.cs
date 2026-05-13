@@ -17,7 +17,14 @@ public class CurrentUser(IHttpContextAccessor httpContextAccessor) : ICurrentUse
         }
     }
 
-    public string? Username => _httpContextAccessor.HttpContext?.User?.Identity?.Name;
+    public Role? Role
+    {
+        get
+        {
+            var roleClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Role);
+            return roleClaim != null && Enum.TryParse<Role>(roleClaim.Value, out var role) ? role : null;
+        }
+    }
 
     public bool IsAuthenticated => _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
 }
