@@ -4,6 +4,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Quartz;
 using SensorX.Master.Application.Common.Interfaces;
+using SensorX.Master.Application.Events.IntegrationEvents.QuoteAnalysis;
+using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Infrastructure.Jobs;
 using SensorX.Master.Infrastructure.Persistences;
@@ -31,6 +33,8 @@ namespace SensorX.Master.Infrastructure.DI
             services.AddScoped(typeof(IQueryBuilder<>), typeof(QueryBuilder<>));
             services.AddScoped<IQueryExecutor, QueryExecutor>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IWarehouseRepository, WarehouseRepository>();
+            services.AddScoped<IWarehouseQueryService, WarehouseQueryService>(); // Add Query Service
             services.AddScoped<ICurrentUser, CurrentUser>();
 
             // Đăng ký HttpClient cho Data Service

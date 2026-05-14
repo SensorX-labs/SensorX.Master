@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using SensorX.Master.WebApi.API.Commands;
 using SensorX.Master.WebApi.API.Queries;
 
@@ -12,6 +13,10 @@ public static class Api
         api.MapRFQQueriesApi();
         api.MapRFQCommandApi();
         api.MapQuoteApi();
+        api.MapOrderApi();
+        api.MapTransferOrderApi();
+        api.MapWarehouseApi(); // Add Warehouse API
+        api.MapSupplyRequestApi();
         return api;
     }
 }

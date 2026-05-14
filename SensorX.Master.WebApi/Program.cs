@@ -1,3 +1,4 @@
+using System;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -43,6 +44,22 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+
+app.UseCors("AllowAll");
+
+app.UseAuthentication();
+app.UseMiddleware<UserContextMiddleware>();
+app.UseAuthorization();
+
+app.MapApi();
+
 var autoApplyMigration = builder.Configuration.GetValue("Migration:AutoApply", true);
 if (autoApplyMigration)
 {
@@ -54,37 +71,24 @@ if (autoApplyMigration)
             using var scope = app.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             await dbContext.Database.MigrateAsync();
-
+            app.Logger.LogInformation("Database migration applied successfully.");
             break;
         }
         catch (Exception ex) when (attempt < maxMigrationRetries)
         {
             app.Logger.LogWarning(
                 ex,
-                "Data API migration attempt {Attempt}/{MaxRetries} failed. Retrying in 5 seconds...",
+                "Database migration attempt {Attempt}/{MaxRetries} failed. Retrying in 5 seconds...",
                 attempt,
                 maxMigrationRetries);
             await Task.Delay(TimeSpan.FromSeconds(5));
         }
+        catch (Exception ex)
+        {
+            app.Logger.LogError(ex, "Database migration failed after {MaxRetries} attempts.", maxMigrationRetries);
+            throw;
+        }
     }
 }
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-app.UseExceptionHandler(opt => { });
-
-app.UseHttpsRedirection();
-
-app.UseCors("AllowAll");
-
-app.UseAuthentication();
-app.UseMiddleware<UserContextMiddleware>();
-app.UseAuthorization();
-
-app.MapApi();
 
 app.Run();

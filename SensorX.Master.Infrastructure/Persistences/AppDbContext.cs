@@ -1,10 +1,13 @@
 using System.Text.Json;
 using MassTransit;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SensorX.Master.Application.Common.DomainEvent;
 using SensorX.Master.Application.Common.ReadModel;
+using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
+using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.SupplyRequestAggregate;
+using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.TransferOrderAggregate;
+using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate;
 using SensorX.Master.Domain.SeedWork;
 
 namespace SensorX.Master.Infrastructure.Persistences;
@@ -12,6 +15,10 @@ namespace SensorX.Master.Infrastructure.Persistences;
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<DomainEventOutbox> DomainEventOutboxes { get; set; }
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<Warehouse> Warehouses => Set<Warehouse>();
+    public DbSet<SupplyRequest> SupplyRequests => Set<SupplyRequest>();
+    public DbSet<TransferOrder> TransferOrders => Set<TransferOrder>();
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         base.OnConfiguring(optionsBuilder);
