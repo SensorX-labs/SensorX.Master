@@ -1,4 +1,4 @@
-using SensorX.Master.WebApi;
+using System.Text.Json.Serialization;
 using SensorX.Master.WebApi.API;
 
 namespace SensorX.Master.WebApi;
@@ -11,6 +11,10 @@ public static class Api
         // viết api cho master
         api.MapRFQApi();
         api.MapQuoteApi();
+        api.MapOrderApi();
+        api.MapTransferOrderApi();
+        api.MapWarehouseApi(); // Add Warehouse API
+        api.MapSupplyRequestApi();
         return api;
     }
 }

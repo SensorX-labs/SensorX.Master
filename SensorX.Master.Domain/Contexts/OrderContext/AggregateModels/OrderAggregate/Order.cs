@@ -2,6 +2,7 @@ using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
+using SensorX.Master.Domain.Events;
 
 namespace SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
 
@@ -31,6 +32,16 @@ public class Order : Entity<OrderId>, IAggregateRoot, ICreationTrackable, IUpdat
         SenderInfo = senderInfo;
         Status = status;
         OrderDate = orderDate;
+
+        AddDomainEvent(new OrderCreatedDomainEvent(
+            Id.Value,
+            code.Value,
+            customerInfo.RecipientName,
+            customerInfo.RecipientPhone.Value,
+            customerInfo.Address,
+            customerInfo.CompanyName,
+            customerInfo.TaxCode
+        ));
     }
 
     public void AddItem(OrderItem item)

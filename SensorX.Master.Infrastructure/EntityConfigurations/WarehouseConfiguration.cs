@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate;
 using SensorX.Master.Domain.StrongIDs;
+using SensorX.Master.Domain.ValueObjects;
 
 namespace SensorX.Master.Infrastructure.EntityConfigurations;
 
@@ -16,5 +17,27 @@ public class WarehouseConfiguration : IEntityTypeConfiguration<Warehouse>
         builder.Property(w => w.Id)
             .HasConversion(id => id.Value, v => new WarehouseId(v))
             .ValueGeneratedNever();
+
+        builder.Property(w => w.Name)
+            .IsRequired()
+            .HasMaxLength(200);
+
+        builder.Property(w => w.Address)
+            .HasMaxLength(500);
+
+        builder.Property(w => w.ApiEndpointUrl)
+            .HasConversion(url => url.Value, v => ApiEndpointUrl.From(v))
+            .IsRequired()
+            .HasMaxLength(500);
+
+        builder.Property(w => w.IsActive)
+            .IsRequired();
+
+        builder.Property(w => w.CreatedAt)
+            .IsRequired();
+
+        builder.Property(w => w.UpdatedAt);
+
+        builder.HasIndex(w => w.ApiEndpointUrl).IsUnique();
     }
 }
