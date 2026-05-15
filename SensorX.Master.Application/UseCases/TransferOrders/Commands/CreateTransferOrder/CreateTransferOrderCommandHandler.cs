@@ -13,7 +13,7 @@ namespace SensorX.Master.Application.UseCases.TransferOrders.Commands.CreateTran
 
 public class CreateTransferOrderCommandHandler(
     IRepository<TransferOrder> transferOrderRepository,
-    IWarehouseRepository warehouseRepository,
+    IRepository<Warehouse> warehouseRepository,
     IMediator mediator
 ) : IRequestHandler<CreateTransferOrderCommand, Result<Guid>>
 {
@@ -32,7 +32,7 @@ public class CreateTransferOrderCommandHandler(
 
         var sourceWarehouseId = new WarehouseId(request.SourceWarehouseId);
         var sourceWarehouse = await warehouseRepository.GetByIdAsync(sourceWarehouseId, cancellationToken);
-        if (sourceWarehouse == null || !sourceWarehouse.IsActive)
+        if (sourceWarehouse is null || !sourceWarehouse.IsActive)
         {
             return Result<Guid>.Failure("Kho xuất không tồn tại hoặc đã bị vô hiệu hóa");
         }

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using SensorX.Master.Domain.Common.Exceptions;
 
@@ -10,7 +11,8 @@ public partial record Phone
 
     public string Value { get; init; }
 
-    private Phone(string value)
+    [JsonConstructor]
+    public Phone(string value)
     {
         Value = value;
     }

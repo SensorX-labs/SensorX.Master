@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using SensorX.Master.Domain.Common.Exceptions;
 
 namespace SensorX.Master.Domain.ValueObjects;
@@ -7,8 +8,8 @@ public record Money
     public decimal Amount { get; init; }
     public string Currency { get; init; }
 
-    // Private constructor để bắt buộc dùng Factory Method hoặc khởi tạo đúng
-    private Money(decimal amount, string currency = "VND")
+    [JsonConstructor]
+    public Money(decimal amount, string currency = "VND")
     {
         if (amount < 0) throw new DomainException("Số tiền không được âm.");
         Amount = amount;

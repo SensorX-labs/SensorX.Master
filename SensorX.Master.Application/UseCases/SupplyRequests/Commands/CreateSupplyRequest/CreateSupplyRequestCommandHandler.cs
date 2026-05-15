@@ -11,7 +11,7 @@ namespace SensorX.Master.Application.UseCases.SupplyRequests.Commands.CreateSupp
 
 public class CreateSupplyRequestCommandHandler(
     IRepository<SupplyRequest> supplyRequestRepository,
-    IWarehouseRepository warehouseRepository,
+    IRepository<Warehouse> warehouseRepository,
     IUnitOfWork unitOfWork
 ) : IRequestHandler<CreateSupplyRequestCommand, Result<Guid>>
 {

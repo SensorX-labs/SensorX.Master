@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using SensorX.Master.Domain.Common.Exceptions;
 
@@ -7,7 +8,8 @@ public partial record Code
 {
     public string Value { get; init; }
 
-    private Code(string value)
+    [JsonConstructor]
+    public Code(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
             throw new DomainException("Code cannot be empty.");

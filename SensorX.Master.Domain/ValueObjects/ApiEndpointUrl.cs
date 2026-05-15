@@ -1,4 +1,4 @@
-using System;
+using System.Text.Json.Serialization;
 using SensorX.Master.Domain.Common.Exceptions;
 
 namespace SensorX.Master.Domain.ValueObjects;
@@ -7,7 +7,8 @@ public partial record ApiEndpointUrl
 {
     public string Value { get; init; }
 
-    private ApiEndpointUrl(string value)
+    [JsonConstructor]
+    public ApiEndpointUrl(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
             throw new DomainException("API Endpoint URL không được để trống.");

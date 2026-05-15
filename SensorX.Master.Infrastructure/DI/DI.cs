@@ -5,10 +5,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Quartz;
 using SensorX.Master.Application.Common.Interfaces;
 using SensorX.Master.Application.Events.IntegrationEvents.QuoteAnalysis;
+using SensorX.Master.Application.Services;
 using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Infrastructure.Jobs;
 using SensorX.Master.Infrastructure.Persistences;
+using SensorX.Master.Infrastructure.Repositories;
 using SensorX.Master.Infrastructure.Services;
 
 namespace SensorX.Master.Infrastructure.DI
