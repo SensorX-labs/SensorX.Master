@@ -7,6 +7,7 @@ using SensorX.Master.Application.Queries.RFQs.GetMyRFQPage;
 using SensorX.Master.Application.Queries.RFQs.GetMyRFQPageDetail;
 using SensorX.Master.Application.Queries.RFQs.GetPageListRFQ;
 using SensorX.Master.Application.Queries.RFQs.GetRFQById;
+using SensorX.Master.Application.Queries.RFQs.GetStats;
 using SensorX.Master.WebApi.Configurations;
 using SensorX.Master.WebApi.Extensions;
 
@@ -42,9 +43,16 @@ namespace SensorX.Master.WebApi.API.Queries
                 return operation;
             });
 
+            api.MapGet("stats", GetStats).WithOpenApi(operation =>
+            {
+                operation.Summary = "Lấy thống kê RFQ";
+                return operation;
+            });
+
             return api;
         }
 
+        [AuthorizeRole(Role.SaleStaff, Role.Manager)]
         private static async Task<IResult> GetRFQById(
             [FromRoute] Guid id,
             [FromServices] IMediator mediator
@@ -54,6 +62,16 @@ namespace SensorX.Master.WebApi.API.Queries
             return result.ToResult();
         }
 
+        [AuthorizeRole(Role.SaleStaff, Role.Manager)]
+        private static async Task<IResult> GetStats(
+            [FromServices] IMediator mediator
+        )
+        {
+            var result = await mediator.Send(new GetStatsCommand());
+            return result.ToResult();
+        }
+
+        [AuthorizeRole(Role.SaleStaff, Role.Manager)]
         private static async Task<IResult> GetPageListRFQ(
             [AsParameters] GetPageListRFQQuery query,
             [FromServices] IMediator mediator

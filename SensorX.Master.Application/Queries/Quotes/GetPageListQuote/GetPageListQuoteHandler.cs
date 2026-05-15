@@ -42,9 +42,9 @@ public class GetPageListQuoteHandler(
         var result = new OffsetPagedResult<GetPageListQuoteResponse>
         {
             Items = items,
-            TotalCount = totalCount,
-            PageNumber = request.PageNumber,
-            PageSize = request.PageSize
+            PageNumber = request.PageNumber ?? 1,
+            PageSize = request.PageSize ?? 10,
+            TotalCount = totalCount
         };
 
         return Result<OffsetPagedResult<GetPageListQuoteResponse>>.Success(result);
