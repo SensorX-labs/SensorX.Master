@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SensorX.Master.Application.Common.Interfaces;
 using SensorX.Master.Application.Events.IntegrationEvents.QuoteAnalysis;
+using SensorX.Master.Application.Services;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Infrastructure.Persistences;
 using SensorX.Master.Infrastructure.Services;
@@ -11,6 +12,9 @@ using SensorX.Master.Infrastructure.Services.Telegram;
 using Telegram.Bot;
 using Microsoft.Extensions.Options;
 
+
+using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate;
+using SensorX.Master.Infrastructure.Repositories;
 
 namespace SensorX.Master.Infrastructure.DI
 {
@@ -55,6 +59,8 @@ namespace SensorX.Master.Infrastructure.DI
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddScoped(typeof(IQueryBuilder<>), typeof(QueryBuilder<>));
             services.AddScoped<IQueryExecutor, QueryExecutor>();
+            services.AddScoped<IWarehouseRepository, WarehouseRepository>();
+            services.AddScoped<IWarehouseQueryService, WarehouseQueryService>(); // Add Query Service
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<ICurrentUser, CurrentUser>();
 

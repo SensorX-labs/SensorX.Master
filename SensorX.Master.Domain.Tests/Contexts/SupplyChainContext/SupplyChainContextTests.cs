@@ -14,6 +14,7 @@ public class SupplyChainContextTests
         // Arrange
         var request = new SupplyRequest(
             SupplyRequestId.New(),
+            Code.Create("YC"),
             WarehouseId.New(),
             SupplyRequestStatus.Pending,
             "Test note"
@@ -35,6 +36,7 @@ public class SupplyChainContextTests
         // Arrange
         var request = new SupplyRequest(
             SupplyRequestId.New(),
+            Code.Create("YC"),
             WarehouseId.New(),
             SupplyRequestStatus.Pending,
             "Test note"
@@ -53,6 +55,7 @@ public class SupplyChainContextTests
         // Arrange
         var request = new SupplyRequest(
             SupplyRequestId.New(),
+            Code.Create("YC"),
             WarehouseId.New(),
             SupplyRequestStatus.Pending,
             "Test note"

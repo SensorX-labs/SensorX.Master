@@ -1,3 +1,4 @@
+using System;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -5,11 +6,27 @@ using Microsoft.IdentityModel.Tokens;
 using SensorX.Master.Infrastructure.DI;
 using SensorX.Master.Infrastructure.Persistences;
 using SensorX.Master.WebApi;
+using SensorX.Master.WebApi.API;
 using SensorX.Master.WebApi.Configurations;
 using SensorX.Master.WebApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
-// Cấu hình Authentication
+
+// Add services to the container.
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.UseInlineDefinitionsForEnums();
+});
+
+// Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -21,7 +38,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateLifetime = true,
-            ValidateIssuerSigningKey = false, // Thường Gateway đã validate rồi
+            ValidateIssuerSigningKey = false,
             NameClaimType = "name",
             RoleClaimType = "role"
         };
@@ -32,18 +49,8 @@ builder.Services.AddAuthorization();
 builder.Services.AddServices(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
-
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.ConfigureHttpJsonOptions(options =>
-{
-    // Yêu cầu .NET tự động chuyển đổi giữa String và Enum
-    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
-});
-builder.Services.AddSwaggerGen(options =>
-{
-    options.UseInlineDefinitionsForEnums();
-});
-
+builder.Services.AddHttpClient();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
 builder.Services.AddCors(options =>
@@ -58,6 +65,22 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+
+app.UseCors("AllowAll");
+
+app.UseAuthentication();
+app.UseUserContext();
+app.UseAuthorization();
+
+app.MapApi();
+
 var autoApplyMigration = builder.Configuration.GetValue("Migration:AutoApply", true);
 if (autoApplyMigration)
 {
@@ -69,37 +92,24 @@ if (autoApplyMigration)
             using var scope = app.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             await dbContext.Database.MigrateAsync();
-
+            app.Logger.LogInformation("Database migration applied successfully.");
             break;
         }
         catch (Exception ex) when (attempt < maxMigrationRetries)
         {
             app.Logger.LogWarning(
                 ex,
-                "Data API migration attempt {Attempt}/{MaxRetries} failed. Retrying in 5 seconds...",
+                "Database migration attempt {Attempt}/{MaxRetries} failed. Retrying in 5 seconds...",
                 attempt,
                 maxMigrationRetries);
             await Task.Delay(TimeSpan.FromSeconds(5));
         }
+        catch (Exception ex)
+        {
+            app.Logger.LogError(ex, "Database migration failed after {MaxRetries} attempts.", maxMigrationRetries);
+            throw;
+        }
     }
 }
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-app.UseExceptionHandler(opt => { });
-
-app.UseHttpsRedirection();
-
-app.UseCors("AllowAll");
-
-app.UseAuthentication();
-app.UseUserContext();
-app.UseAuthorization();
-
-app.MapApi();
 
 app.Run();

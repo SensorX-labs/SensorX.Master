@@ -1,6 +1,7 @@
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
+using SensorX.Master.Domain.Events;
 
 namespace SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.TransferOrderAggregate;
 
@@ -28,6 +29,8 @@ public class TransferOrder : Entity<TransferOrderId>, IAggregateRoot, ICreationT
         Status = status;
         Note = note;
         SupplyRequestId = supplyRequestId;
+
+        AddDomainEvent(new TransferOrderCreatedDomainEvent(Id.Value, code.Value, sourceWarehouseId.Value));
     }
 
     public void Complete()

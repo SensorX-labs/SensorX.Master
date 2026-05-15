@@ -4,8 +4,9 @@ using SensorX.Master.Domain.ValueObjects;
 
 namespace SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.SupplyRequestAggregate;
 
-public class SupplyRequest : Entity<SupplyRequestId> , ICreationTrackable , IUpdateTrackable
+public class SupplyRequest : Entity<SupplyRequestId> , IAggregateRoot, ICreationTrackable , IUpdateTrackable
 {
+    public Code Code { get; private set; } = null!;
     public WarehouseId WarehouseId { get; private set; } = null!;
     public SupplyRequestStatus Status { get; private set; }
     public string Note { get; private set; } = null!;
@@ -20,8 +21,9 @@ public class SupplyRequest : Entity<SupplyRequestId> , ICreationTrackable , IUpd
 
     private SupplyRequest() : base() { }
 
-    public SupplyRequest(SupplyRequestId id, WarehouseId warehouseId, SupplyRequestStatus status, string note) : base(id)
+    public SupplyRequest(SupplyRequestId id, Code code, WarehouseId warehouseId, SupplyRequestStatus status, string note) : base(id)
     {
+        Code = code;
         WarehouseId = warehouseId;
         Status = status;
         Note = note;

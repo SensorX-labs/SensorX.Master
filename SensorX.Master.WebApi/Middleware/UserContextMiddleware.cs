@@ -20,7 +20,14 @@ public class UserContextMiddleware(RequestDelegate next)
 
             if (!string.IsNullOrEmpty(userRolesHeader))
             {
-                claims.Add(new Claim(ClaimTypes.Role, userRolesHeader));
+                var roles = userRolesHeader.Split(',');
+                foreach (var role in roles)
+                {
+                    if (!string.IsNullOrWhiteSpace(role))
+                    {
+                        claims.Add(new Claim(ClaimTypes.Role, role.Trim()));
+                    }
+                }
             }
 
             var identity = new ClaimsIdentity(claims, "Gateway");
