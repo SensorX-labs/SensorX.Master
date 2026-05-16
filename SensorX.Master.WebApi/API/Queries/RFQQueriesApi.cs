@@ -8,6 +8,7 @@ using SensorX.Master.Application.Queries.RFQs.GetMyRFQPageDetail;
 using SensorX.Master.Application.Queries.RFQs.GetPageListRFQ;
 using SensorX.Master.Application.Queries.RFQs.GetRFQById;
 using SensorX.Master.Application.Queries.RFQs.GetStats;
+using SensorX.Master.Application.Queries.RFQs.LoadMoreSaleStaff;
 using SensorX.Master.WebApi.Configurations;
 using SensorX.Master.WebApi.Extensions;
 
@@ -49,7 +50,23 @@ namespace SensorX.Master.WebApi.API.Queries
                 return operation;
             });
 
+            api.MapGet("load-more-sale-staff", LoadMoreSaleStaff).WithOpenApi(operation =>
+            {
+                operation.Summary = "Lấy danh sách nhân viên bán hàng theo kiểu load-more";
+                return operation;
+            });
+
             return api;
+        }
+
+        [AuthorizeRole(Role.Manager)]
+        private static async Task<IResult> LoadMoreSaleStaff(
+            [AsParameters] LoadMoreSaleStaffQuery query,
+            [FromServices] IMediator mediator
+        )
+        {
+            var result = await mediator.Send(query);
+            return result.ToResult();
         }
 
         [AuthorizeRole(Role.SaleStaff, Role.Manager)]
@@ -67,7 +84,7 @@ namespace SensorX.Master.WebApi.API.Queries
             [FromServices] IMediator mediator
         )
         {
-            var result = await mediator.Send(new GetStatsCommand());
+            var result = await mediator.Send(new GetStatsQuery());
             return result.ToResult();
         }
 

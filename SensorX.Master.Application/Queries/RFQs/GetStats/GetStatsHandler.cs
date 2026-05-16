@@ -12,9 +12,9 @@ public sealed class GetStatsHandler(
     IQueryBuilder<SaleStaff> _staffQueryBuilder,
     IQueryExecutor _queryExecutor,
     ICurrentUser _currentUser
-) : IRequestHandler<GetStatsCommand, Result<GetStatsResponse>>
+) : IRequestHandler<GetStatsQuery, Result<GetStatsResponse>>
 {
-    public async Task<Result<GetStatsResponse>> Handle(GetStatsCommand request, CancellationToken cancellationToken)
+    public async Task<Result<GetStatsResponse>> Handle(GetStatsQuery request, CancellationToken cancellationToken)
     {
         var query = _rfqQueryBuilder.QueryAsNoTracking;
         if (_currentUser.Role == Role.SaleStaff)

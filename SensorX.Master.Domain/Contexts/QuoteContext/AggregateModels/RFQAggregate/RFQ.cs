@@ -105,6 +105,9 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
             if (Status != RFQStatus.Rejected && Status != RFQStatus.Pending)
                 throw new DomainException("Trạng thái RFQ không hợp lệ. Không thể chỉ định phân bổ.");
 
+            if (StaffId != null)
+                throw new DomainException("RFQ này đã có nhân viên phụ trách, không thể gán lại.");
+
             StaffId = staffId;
             Status = RFQStatus.Accepted;
             UpdatedAt = DateTimeOffset.UtcNow;

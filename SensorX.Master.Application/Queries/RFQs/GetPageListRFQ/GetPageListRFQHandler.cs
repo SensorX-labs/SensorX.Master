@@ -21,7 +21,7 @@ public sealed class GetPageListRFQHandler(
     {
         try
         {
-            var sourceQuery = _RFQQueryBuilder.QueryAsNoTracking;
+            var sourceQuery = _RFQQueryBuilder.QueryAsNoTracking.Where(x => x.Status != RFQStatus.Draft);
             if (_currentUser.Role == Role.SaleStaff)
             {
                 var queryStaffId = _staffQueryBuilder.QueryAsNoTracking.Where(s => s.AccountId == _currentUser.UserId).Select(s => s.Id);
@@ -39,7 +39,7 @@ public sealed class GetPageListRFQHandler(
             var totalCount = await _queryExecutor.CountAsync(sourceQuery, cancellationToken);
 
             var pagedQuery = sourceQuery
-                .OrderByDescending(x => x.CreatedAt)
+                .OrderByDescending(x => x.UpdatedAt)
                 .ThenByDescending(x => x.Id)
                 .ApplyOffsetPagination(request);
 
