@@ -1,12 +1,9 @@
-using System.Text.Json;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using SensorX.Master.Application.Commands.Warehouses;
 using SensorX.Master.Application.DTOs;
 using SensorX.Master.Application.Queries.Warehouses;
 using SensorX.Master.Application.Services;
-using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate;
 
 namespace SensorX.Master.WebApi.API;
 
@@ -40,84 +37,20 @@ public static class WarehouseApi
         return app;
     }
 
-    private record WarehouseInventoryItemDto(
-        Guid Id,
-        Guid ProductId,
-        string? ProductName,
-        string? ProductCode,
-        decimal PhysicalQuantity,
-        decimal AllocatedQuantity,
-        string? WarehouseName,
-        string? BrandZone,
-        string? RackCode
-    );
-
     private static async Task<IResult> GetTotalInventory(
         [FromServices] IWarehouseQueryService warehouseQueryService,
-        [FromServices] IHttpClientFactory httpClientFactory,
-        [FromServices] ILoggerFactory loggerFactory,
         CancellationToken cancellationToken)
     {
-        var logger = loggerFactory.CreateLogger("WarehouseApi");
-        var warehouses = await warehouseQueryService.GetAllAsync(cancellationToken);
-        var activeWarehouses = warehouses.Where(w => w.IsActive).ToList();
-
-        var client = httpClientFactory.CreateClient();
-        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-
-        var fetchTasks = activeWarehouses.Select(async warehouse =>
-        {
-            try
-            {
-                var baseUrl = warehouse.ApiEndpointUrl.TrimEnd('/');
-                var url = $"{baseUrl}/api/inventory/list?pageSize=1000";
-                
-                var request = new HttpRequestMessage(HttpMethod.Get, url);
-                request.Headers.Add("X-Warehouse-Id", warehouse.Id.ToString());
-
-                var response = await client.SendAsync(request, cancellationToken);
-                if (response.IsSuccessStatusCode)
-                {
-                    var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-                    using var doc = await JsonDocument.ParseAsync(contentStream, cancellationToken: cancellationToken);
-                    
-                    var items = new List<WarehouseInventoryItemDto>();
-                    if (doc.RootElement.TryGetProperty("items", out var itemsElement) && itemsElement.ValueKind == JsonValueKind.Array)
-                    {
-                        foreach (var item in itemsElement.EnumerateArray())
-                        {
-                            var dto = JsonSerializer.Deserialize<WarehouseInventoryItemDto>(item.GetRawText(), options);
-                            if (dto != null)
-                            {
-                                items.Add(dto with { WarehouseName = warehouse.Name });
-                            }
-                        }
-                    }
-                    return items;
-                }
-                else
-                {
-                    logger.LogWarning("Failed to fetch inventory from warehouse {Name} at {Url}. Status: {Status}", warehouse.Name, url, response.StatusCode);
-                    return [];
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error fetching inventory from warehouse {Name}", warehouse.Name);
-                return [];
-            }
-        });
-
-        var results = await Task.WhenAll(fetchTasks);
-        var flatItems = results.SelectMany(x => x).ToList();
+        var flatItems = await warehouseQueryService.GetTotalInventoryRowsAsync(cancellationToken);
 
         var consolidatedItems = flatItems
-            .GroupBy(x => new { x.ProductId, x.ProductCode, x.ProductName })
+            .GroupBy(x => new { x.ProductId, x.ProductCode, x.ProductName, x.Unit })
             .Select(g => new
             {
                 productId = g.Key.ProductId,
                 productCode = g.Key.ProductCode,
                 productName = g.Key.ProductName,
+                unit = g.Key.Unit,
                 totalPhysicalQuantity = g.Sum(x => x.PhysicalQuantity),
                 totalAllocatedQuantity = g.Sum(x => x.AllocatedQuantity),
                 totalSalableQuantity = g.Sum(x => x.PhysicalQuantity - x.AllocatedQuantity),
@@ -128,7 +61,8 @@ public static class WarehouseApi
                     allocatedQuantity = x.AllocatedQuantity,
                     salableQuantity = x.PhysicalQuantity - x.AllocatedQuantity,
                     brandZone = x.BrandZone,
-                    rackCode = x.RackCode
+                    rackCode = x.RackCode,
+                    lastSyncAt = x.LastSyncAt
                 }).ToList()
             })
             .ToList();

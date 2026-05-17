@@ -54,7 +54,7 @@ public class TransferOrderConfiguration : IEntityTypeConfiguration<TransferOrder
                 .HasConversion(qty => qty.Value, v => new Quantity(v));
         });
 
-        builder.HasOne<Warehouse>()
+        builder.HasOne<SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate.Warehouse>()
             .WithMany()
             .HasForeignKey(to => to.DestinationWarehouseId)
             .OnDelete(DeleteBehavior.NoAction);

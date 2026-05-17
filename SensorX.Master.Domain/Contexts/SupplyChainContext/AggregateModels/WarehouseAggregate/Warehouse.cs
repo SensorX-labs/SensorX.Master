@@ -4,29 +4,19 @@ using SensorX.Master.Domain.ValueObjects;
 
 namespace SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate;
 
-public class Warehouse : Entity<WarehouseId>, IAggregateRoot, ICreationTrackable
+public class Warehouse(WarehouseId id, string name, string? address, bool isActive = true)
+ : Entity<WarehouseId>(id), IAggregateRoot, ICreationTrackable
 {
-    public Warehouse(WarehouseId id, string name, string? address, ApiEndpointUrl apiEndpointUrl, bool isActive = true) : base(id)
-    {
-        Name = name;
-        Address = address;
-        ApiEndpointUrl = apiEndpointUrl;
-        IsActive = isActive;
-        CreatedAt = DateTimeOffset.UtcNow;
-    }
-
-    public string Name { get; private set; }
-    public string? Address { get; private set; }
-    public ApiEndpointUrl ApiEndpointUrl { get; private set; } = null!;
-    public bool IsActive { get; private set; }
+    public string Name { get; private set; } = name;
+    public string? Address { get; private set; } = address;
+    public bool IsActive { get; private set; } = isActive;
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? UpdatedAt { get; private set; }
 
-    public void Update(string name, string? address, ApiEndpointUrl apiEndpointUrl, bool isActive)
+    public void Update(string name, string? address, bool isActive)
     {
         Name = name;
         Address = address;
-        ApiEndpointUrl = apiEndpointUrl;
         IsActive = isActive;
         UpdatedAt = DateTimeOffset.UtcNow;
     }

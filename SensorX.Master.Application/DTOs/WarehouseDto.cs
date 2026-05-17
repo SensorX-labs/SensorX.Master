@@ -14,6 +14,7 @@ public record WarehouseDto(
 }
 
 public record CreateWarehouseDto(
+    Guid Id,
     string Name,
     string? Address,
     string ApiEndpointUrl

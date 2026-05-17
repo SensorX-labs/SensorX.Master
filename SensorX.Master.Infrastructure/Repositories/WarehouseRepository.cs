@@ -9,7 +9,7 @@ using SensorX.Master.Infrastructure.Persistences;
 
 namespace SensorX.Master.Infrastructure.Repositories;
 
-public class WarehouseRepository : Repository<Warehouse>, IWarehouseRepository
+public class WarehouseRepository : Repository<SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate.Warehouse>, IWarehouseRepository
 {
     private readonly AppDbContext _appDbContext;
 
@@ -18,15 +18,9 @@ public class WarehouseRepository : Repository<Warehouse>, IWarehouseRepository
         _appDbContext = dbContext;
     }
 
-    public async Task<Warehouse?> GetByIdAsync(WarehouseId id, CancellationToken cancellationToken = default)
+    public async Task<SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate.Warehouse?> GetByIdAsync(WarehouseId id, CancellationToken cancellationToken = default)
     {
         return await _appDbContext.Warehouses
             .FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
-    }
-
-    public async Task<Warehouse?> GetByApiEndpointUrlAsync(string apiEndpointUrl, CancellationToken cancellationToken = default)
-    {
-        return await _appDbContext.Warehouses
-            .FirstOrDefaultAsync(w => w.ApiEndpointUrl.Value == apiEndpointUrl, cancellationToken);
     }
 }
