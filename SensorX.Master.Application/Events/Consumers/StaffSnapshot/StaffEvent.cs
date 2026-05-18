@@ -1,4 +1,5 @@
 using MassTransit;
+using SensorX.Master.Domain.Common;
 
 namespace SensorX.Master.Application.Events.Consumers.StaffSnapshot;
 
@@ -18,6 +19,7 @@ public sealed record CreateStaffEvent(
     string Name,
     string Email,
     Department Department,
+    StaffStatus Status,
     DateTimeOffset CreatedAt
 );
 
@@ -31,7 +33,8 @@ public sealed record UpdateStaffEvent(
     string? CitizenId,
     string? Biography,
     DateTimeOffset JoinDate,
-    Department Department
+    Department Department,
+    StaffStatus Status
 );
 
 [MessageUrn("staff-avatar-updated")]
@@ -39,4 +42,12 @@ public sealed record UpdateStaffEvent(
 public sealed record UpdateStaffAvatarEvent(
     Guid Id,
     string AvatarUrl
+);
+
+[MessageUrn("staff-status-changed")]
+[EntityName("staff-status-changed")]
+public sealed record StaffStatusChangedEvent(
+    Guid Id,
+    Guid AccountId,
+    StaffStatus Status
 );

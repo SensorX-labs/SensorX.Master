@@ -9,7 +9,9 @@ namespace SensorX.Master.Application.Events.Consumers.StaffSnapshot;
 public class StaffSnapshotConsumer(
     IRepository<SaleStaff> _staffRepository
 ) : IConsumer<CreateStaffEvent>,
-    IConsumer<UpdateStaffEvent>
+    IConsumer<UpdateStaffEvent>,
+    IConsumer<UpdateStaffAvatarEvent>,
+    IConsumer<StaffStatusChangedEvent>
 {
     public async Task Consume(ConsumeContext<CreateStaffEvent> context)
     {
@@ -21,7 +23,8 @@ public class StaffSnapshotConsumer(
             Code.From(staffEvent.Code),
             staffEvent.Name,
             Email.From(staffEvent.Email),
-            null
+            null,
+            staffEvent.Status
         );
         await _staffRepository.AddAsync(staff, context.CancellationToken);
     }
@@ -35,7 +38,8 @@ public class StaffSnapshotConsumer(
         staff.Update(
             staffEvent.Name,
             Email.From(staffEvent.Email),
-            staffEvent.Phone != null ? Phone.From(staffEvent.Phone) : null
+            staffEvent.Phone != null ? Phone.From(staffEvent.Phone) : null,
+            staffEvent.Status
         );
         await _staffRepository.SaveChangesAsync(context.CancellationToken);
     }
@@ -47,6 +51,16 @@ public class StaffSnapshotConsumer(
         if (staff == null) return;
 
         staff.UpdateAvatarUrl(staffEvent.AvatarUrl);
+        await _staffRepository.SaveChangesAsync(context.CancellationToken);
+    }
+
+    public async Task Consume(ConsumeContext<StaffStatusChangedEvent> context)
+    {
+        var staffEvent = context.Message;
+        var staff = await _staffRepository.GetByIdAsync(new StaffId(staffEvent.Id), context.CancellationToken);
+        if (staff == null) return;
+
+        staff.ChangeStatus(staffEvent.Status);
         await _staffRepository.SaveChangesAsync(context.CancellationToken);
     }
 }
