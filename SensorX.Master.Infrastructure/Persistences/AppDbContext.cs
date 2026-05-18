@@ -7,6 +7,7 @@ using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate;
 using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.SupplyRequestAggregate;
 using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.TransferOrderAggregate;
+using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAggregate;
 
 namespace SensorX.Master.Infrastructure.Persistences;
 
@@ -15,6 +16,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, IMediator? med
     private readonly IMediator? _mediator = mediator;
 
     public DbSet<Order> Orders => Set<Order>();
+    public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<Warehouse> Warehouses => Set<Warehouse>();
     public DbSet<SupplyRequest> SupplyRequests => Set<SupplyRequest>();
     public DbSet<TransferOrder> TransferOrders => Set<TransferOrder>();

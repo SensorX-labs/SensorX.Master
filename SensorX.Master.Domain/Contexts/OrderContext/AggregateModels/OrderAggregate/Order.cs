@@ -32,21 +32,25 @@ public class Order : Entity<OrderId>, IAggregateRoot, ICreationTrackable, IUpdat
         SenderInfo = senderInfo;
         Status = status;
         OrderDate = orderDate;
-
-        AddDomainEvent(new OrderCreatedDomainEvent(
-            Id.Value,
-            code.Value,
-            customerInfo.RecipientName,
-            customerInfo.RecipientPhone.Value,
-            customerInfo.Address,
-            customerInfo.CompanyName,
-            customerInfo.TaxCode
-        ));
     }
 
     public void AddItem(OrderItem item)
     {
         _items.Add(item);
+    }
+
+    public void RaiseCreatedDomainEvent()
+    {
+        AddDomainEvent(new OrderCreatedDomainEvent(
+            this,
+            Id.Value,
+            Code.Value,
+            CustomerInfo.RecipientName,
+            CustomerInfo.RecipientPhone.Value,
+            CustomerInfo.Address,
+            CustomerInfo.CompanyName,
+            CustomerInfo.TaxCode
+        ));
     }
 
     public Money GetSubtotal()

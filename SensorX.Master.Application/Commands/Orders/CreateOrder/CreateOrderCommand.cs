@@ -1,16 +1,17 @@
 using MediatR;
+using SensorX.Master.Application.Common.ResponseClient;
 
-namespace SensorX.Master.Application.UseCases.Orders.Commands.CreateOrder;
+namespace SensorX.Master.Application.Commands.Orders.CreateOrder;
 
 public record CreateOrderCommand(
     Guid QuoteId,
-    string Code,
+    string? Code,
     Guid CustomerId,
     CustomerInfoDto CustomerInfo,
     SenderInfoDto SenderInfo,
-    DateTimeOffset OrderDate,
+    DateTimeOffset? OrderDate,
     List<OrderItemDto> Items
-) : IRequest<Guid>;
+) : IRequest<Result<Guid>>;
 
 public record CustomerInfoDto(
     string RecipientName,

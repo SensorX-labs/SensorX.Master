@@ -87,4 +87,22 @@ public class DataServiceClient : IDataServiceClient
             return new StaffMetricsApiResponse { IsSuccess = false, Message = ex.Message };
         }
     }
+
+    public async Task<CustomerByAccountApiResponse> GetCustomerByAccountIdAsync(Guid accountId)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"/api/customer/account/{accountId}");
+            if (!response.IsSuccessStatusCode)
+                return new CustomerByAccountApiResponse { IsSuccess = false, Message = "Loi goi API Customer theo AccountId" };
+
+            return await response.Content.ReadFromJsonAsync<CustomerByAccountApiResponse>()
+                   ?? new CustomerByAccountApiResponse { IsSuccess = false, Message = "Khong doc duoc du lieu customer" };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Loi goi API Customer theo AccountId cho {AccountId}", accountId);
+            return new CustomerByAccountApiResponse { IsSuccess = false, Message = ex.Message };
+        }
+    }
 }
