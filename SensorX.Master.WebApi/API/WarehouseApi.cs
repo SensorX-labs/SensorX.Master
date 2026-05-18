@@ -16,9 +16,6 @@ public static class WarehouseApi
         api.MapGet("inventory/total", GetTotalInventory)
             .WithOpenApi(op => { op.Summary = "Get total consolidated inventory from all warehouses"; return op; });
 
-        api.MapPost("", CreateWarehouse)
-            .WithOpenApi(op => { op.Summary = "Create a new warehouse"; return op; });
-
         api.MapGet("{id:guid}", GetWarehouseById)
             .WithOpenApi(op => { op.Summary = "Get warehouse by ID"; return op; });
 
@@ -68,16 +65,6 @@ public static class WarehouseApi
             .ToList();
 
         return TypedResults.Ok(new { items = consolidatedItems, totalCount = consolidatedItems.Count });
-    }
-
-    private static async Task<IResult> CreateWarehouse(
-        [FromBody] CreateWarehouseCommand command,
-        [FromServices] IMediator mediator)
-    {
-        var result = await mediator.Send(command);
-        return result.IsSuccess
-            ? TypedResults.Ok(result)
-            : TypedResults.BadRequest(result);
     }
 
     private static async Task<IResult> GetWarehouseById(

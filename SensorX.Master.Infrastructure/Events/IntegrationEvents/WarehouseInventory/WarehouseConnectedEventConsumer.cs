@@ -1,6 +1,7 @@
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SensorX.Master.Application.Services;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Infrastructure.Persistences;
 using SensorX.Warehouse.Application.Events;
@@ -12,11 +13,13 @@ public class WarehouseConnectedEventConsumer : IConsumer<WarehouseConnectedEvent
 {
     private readonly AppDbContext _dbContext;
     private readonly ILogger<WarehouseConnectedEventConsumer> _logger;
+    private readonly IGeolocationQueryService _geolocationQueryService;
 
-    public WarehouseConnectedEventConsumer(AppDbContext dbContext, ILogger<WarehouseConnectedEventConsumer> logger)
+    public WarehouseConnectedEventConsumer(AppDbContext dbContext, ILogger<WarehouseConnectedEventConsumer> logger, IGeolocationQueryService geolocationQueryService)
     {
         _dbContext = dbContext;
         _logger = logger;
+        _geolocationQueryService = geolocationQueryService;
     }
 
     public async Task Consume(ConsumeContext<WarehouseConnectedEvent> context)
@@ -28,29 +31,43 @@ public class WarehouseConnectedEventConsumer : IConsumer<WarehouseConnectedEvent
             return;
         }
 
-        var warehouseId = new WarehouseId(idGuid);
-        var warehouseExists = await _dbContext.Warehouses.AnyAsync(w => w.Id == warehouseId, context.CancellationToken);
+        var name = string.IsNullOrWhiteSpace(message.WarehouseName)
+            ? $"Warehouse {message.WarehouseId[..Math.Min(message.WarehouseId.Length, 8)]}"
+            : message.WarehouseName.Trim();
 
-        if (!warehouseExists)
+        var geolocationCandidates = await _geolocationQueryService.GetGeolocationByAddress(message.WarehouseAddress, context.CancellationToken);
+        var geolocation = geolocationCandidates?.FirstOrDefault() ?? new(0, 0);
+
+        var createdAt = DateTimeOffset.UtcNow;
+        var updatedAt = DateTimeOffset.UtcNow;
+        var rowsAffected = await _dbContext.Database.ExecuteSqlInterpolatedAsync($@"
+            INSERT INTO ""Warehouses"" (
+                ""Id"", ""Address"", ""CreatedAt"", ""IsActive"", ""Name"", ""UpdatedAt"", ""Location_Latitude"", ""Location_Longitude""
+            )
+            VALUES (
+                {idGuid}, {message.WarehouseAddress}, {createdAt}, {true}, {name}, {null}, {geolocation.Latitude}, {geolocation.Longitude}
+            )
+            ON CONFLICT (""Id"") DO UPDATE SET
+                ""Address"" = EXCLUDED.""Address"",
+                ""IsActive"" = EXCLUDED.""IsActive"",
+                ""Name"" = EXCLUDED.""Name"",
+                ""UpdatedAt"" = {updatedAt},
+                ""Location_Latitude"" = EXCLUDED.""Location_Latitude"",
+                ""Location_Longitude"" = EXCLUDED.""Location_Longitude"";
+        ", context.CancellationToken);
+
+        if (rowsAffected > 0)
         {
-            var name = string.IsNullOrWhiteSpace(message.WarehouseName)
-                ? $"Warehouse {message.WarehouseId[..Math.Min(message.WarehouseId.Length, 8)]}"
-                : message.WarehouseName.Trim();
+            if (rowsAffected == 1)
+            {
+                _logger.LogInformation("Successfully upserted warehouse: {WarehouseName} ({WarehouseId})", name, message.WarehouseId);
+                return;
+            }
 
-            var warehouse = new WarehouseEntity(
-                warehouseId,
-                name,
-                "Auto-registered on connection via RabbitMQ"
-            );
-
-            _dbContext.Warehouses.Add(warehouse);
-            await _dbContext.SaveChangesAsync(context.CancellationToken);
-
-            _logger.LogInformation("Successfully auto-registered new warehouse: {WarehouseName} ({WarehouseId})", name, message.WarehouseId);
+            _logger.LogInformation("Warehouse updated from WarehouseConnected event: {WarehouseName} ({WarehouseId})", name, message.WarehouseId);
+            return;
         }
-        else
-        {
-            _logger.LogInformation("Warehouse already exists, skipped registration: {WarehouseId}", message.WarehouseId);
-        }
+
+        _logger.LogInformation("Warehouse upsert had no effect: {WarehouseId}", message.WarehouseId);
     }
 }

@@ -31,5 +31,14 @@ public class WarehouseConfiguration : IEntityTypeConfiguration<SensorX.Master.Do
             .IsRequired();
 
         builder.Property(w => w.UpdatedAt);
+
+        builder.OwnsOne(w => w.Location, ownedBuilder =>
+        {
+            ownedBuilder.Property(g => g.Latitude)
+                .IsRequired();
+
+            ownedBuilder.Property(g => g.Longitude)
+                .IsRequired();
+        });
     }
 }

@@ -1,84 +1,66 @@
-using Dapper;
-using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
 using SensorX.Master.Application.DTOs;
 using SensorX.Master.Application.Services;
-using Npgsql;
+using SensorX.Master.Infrastructure.Persistences;
 
 namespace SensorX.Master.Infrastructure.Services;
 
 public class WarehouseQueryService : IWarehouseQueryService
 {
-    private readonly string _connectionString;
+    private readonly AppDbContext _dbContext;
 
-    public WarehouseQueryService(IConfiguration configuration)
+    public WarehouseQueryService(AppDbContext dbContext)
     {
-        _connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+        _dbContext = dbContext;
     }
 
     public async Task<List<WarehouseDto>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync(cancellationToken);
-
-        var sql = @"
-            SELECT 
-                w.""Id"" AS Id,
-                w.""Name"" AS Name,
-                w.""Address"" AS Address,
-                NULL::text AS ApiEndpointUrl,
-                w.""IsActive"" AS IsActive,
-                w.""CreatedAt"" AS CreatedAt,
-                w.""UpdatedAt"" AS UpdatedAt
-            FROM ""Warehouses"" w
-            ORDER BY w.""CreatedAt"" DESC";
-
-        var warehouses = await connection.QueryAsync<WarehouseDto>(sql);
-        return warehouses.ToList();
+        return await _dbContext.Warehouses
+            .AsNoTracking()
+            .OrderByDescending(w => w.CreatedAt)
+            .Select(w => new WarehouseDto(
+                w.Id.Value,
+                w.Name,
+                w.Address,
+                w.IsActive,
+                w.CreatedAt,
+                w.UpdatedAt))
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<WarehouseDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync(cancellationToken);
-
-        var sql = @"
-            SELECT 
-                w.""Id"" AS Id,
-                w.""Name"" AS Name,
-                w.""Address"" AS Address,
-                NULL::text AS ApiEndpointUrl,
-                w.""IsActive"" AS IsActive,
-                w.""CreatedAt"" AS CreatedAt,
-                w.""UpdatedAt"" AS UpdatedAt
-            FROM ""Warehouses"" w
-            WHERE w.""Id"" = @Id";
-
-        return await connection.QueryFirstOrDefaultAsync<WarehouseDto>(sql, new { Id = id });
+        return await _dbContext.Warehouses
+            .AsNoTracking()
+            .Where(w => w.Id.Value == id)
+            .Select(w => new WarehouseDto(
+                w.Id.Value,
+                w.Name,
+                w.Address,
+                w.IsActive,
+                w.CreatedAt,
+                w.UpdatedAt))
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<List<WarehouseInventoryRowDto>> GetTotalInventoryRowsAsync(CancellationToken cancellationToken = default)
     {
-        await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync(cancellationToken);
-
-        var sql = @"
-            SELECT
-                p.""WarehouseId"" AS WarehouseId,
-                p.""ProductId"" AS ProductId,
-                p.""ProductCode"" AS ProductCode,
-                p.""ProductName"" AS ProductName,
-                p.""Unit"" AS Unit,
-                p.""PhysicalQuantity"" AS PhysicalQuantity,
-                p.""AllocatedQuantity"" AS AllocatedQuantity,
-                p.""WarehouseName"" AS WarehouseName,
-                p.""BrandZone"" AS BrandZone,
-                p.""RackCode"" AS RackCode,
-                p.""LastSyncAt"" AS LastSyncAt
-            FROM ""WarehouseInventoryProjections"" p
-            ORDER BY p.""LastSyncAt"" DESC";
-
-        var rows = await connection.QueryAsync<WarehouseInventoryRowDto>(sql);
-        return rows.ToList();
+        return await _dbContext.WarehouseInventoryProjections
+            .AsNoTracking()
+            .OrderByDescending(p => p.LastSyncAt)
+            .Select(p => new WarehouseInventoryRowDto(
+                p.WarehouseId,
+                p.ProductId,
+                p.ProductCode,
+                p.ProductName,
+                p.Unit,
+                p.PhysicalQuantity,
+                p.AllocatedQuantity,
+                p.WarehouseName,
+                p.BrandZone,
+                p.RackCode,
+                p.LastSyncAt))
+            .ToListAsync(cancellationToken);
     }
 }

@@ -4,19 +4,24 @@ using SensorX.Master.Domain.ValueObjects;
 
 namespace SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate;
 
-public class Warehouse(WarehouseId id, string name, string? address, bool isActive = true)
+public class Warehouse(WarehouseId id, string name, string? address, Geolocation location, bool isActive = true)
  : Entity<WarehouseId>(id), IAggregateRoot, ICreationTrackable
 {
     public string Name { get; private set; } = name;
     public string? Address { get; private set; } = address;
     public bool IsActive { get; private set; } = isActive;
+    public Geolocation Location { get; set; } = location;
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? UpdatedAt { get; private set; }
 
-    public void Update(string name, string? address, bool isActive)
+    // For EF Core materialization
+    private Warehouse() : this(null!, null!, null, null!, false) { }
+
+    public void Update(string name, string? address, Geolocation location, bool isActive)
     {
         Name = name;
         Address = address;
+        Location = location;
         IsActive = isActive;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
