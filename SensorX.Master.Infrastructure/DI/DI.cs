@@ -9,6 +9,10 @@ using SensorX.Master.Application.Services;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Infrastructure.Persistences;
 using SensorX.Master.Infrastructure.Services;
+using SensorX.Master.Infrastructure.Services.Telegram;
+using Telegram.Bot;
+using Microsoft.Extensions.Options;
+
 
 using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate;
 using SensorX.Master.Infrastructure.Repositories;
@@ -82,7 +86,22 @@ namespace SensorX.Master.Infrastructure.DI
             // Đăng ký HttpClient cho Data Service
             services.AddHttpClient<IDataServiceClient, DataServiceClient>();
 
+            // Đăng ký Telegram Bot
+            services.Configure<TelegramOptions>(configuration.GetSection(TelegramOptions.SectionName));
+            services.AddSingleton<ITelegramBotClient>(sp =>
+            {
+                var options = sp.GetRequiredService<IOptions<TelegramOptions>>().Value;
+                if (string.IsNullOrEmpty(options.Token))
+                {
+                    // Tránh crash nếu chưa cấu hình token, nhưng log cảnh báo
+                    return new TelegramBotClient("DUMMY_TOKEN"); 
+                }
+                return new TelegramBotClient(options.Token);
+            });
+            services.AddHostedService<TelegramBotBackgroundService>();
+
             return services;
+
         }
     }
 }

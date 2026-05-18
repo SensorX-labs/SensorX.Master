@@ -7,4 +7,5 @@ public interface IDataServiceClient
     Task<CustomerBuyingHistoryApiResponse> GetCustomerHistoryAsync(Guid customerId);
     Task<ProductPricingPolicyData[]> GetProductPricingAsync(Guid[] productIds);
     Task<StaffMetricsApiResponse> GetEmployeeMetricsAsync(Guid employeeId);
+    Task<CustomerByAccountApiResponse> GetCustomerByAccountIdAsync(Guid accountId);
 }
