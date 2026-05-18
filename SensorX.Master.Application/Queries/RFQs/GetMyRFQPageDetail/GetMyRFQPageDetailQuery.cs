@@ -10,12 +10,7 @@ public sealed record MyRfqDetail(
     string Code,
     string Status,
     DateTimeOffset CreatedAt,
-    Guid CustomerId,
-    string? RecipientName,
-    string? RecipientPhone,
-    string? Email,
-    string? Address,
-    string? CompanyName,
+    MyRfqSaleStaff? SaleStaff,
     MyRfqDetailCustomer? Customer,
     List<MyRfqDetailItem> Items
 );
@@ -34,4 +29,12 @@ public sealed record MyRfqDetailItem(
     string ProductCode,
     double Quantity,
     string Unit
+);
+
+public sealed record MyRfqSaleStaff(
+    Guid Id,
+    string Name,
+    string? Phone,
+    string Email,
+    string? AvatarUrl
 );

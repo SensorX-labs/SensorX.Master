@@ -33,3 +33,10 @@ public sealed record UpdateStaffEvent(
     DateTimeOffset JoinDate,
     Department Department
 );
+
+[MessageUrn("staff-avatar-updated")]
+[EntityName("staff-avatar-updated")]
+public sealed record UpdateStaffAvatarEvent(
+    Guid Id,
+    string AvatarUrl
+);

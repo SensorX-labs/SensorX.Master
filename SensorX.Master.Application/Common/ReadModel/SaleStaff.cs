@@ -22,6 +22,7 @@ namespace SensorX.Master.Application.Common.ReadModel
         public string Name { get; private set; }
         public Email Email { get; private set; }
         public Phone? Phone { get; private set; }
+        public string? AvatarUrl { get; set; }
 
         public void Update(
             string name,
@@ -32,6 +33,11 @@ namespace SensorX.Master.Application.Common.ReadModel
             Name = name;
             Email = email;
             Phone = phone;
+        }
+
+        public void UpdateAvatarUrl(string avatarUrl)
+        {
+            AvatarUrl = avatarUrl;
         }
     }
 }

@@ -10,12 +10,12 @@ namespace SensorX.Master.Application.Queries.RFQs.GetMyRFQPageDetail;
 public class GetMyRFQPageDetailHandler(
     IRepository<RFQ> _rfqRepository,
     IQueryBuilder<Customer> _customerBuilder,
+    IQueryBuilder<SaleStaff> _staffBuilder,
     IQueryExecutor _queryExecutor
 ) : IRequestHandler<GetMyRFQPageDetailQuery, Result<MyRfqDetail>>
 {
     public async Task<Result<MyRfqDetail>> Handle(GetMyRFQPageDetailQuery request, CancellationToken cancellationToken)
     {
-        // 1. Lấy thông tin RFQ và Items thông qua Explicit Join
         var rfqData = await _rfqRepository.GetByIdAsync(new RFQId(request.Id), cancellationToken);
 
         if (rfqData is null)
@@ -23,31 +23,45 @@ public class GetMyRFQPageDetailHandler(
             return Result<MyRfqDetail>.Failure("Không tìm thấy yêu cầu báo giá.");
         }
 
-        // 2. Lấy thông tin Customer gốc
-        var customerQuery = _customerBuilder.QueryAsNoTracking
-            .Where(x => x.Id == rfqData.CustomerId);
+        MyRfqSaleStaff? saleStaff = null;
+        if (rfqData.StaffId != null && rfqData.Status != RFQStatus.Draft && rfqData.Status != RFQStatus.Pending)
+        {
+            var staffQuery = _staffBuilder.QueryAsNoTracking
+                .Where(x => x.Id == rfqData.StaffId);
+            var staff = await _queryExecutor.FirstOrDefaultAsync(staffQuery, cancellationToken);
+            if (staff != null)
+            {
+                saleStaff = new MyRfqSaleStaff(
+                    staff.Id.Value,
+                    staff.Name,
+                    staff.Phone,
+                    staff.Email,
+                    staff.AvatarUrl
+                );
+            }
+        }
 
+        var customerQuery = _customerBuilder.QueryAsNoTracking.Where(x => x.Id == rfqData.CustomerId);
         var customer = await _queryExecutor.FirstOrDefaultAsync(customerQuery, cancellationToken);
-
-        // 3. Map sang MyRfqDetail
-        var result = new MyRfqDetail(
-            rfqData.Id.Value,
-            rfqData.Code.ToString(),
-            rfqData.Status.ToString(),
-            rfqData.CreatedAt,
-            rfqData.CustomerId.Value,
-            rfqData.CustomerInfo.RecipientName,
-            rfqData.CustomerInfo.RecipientPhone.ToString(),
-            rfqData.CustomerInfo.Email.ToString(),
-            rfqData.CustomerInfo.Address,
-            rfqData.CustomerInfo.CompanyName,
-            customer != null ? new MyRfqDetailCustomer(
+        MyRfqDetailCustomer? customerDetail = null;
+        if (customer != null)
+        {
+            customerDetail = new MyRfqDetailCustomer(
                 customer.Id.Value,
                 customer.CompanyName,
                 customer.Email.ToString(),
                 customer.Phone?.ToString(),
                 customer.Address
-            ) : null,
+            );
+        }
+
+        var result = new MyRfqDetail(
+            rfqData.Id.Value,
+            rfqData.Code.ToString(),
+            rfqData.Status.ToString(),
+            rfqData.CreatedAt,
+            saleStaff,
+            customerDetail,
             [.. rfqData.Items.Select(x => new MyRfqDetailItem(
                 x.ProductId.Value,
                 x.ProductName,

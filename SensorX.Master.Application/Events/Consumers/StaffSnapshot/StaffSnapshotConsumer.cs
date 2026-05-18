@@ -39,4 +39,14 @@ public class StaffSnapshotConsumer(
         );
         await _staffRepository.SaveChangesAsync(context.CancellationToken);
     }
+
+    public async Task Consume(ConsumeContext<UpdateStaffAvatarEvent> context)
+    {
+        var staffEvent = context.Message;
+        var staff = await _staffRepository.GetByIdAsync(new StaffId(staffEvent.Id), context.CancellationToken);
+        if (staff == null) return;
+
+        staff.UpdateAvatarUrl(staffEvent.AvatarUrl);
+        await _staffRepository.SaveChangesAsync(context.CancellationToken);
+    }
 }
