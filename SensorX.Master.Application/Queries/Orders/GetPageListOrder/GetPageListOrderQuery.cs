@@ -4,8 +4,7 @@ using SensorX.Master.Application.Common.ResponseClient;
 
 namespace SensorX.Master.Application.Queries.Orders.GetPageListOrder;
 
-public record GetPageListOrderQuery(
-    string? SearchTerm,
-    int PageNumber = 1,
-    int PageSize = 10
-) : OffsetPagedQuery(PageNumber, PageSize), IRequest<Result<OffsetPagedResult<GetPageListOrderResponse>>>;
+public record GetPageListOrderQuery : OffsetPagedQuery, IRequest<Result<OffsetPagedResult<GetPageListOrderResponse>>>
+{
+    public string? SearchTerm { get; init; }
+}

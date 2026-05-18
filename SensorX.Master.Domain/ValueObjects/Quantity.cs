@@ -1,11 +1,13 @@
+using System.Text.Json.Serialization;
 using SensorX.Master.Domain.Common.Exceptions;
 
 namespace SensorX.Master.Domain.ValueObjects;
 
 public record Quantity
 {
-    public int Value { get; }
+    public int Value { get; init; }
 
+    [JsonConstructor]
     public Quantity(int value)
     {
         if (value < 0)

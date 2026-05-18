@@ -25,6 +25,7 @@ public class CreateOrderHandler(
             var customerInfo = new CustomerInfo(
                 request.CustomerInfo.RecipientName,
                 Phone.From(request.CustomerInfo.RecipientPhone),
+                request.CustomerInfo.ShippingAddress,
                 request.CustomerInfo.CompanyName,
                 Email.From(request.CustomerInfo.Email),
                 request.CustomerInfo.Address,

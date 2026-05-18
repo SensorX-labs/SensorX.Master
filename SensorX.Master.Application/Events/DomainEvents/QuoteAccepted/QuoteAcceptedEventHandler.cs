@@ -28,6 +28,7 @@ public class QuoteAcceptedEventHandler(
             var customerInfo = new CustomerInfoDto(
                 RecipientName: quote.CustomerInfo.RecipientName,
                 RecipientPhone: quote.CustomerInfo.RecipientPhone.Value,
+                ShippingAddress: quote.CustomerInfo.ShippingAddress,
                 CompanyName: quote.CustomerInfo.CompanyName,
                 Email: quote.CustomerInfo.Email.Value,
                 Address: quote.CustomerInfo.Address,

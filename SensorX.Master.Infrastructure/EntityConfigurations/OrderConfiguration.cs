@@ -38,6 +38,7 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
                 .HasConversion(p => p.Value, v => Phone.From(v))
                 .HasColumnName("CustomerRecipientPhone");
             c.Property(p => p.CompanyName).HasColumnName("CustomerCompanyName");
+            c.Property(p => p.ShippingAddress).HasColumnName("CustomerShippingAddress");
             c.Property(p => p.Email).HasConversion(e => e.Value, v => Email.From(v)).HasColumnName("CustomerEmail");
             c.Property(p => p.Address).HasColumnName("CustomerAddress");
             c.Property(p => p.TaxCode).HasColumnName("CustomerTaxCode");

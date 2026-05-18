@@ -37,6 +37,7 @@ public class RFQConfiguration : IEntityTypeConfiguration<RFQ>
                 .HasConversion(p => p.Value, v => Phone.From(v))
                 .HasColumnName("RecipientPhone");
             c.Property(p => p.CompanyName).HasColumnName("CompanyName");
+            c.Property(p => p.ShippingAddress).HasColumnName("CustomerShippingAddress");
             c.Property(p => p.Email).HasConversion(e => e.Value, v => Email.From(v)).HasColumnName("Email");
             c.Property(p => p.Address).HasColumnName("Address");
             c.Property(p => p.TaxCode).HasColumnName("TaxCode");

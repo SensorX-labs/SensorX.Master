@@ -190,6 +190,121 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                     b.ToTable("OutboxState");
                 });
 
+            modelBuilder.Entity("SensorX.Master.Application.Common.ReadModel.Customer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CompanyName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RecipientName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RecipientPhone")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ShippingAddress")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TaxCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CustomerSnapshots", (string)null);
+                });
+
+            modelBuilder.Entity("SensorX.Master.Application.Common.ReadModel.Product", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Manufacturer")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ProductSnapshots", (string)null);
+                });
+
+            modelBuilder.Entity("SensorX.Master.Application.Common.ReadModel.SaleStaff", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AvatarUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SaleStaffSnapshots", (string)null);
+                });
+
             modelBuilder.Entity("SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAggregate.Invoice", b =>
                 {
                     b.Property<Guid>("Id")
@@ -681,6 +796,11 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("CustomerRecipientPhone");
 
+                            b1.Property<string>("ShippingAddress")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CustomerShippingAddress");
+
                             b1.Property<string>("TaxCode")
                                 .IsRequired()
                                 .HasColumnType("text")
@@ -828,6 +948,11 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("RecipientPhone");
 
+                            b1.Property<string>("ShippingAddress")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CustomerShippingAddress");
+
                             b1.Property<string>("TaxCode")
                                 .IsRequired()
                                 .HasColumnType("text")
@@ -953,6 +1078,11 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("RecipientPhone");
 
+                            b1.Property<string>("ShippingAddress")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CustomerShippingAddress");
+
                             b1.Property<string>("TaxCode")
                                 .IsRequired()
                                 .HasColumnType("text")
@@ -1005,8 +1135,7 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                                 .HasForeignKey("RFQId");
                         });
 
-                    b.Navigation("CustomerInfo")
-                        .IsRequired();
+                    b.Navigation("CustomerInfo");
 
                     b.Navigation("Items");
                 });

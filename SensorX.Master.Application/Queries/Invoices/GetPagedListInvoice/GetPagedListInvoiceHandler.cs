@@ -53,8 +53,8 @@ public class GetPagedListInvoiceHandler(
         {
             Items = items,
             TotalCount = totalCount,
-            PageNumber = request.PageNumber,
-            PageSize = request.PageSize
+            PageNumber = request.PageNumber ?? 1,
+            PageSize = request.PageSize ?? 10
         });
     }
 }

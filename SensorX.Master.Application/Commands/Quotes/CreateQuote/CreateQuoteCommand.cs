@@ -10,6 +10,7 @@ public record CreateQuoteCommand(
     DateTimeOffset QuoteDate,
     string RecipientName,
     string RecipientPhone,
+    string ShippingAddress,
     string CompanyName,
     string Email,
     string Address,

@@ -4,8 +4,7 @@ using SensorX.Master.Application.Common.ResponseClient;
 
 namespace SensorX.Master.Application.Queries.Invoices.GetPagedListInvoice;
 
-public record GetPagedListInvoiceQuery(
-    string? SearchTerm,
-    int PageNumber = 1,
-    int PageSize = 10
-) : OffsetPagedQuery(PageNumber, PageSize), IRequest<Result<OffsetPagedResult<GetPagedListInvoiceResponse>>>;
+public record GetPagedListInvoiceQuery : OffsetPagedQuery, IRequest<Result<OffsetPagedResult<GetPagedListInvoiceResponse>>>
+{
+    public string? SearchTerm { get; init; }
+}

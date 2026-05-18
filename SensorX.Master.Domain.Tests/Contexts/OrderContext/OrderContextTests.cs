@@ -2,8 +2,8 @@ using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAggrega
 using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 using SensorX.Master.Domain.Services;
-using SensorX.Master.Domain.ValueObjects;
 using SensorX.Master.Domain.StrongIDs;
+using SensorX.Master.Domain.ValueObjects;
 
 namespace SensorX.Master.Domain.Tests.Contexts.OrderContext;
 
@@ -19,6 +19,7 @@ public class OrderContextTests
         (
             "Nguyễn Văn A",
             Phone.Create("0123456789"),
+            "Shipping Address",
             "Company",
             Email.From("test@test.com"),
             "Hà Nội",
@@ -124,6 +125,7 @@ public class OrderContextTests
         (
             "Test",
             Phone.Create("0123456789"),
+            "Shipping Address",
             "Test Company",
             Email.From("a@b.com"),
             "Test Address",

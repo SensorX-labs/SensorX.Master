@@ -3,7 +3,6 @@ using System.Text.Json;
 using MediatR;
 using SensorX.Master.Application.Common.ResponseClient;
 using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.TransferOrderAggregate;
-using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate;
 using SensorX.Master.Domain.Events;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
@@ -13,7 +12,7 @@ namespace SensorX.Master.Application.UseCases.TransferOrders.Commands.CreateTran
 
 public class CreateTransferOrderCommandHandler(
     IRepository<TransferOrder> transferOrderRepository,
-    IWarehouseRepository warehouseRepository,
+    IRepository<SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate.Warehouse> warehouseRepository,
     IMediator mediator
 ) : IRequestHandler<CreateTransferOrderCommand, Result<Guid>>
 {
@@ -32,7 +31,7 @@ public class CreateTransferOrderCommandHandler(
 
         var sourceWarehouseId = new WarehouseId(request.SourceWarehouseId);
         var sourceWarehouse = await warehouseRepository.GetByIdAsync(sourceWarehouseId, cancellationToken);
-        if (sourceWarehouse == null || !sourceWarehouse.IsActive)
+        if (sourceWarehouse is null || !sourceWarehouse.IsActive)
         {
             return Result<Guid>.Failure("Kho xuất không tồn tại hoặc đã bị vô hiệu hóa");
         }
