@@ -1,4 +1,4 @@
-namespace SensorX.Master.Domain.Contexts.QuoteContext
+namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate
 {
     public enum QuoteResponseStatus
     {
