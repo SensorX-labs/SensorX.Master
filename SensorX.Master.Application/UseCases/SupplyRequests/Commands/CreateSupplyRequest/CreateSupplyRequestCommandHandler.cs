@@ -2,7 +2,6 @@ using MediatR;
 using SensorX.Master.Application.Common.Interfaces;
 using SensorX.Master.Application.Common.ResponseClient;
 using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.SupplyRequestAggregate;
-using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
@@ -11,7 +10,7 @@ namespace SensorX.Master.Application.UseCases.SupplyRequests.Commands.CreateSupp
 
 public class CreateSupplyRequestCommandHandler(
     IRepository<SupplyRequest> supplyRequestRepository,
-    IRepository<Warehouse> warehouseRepository,
+    IRepository<SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate.Warehouse> warehouseRepository,
     IUnitOfWork unitOfWork
 ) : IRequestHandler<CreateSupplyRequestCommand, Result<Guid>>
 {

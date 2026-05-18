@@ -587,11 +587,6 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
-                    b.Property<string>("ApiEndpointUrl")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -608,38 +603,53 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ApiEndpointUrl")
-                        .IsUnique();
-
                     b.ToTable("Warehouses", (string)null);
                 });
 
-            modelBuilder.Entity("SensorX.Master.Domain.SeedWork.DomainEventOutbox", b =>
+            modelBuilder.Entity("SensorX.Master.Domain.Contexts.SupplyChainContext.ReadModels.WarehouseInventoryProjection", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
+                    b.Property<Guid>("WarehouseId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
 
-                    b.Property<DateTimeOffset>("CreatedAt")
+                    b.Property<int>("AllocatedQuantity")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("BrandZone")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset>("LastSyncAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Error")
-                        .HasColumnType("text");
+                    b.Property<int>("PhysicalQuantity")
+                        .HasColumnType("integer");
 
-                    b.Property<string>("EventType")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<string>("ProductCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
-                    b.Property<DateTimeOffset?>("ProcessedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<string>("ProductName")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
-                    b.HasKey("Id");
+                    b.Property<string>("RackCode")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
-                    b.ToTable("DomainEventOutboxes");
+                    b.Property<string>("Unit")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("WarehouseName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("WarehouseId", "ProductId");
+
+                    b.ToTable("WarehouseInventoryProjections", (string)null);
                 });
 
             modelBuilder.Entity("MassTransit.EntityFrameworkCoreIntegration.OutboxMessage", b =>
@@ -1253,6 +1263,31 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                         });
 
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate.Warehouse", b =>
+                {
+                    b.OwnsOne("SensorX.Master.Domain.ValueObjects.Geolocation", "Location", b1 =>
+                        {
+                            b1.Property<Guid>("WarehouseId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<double>("Latitude")
+                                .HasColumnType("double precision");
+
+                            b1.Property<double>("Longitude")
+                                .HasColumnType("double precision");
+
+                            b1.HasKey("WarehouseId");
+
+                            b1.ToTable("Warehouses");
+
+                            b1.WithOwner()
+                                .HasForeignKey("WarehouseId");
+                        });
+
+                    b.Navigation("Location")
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

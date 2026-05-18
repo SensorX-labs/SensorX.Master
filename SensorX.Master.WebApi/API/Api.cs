@@ -14,6 +14,7 @@ public static class Api
         api.MapRFQCommandApi();
         api.MapQuoteApi();
         api.MapOrderApi();
+        api.MapInvoiceApi();
         api.MapTransferOrderApi();
         api.MapWarehouseApi(); // Add Warehouse API
         api.MapSupplyRequestApi();

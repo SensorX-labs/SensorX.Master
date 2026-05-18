@@ -9,5 +9,4 @@ namespace SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.Ware
 public interface IWarehouseRepository : IRepository<Warehouse>
 {
     Task<Warehouse?> GetByIdAsync(WarehouseId id, CancellationToken cancellationToken = default);
-    Task<Warehouse?> GetByApiEndpointUrlAsync(string apiEndpointUrl, CancellationToken cancellationToken = default);
 }

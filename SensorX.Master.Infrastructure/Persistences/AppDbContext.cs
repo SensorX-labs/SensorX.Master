@@ -3,12 +3,13 @@ using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SensorX.Master.Application.Common.DomainEvent;
-using SensorX.Master.Application.Common.ReadModel;
+using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
+using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAggregate;
+using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate;
+using SensorX.Master.Domain.Contexts.SupplyChainContext.ReadModels;
 using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.SupplyRequestAggregate;
 using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.TransferOrderAggregate;
-using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate;
-using SensorX.Master.Domain.SeedWork;
 
 namespace SensorX.Master.Infrastructure.Persistences;
 
@@ -16,7 +17,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 {
     public DbSet<DomainEventOutbox> DomainEventOutboxes { get; set; }
     public DbSet<Order> Orders => Set<Order>();
-    public DbSet<Warehouse> Warehouses => Set<Warehouse>();
+    public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate.Warehouse> Warehouses => Set<SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate.Warehouse>();
+    public DbSet<WarehouseInventoryProjection> WarehouseInventoryProjections => Set<WarehouseInventoryProjection>();
     public DbSet<SupplyRequest> SupplyRequests => Set<SupplyRequest>();
     public DbSet<TransferOrder> TransferOrders => Set<TransferOrder>();
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
