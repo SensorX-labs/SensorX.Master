@@ -92,6 +92,21 @@ if (autoApplyMigration)
             using var scope = app.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             await dbContext.Database.MigrateAsync();
+            await dbContext.Database.ExecuteSqlRawAsync(@"
+                CREATE TABLE IF NOT EXISTS ""WarehouseInventoryProjections"" (
+                    ""WarehouseId"" uuid NOT NULL,
+                    ""ProductId"" uuid NOT NULL,
+                    ""ProductCode"" character varying(100) NULL,
+                    ""ProductName"" character varying(500) NULL,
+                    ""Unit"" character varying(50) NULL,
+                    ""PhysicalQuantity"" integer NOT NULL,
+                    ""AllocatedQuantity"" integer NOT NULL,
+                    ""WarehouseName"" character varying(200) NULL,
+                    ""BrandZone"" character varying(200) NULL,
+                    ""RackCode"" character varying(200) NULL,
+                    ""LastSyncAt"" timestamp with time zone NOT NULL,
+                    CONSTRAINT ""PK_WarehouseInventoryProjections"" PRIMARY KEY (""WarehouseId"", ""ProductId"")
+                );");
             app.Logger.LogInformation("Database migration applied successfully.");
             break;
         }
