@@ -14,6 +14,7 @@ public record CreateOrderCommand(
 public record CustomerInfoDto(
     string RecipientName,
     string RecipientPhone,
+    string ShippingAddress,
     string CompanyName,
     string Email,
     string Address,

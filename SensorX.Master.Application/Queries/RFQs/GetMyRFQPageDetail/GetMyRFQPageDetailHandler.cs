@@ -23,37 +23,8 @@ public class GetMyRFQPageDetailHandler(
             return Result<MyRfqDetail>.Failure("Không tìm thấy yêu cầu báo giá.");
         }
 
-        MyRfqSaleStaff? saleStaff = null;
-        if (rfqData.StaffId != null && rfqData.Status != RFQStatus.Draft && rfqData.Status != RFQStatus.Pending)
-        {
-            var staffQuery = _staffBuilder.QueryAsNoTracking
-                .Where(x => x.Id == rfqData.StaffId);
-            var staff = await _queryExecutor.FirstOrDefaultAsync(staffQuery, cancellationToken);
-            if (staff != null)
-            {
-                saleStaff = new MyRfqSaleStaff(
-                    staff.Id.Value,
-                    staff.Name,
-                    staff.Phone,
-                    staff.Email,
-                    staff.AvatarUrl
-                );
-            }
-        }
-
-        var customerQuery = _customerBuilder.QueryAsNoTracking.Where(x => x.Id == rfqData.CustomerId);
-        var customer = await _queryExecutor.FirstOrDefaultAsync(customerQuery, cancellationToken);
-        MyRfqDetailCustomer? customerDetail = null;
-        if (customer != null)
-        {
-            customerDetail = new MyRfqDetailCustomer(
-                customer.Id.Value,
-                customer.CompanyName,
-                customer.Email.ToString(),
-                customer.Phone?.ToString(),
-                customer.Address
-            );
-        }
+        MyRfqSaleStaff? saleStaff = await GetSaleStaff(rfqData, cancellationToken);
+        MyRfqDetailCustomer? customerDetail = await GetCustomerDetail(rfqData, cancellationToken);
 
         var result = new MyRfqDetail(
             rfqData.Id.Value,
@@ -72,5 +43,65 @@ public class GetMyRFQPageDetailHandler(
         );
 
         return Result<MyRfqDetail>.Success(result);
+    }
+
+    private async Task<MyRfqSaleStaff?> GetSaleStaff(RFQ rfqData, CancellationToken cancellationToken)
+    {
+        if (rfqData.StaffId != null && rfqData.Status != RFQStatus.Draft && rfqData.Status != RFQStatus.Pending)
+        {
+            var staffQuery = _staffBuilder.QueryAsNoTracking.Where(x => x.Id == rfqData.StaffId);
+            var staff = await _queryExecutor.FirstOrDefaultAsync(staffQuery, cancellationToken);
+            if (staff != null)
+            {
+                return new MyRfqSaleStaff(
+                    staff.Id.Value,
+                    staff.Name,
+                    staff.Phone,
+                    staff.Email,
+                    staff.AvatarUrl
+                );
+            }
+        }
+        return null;
+    }
+
+    private async Task<MyRfqDetailCustomer?> GetCustomerDetail(RFQ rfqData, CancellationToken cancellationToken)
+    {
+        if (rfqData.CustomerInfo != null && rfqData.Status != RFQStatus.Draft)
+        {
+            var shippingInfo = new ShippingInfo(
+                rfqData.CustomerInfo.RecipientName ?? string.Empty,
+                rfqData.CustomerInfo.RecipientPhone?.ToString() ?? string.Empty,
+                rfqData.CustomerInfo.ShippingAddress ?? string.Empty
+            );
+            return new MyRfqDetailCustomer(
+                rfqData.CustomerId,
+                rfqData.CustomerInfo.CompanyName,
+                rfqData.CustomerInfo.Email.ToString(),
+                rfqData.CustomerInfo.RecipientPhone?.ToString(),
+                rfqData.CustomerInfo.Address,
+                shippingInfo
+            );
+        }
+
+        var customerQuery = _customerBuilder.QueryAsNoTracking.Where(x => x.Id == rfqData.CustomerId);
+        var customer = await _queryExecutor.FirstOrDefaultAsync(customerQuery, cancellationToken);
+        if (customer != null)
+        {
+            var shippingInfo = new ShippingInfo(
+                customer.RecipientName ?? string.Empty,
+                customer.RecipientPhone ?? string.Empty,
+                customer.ShippingAddress ?? string.Empty
+            );
+            return new MyRfqDetailCustomer(
+                customer.Id.Value,
+                customer.CompanyName,
+                customer.Email.ToString(),
+                customer.Phone?.ToString(),
+                customer.Address,
+                shippingInfo
+            );
+        }
+        return null;
     }
 }

@@ -1,4 +1,5 @@
 using MediatR;
+using SensorX.Master.Application.Common.ResponseClient;
 using SensorX.Master.Domain.Common.Exceptions;
 using SensorX.Master.Domain.Contexts.QuoteContext;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
@@ -6,7 +7,6 @@ using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
-using SensorX.Master.Application.Common.ResponseClient;
 
 namespace SensorX.Master.Application.Commands.Quotes.CreateQuote;
 
@@ -36,6 +36,7 @@ public class CreateQuoteCommandHandler(
             var customerInfo = new CustomerInfo(
                 request.RecipientName,
                 Phone.From(request.RecipientPhone),
+                request.ShippingAddress,
                 request.CompanyName,
                 Email.From(request.Email),
                 request.Address,

@@ -20,7 +20,14 @@ public sealed record MyRfqDetailCustomer(
     string Name,
     string Email,
     string? Phone,
-    string? Address
+    string? Address,
+    ShippingInfo? ShippingInfo
+);
+
+public sealed record ShippingInfo(
+    string RecipientName,
+    string RecipientPhone,
+    string ShippingAddress
 );
 
 public sealed record MyRfqDetailItem(

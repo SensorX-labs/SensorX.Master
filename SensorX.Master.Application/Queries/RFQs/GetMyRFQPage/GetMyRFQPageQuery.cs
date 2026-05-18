@@ -17,5 +17,4 @@ public sealed record GetMyRFQResponse(
     RFQStatus Status,
     DateTimeOffset CreatedAt
 );
-
 public sealed class GetMyRFQResult : LoadMoreResult<GetMyRFQResponse>;

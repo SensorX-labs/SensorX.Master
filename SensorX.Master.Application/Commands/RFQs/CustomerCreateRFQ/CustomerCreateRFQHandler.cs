@@ -37,26 +37,12 @@ public class CustomerCreateRFQCommandHandler(
             return Result<Guid>.Failure("Không tìm thấy khách hàng.");
         }
 
-        if (customer.Phone == null || customer.Address == null)
-        {
-            return Result<Guid>.Failure("Thông tin khách hàng không đầy đủ. Vui lòng bổ sung hồ sơ !");
-        }
-
-        var customerInfo = new CustomerInfo(
-            customer.CompanyName,
-            customer.Phone,
-            customer.CompanyName,
-            customer.Email,
-            customer.Address,
-            customer.TaxCode
-        );
-
         var rfq = new RFQ(
             RFQId.New(),
             Code.Create("RFQ"),
             null,
             new CustomerId(customer.Id),
-            customerInfo
+            null
         );
 
         var productIds = itemQuantities.Keys.ToList(); // convert to list for query in EF

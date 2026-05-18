@@ -20,8 +20,9 @@ public sealed record GetPageListRFQResponse
     string RecipientPhone,
     string CompanyName,
     DateTimeOffset CreatedAt,
+    DateTimeOffset? UpdatedAt,
     Guid? StaffId,
-    Guid CustomerId,
+    string? StaffName,
     int ItemCount
 );
 public sealed class GetPageListRFQResult : OffsetPagedResult<GetPageListRFQResponse>;

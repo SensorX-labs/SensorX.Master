@@ -1,3 +1,4 @@
+using System.Linq;
 using MediatR;
 using SensorX.Master.Application.Common.Interfaces;
 using SensorX.Master.Application.Common.QueryExtensions.OffsetPagination;
@@ -43,18 +44,24 @@ public sealed class GetPageListRFQHandler(
                 .ThenByDescending(x => x.Id)
                 .ApplyOffsetPagination(request);
 
-            var dtoQuery = pagedQuery.Select(x => new GetPageListRFQResponse(
-                x.Id.Value,
-                x.Code.Value,
-                x.Status.ToString(),
-                x.CustomerInfo.RecipientName,
-                x.CustomerInfo.RecipientPhone.Value,
-                x.CustomerInfo.CompanyName,
-                x.CreatedAt,
-                x.StaffId != null ? x.StaffId.Value : null,
-                x.CustomerId.Value,
-                x.Items.Count
-            ));
+            var staffQuery = _staffQueryBuilder.QueryAsNoTracking;
+
+            var dtoQuery = from rfq in pagedQuery
+                           join staff in staffQuery on rfq.StaffId equals staff.Id into staffGroup
+                           from s in staffGroup.DefaultIfEmpty()
+                           select new GetPageListRFQResponse(
+                               rfq.Id.Value,
+                               rfq.Code.Value,
+                               rfq.Status.ToString(),
+                               rfq.CustomerInfo!.RecipientName,
+                               rfq.CustomerInfo.RecipientPhone.Value,
+                               rfq.CustomerInfo.CompanyName,
+                               rfq.CreatedAt,
+                               rfq.UpdatedAt,
+                               rfq.StaffId != null ? rfq.StaffId.Value : null,
+                               s != null ? s.Name : null,
+                               rfq.Items.Count
+                           );
 
             var items = await _queryExecutor.ToListAsync(dtoQuery, cancellationToken);
 

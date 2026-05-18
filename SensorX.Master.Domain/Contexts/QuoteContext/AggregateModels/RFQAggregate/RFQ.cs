@@ -13,7 +13,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
             Code code,
             StaffId? staffId,
             CustomerId customerId,
-            CustomerInfo customerInfo
+            CustomerInfo? customerInfo
         ) : base(id)
         {
             Code = code;
@@ -26,7 +26,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
         public Code Code { get; private set; }
         public StaffId? StaffId { get; private set; }
         public CustomerId CustomerId { get; private set; }
-        public CustomerInfo CustomerInfo { get; private set; }
+        public CustomerInfo? CustomerInfo { get; private set; }
         public RFQStatus Status { get; private set; }
 
         private readonly List<RFQItem> _items = [];
@@ -39,11 +39,12 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
         public DateTimeOffset? UpdatedAt { get; set; }
 
         // khách hàng gửi RFQ
-        public void Send()
+        public void Send(CustomerInfo customerInfo)
         {
             if (Status != RFQStatus.Draft)
                 throw new DomainException("RFQ đang ở trạng thái không hợp lệ.");
 
+            CustomerInfo = customerInfo ?? throw new DomainException("Thông tin khách hàng không được để trống khi gửi yêu cầu báo giá.");
             Status = RFQStatus.Pending;
             UpdatedAt = DateTimeOffset.UtcNow;
             AddDomainEvent(new RFQSendedEvent(Id, Code));

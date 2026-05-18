@@ -1,19 +1,26 @@
-using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
+using MediatR;
+using SensorX.Master.Application.Common.ResponseClient;
 
-namespace SensorX.Master.Application.Queries.RFQs.GetRFQById;
+namespace SensorX.Master.Application.Queries.RFQs.GetRFQDetail;
 
-public record GetRFQByIdResponse
+public record GetRFQDetailQuery(Guid Id) : IRequest<Result<GetRFQDetailResponse>>;
+
+public record GetRFQDetailResponse
 (
     Guid Id,
     string Code,
     Guid? StaffId,
+    string? StaffName,
     Guid CustomerId,
     string Status,
     DateTimeOffset CreatedAt,
+    DateTimeOffset? UpdatedAt,
 
     // Flat Customer Info
-    string RecipientName,
-    string RecipientPhone,
+    string? RecipientName,
+    string? RecipientPhone,
+    string? ShippingAddress,
+
     string CompanyName,
     string Email,
     string Address,

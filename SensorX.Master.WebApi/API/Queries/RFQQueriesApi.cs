@@ -6,7 +6,7 @@ using SensorX.Master.Application.Common.Interfaces;
 using SensorX.Master.Application.Queries.RFQs.GetMyRFQPage;
 using SensorX.Master.Application.Queries.RFQs.GetMyRFQPageDetail;
 using SensorX.Master.Application.Queries.RFQs.GetPageListRFQ;
-using SensorX.Master.Application.Queries.RFQs.GetRFQById;
+using SensorX.Master.Application.Queries.RFQs.GetRFQDetail;
 using SensorX.Master.Application.Queries.RFQs.GetStats;
 using SensorX.Master.Application.Queries.RFQs.LoadMoreSaleStaff;
 using SensorX.Master.WebApi.Configurations;
@@ -20,7 +20,7 @@ namespace SensorX.Master.WebApi.API.Queries
         {
             var api = app.MapGroup("rfq").WithTags("RFQ Query Api");
 
-            api.MapGet("{id:guid}", GetRFQById).WithOpenApi(operation =>
+            api.MapGet("{id:guid}", GetRFQDetail).WithOpenApi(operation =>
             {
                 operation.Summary = "Lấy chi tiết yêu cầu báo giá (RFQ)";
                 return operation;
@@ -70,12 +70,12 @@ namespace SensorX.Master.WebApi.API.Queries
         }
 
         [AuthorizeRole(Role.SaleStaff, Role.Manager)]
-        private static async Task<IResult> GetRFQById(
+        private static async Task<IResult> GetRFQDetail(
             [FromRoute] Guid id,
             [FromServices] IMediator mediator
         )
         {
-            var result = await mediator.Send(new GetRFQByIdQuery(id));
+            var result = await mediator.Send(new GetRFQDetailQuery(id));
             return result.ToResult();
         }
 
