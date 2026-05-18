@@ -64,6 +64,7 @@ public class CreateOrderHandler(
                 ));
             }
 
+            order.RaiseCreatedDomainEvent();
             await orderRepository.AddAsync(order, cancellationToken);
 
             return Result<Guid>.Success(order.Id.Value);

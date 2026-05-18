@@ -62,6 +62,7 @@ public class CreateOrderCommandHandler(
             ));
         }
 
+        order.RaiseCreatedDomainEvent();
         await orderRepository.AddAsync(order, cancellationToken);
 
         return order.Id.Value;
