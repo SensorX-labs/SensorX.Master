@@ -9,7 +9,7 @@ public partial class TelegramBotBackgroundService
 {
     private async Task<string> HandleQuotesAsync(IMediator mediator, string statusFilter, CancellationToken ct)
     {
-        var result = await mediator.Send(new GetPageListQuoteQuery(null, 1, 10), ct);
+        var result = await mediator.Send(new GetPageListQuoteQuery(null) { PageNumber = 1, PageSize = 10 }, ct);
         if (!result.IsSuccess || result.Value is null) return "Không thể truy vấn báo giá từ database.";
         
         var items = result.Value.Items.AsEnumerable();
