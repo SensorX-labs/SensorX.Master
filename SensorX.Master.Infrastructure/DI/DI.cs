@@ -67,18 +67,16 @@ namespace SensorX.Master.Infrastructure.DI
             // Đăng ký HttpClient cho Data Service
             services.AddHttpClient<IDataServiceClient, DataServiceClient>();
 
-            // Đăng ký Telegram Bot
+            // Đăng ký Telegram Bot + 9router Intent Router
             services.Configure<TelegramOptions>(configuration.GetSection(TelegramOptions.SectionName));
             services.AddSingleton<ITelegramBotClient>(sp =>
             {
                 var options = sp.GetRequiredService<IOptions<TelegramOptions>>().Value;
                 if (string.IsNullOrEmpty(options.Token))
-                {
-                    // Tránh crash nếu chưa cấu hình token, nhưng log cảnh báo
-                    return new TelegramBotClient("DUMMY_TOKEN"); 
-                }
+                    return new TelegramBotClient("DUMMY_TOKEN");
                 return new TelegramBotClient(options.Token);
             });
+            services.AddHttpClient("NineRouter");
             services.AddHostedService<TelegramBotBackgroundService>();
 
             return services;
