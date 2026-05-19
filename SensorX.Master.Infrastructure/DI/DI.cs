@@ -131,15 +131,19 @@ namespace SensorX.Master.Infrastructure.DI
 
             // Đăng ký Telegram Bot + 9router Intent Router
             services.Configure<TelegramOptions>(configuration.GetSection(TelegramOptions.SectionName));
-            services.AddSingleton<ITelegramBotClient>(sp =>
+            var telegramEnabled = configuration.GetValue<bool>("Telegram:Enabled");
+            if (telegramEnabled)
             {
-                var options = sp.GetRequiredService<IOptions<TelegramOptions>>().Value;
-                if (string.IsNullOrEmpty(options.Token))
-                    return new TelegramBotClient("DUMMY_TOKEN");
-                return new TelegramBotClient(options.Token);
-            });
-            services.AddHttpClient("NineRouter");
-            services.AddHostedService<TelegramBotBackgroundService>();
+                services.AddSingleton<ITelegramBotClient>(sp =>
+                {
+                    var options = sp.GetRequiredService<IOptions<TelegramOptions>>().Value;
+                    if (string.IsNullOrEmpty(options.Token))
+                        return new TelegramBotClient("DUMMY_TOKEN");
+                    return new TelegramBotClient(options.Token);
+                });
+                services.AddHttpClient("NineRouter");
+                services.AddHostedService<TelegramBotBackgroundService>();
+            }
 
             return services;
 

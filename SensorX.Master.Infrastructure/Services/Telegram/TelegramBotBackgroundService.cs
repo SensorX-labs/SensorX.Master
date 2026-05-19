@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text.Json;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,11 +16,15 @@ namespace SensorX.Master.Infrastructure.Services.Telegram;
 
 public partial class TelegramBotBackgroundService : BackgroundService
 {
+    private const string BotPollingMutexName = "SensorX.Master.TelegramBotPolling";
+    private static readonly ConcurrentDictionary<int, byte> ProcessedUpdates = new();
+
     private readonly ILogger<TelegramBotBackgroundService> _logger;
     private readonly ITelegramBotClient _botClient;
     private readonly IServiceProvider _serviceProvider;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly TelegramOptions _options;
+    private CancellationTokenSource? _pollingCancellationTokenSource;
 
     public TelegramBotBackgroundService(
         ILogger<TelegramBotBackgroundService> logger,
@@ -38,29 +43,60 @@ public partial class TelegramBotBackgroundService : BackgroundService
     // khởi động worker
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        using var pollingMutex = new Mutex(false, BotPollingMutexName);
+        using var pollingCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+        _pollingCancellationTokenSource = pollingCancellationTokenSource;
+        var ownsPolling = false;
+
         try
         {
+            ownsPolling = pollingMutex.WaitOne(0);
+            if (!ownsPolling)
+            {
+                _logger.LogWarning("[TelegramBot] PID {ProcessId}: Đã có một instance khác đang polling. Bỏ qua Telegram bot ở process này.", Environment.ProcessId);
+                return;
+            }
+
             var me = await _botClient.GetMe(stoppingToken);
-            _logger.LogInformation("[TelegramBot] Bot @{BotName} đã khởi động và đang lắng nghe...", me.Username);
+            _logger.LogInformation("[TelegramBot] PID {ProcessId}: Bot @{BotName} đã khởi động và đang lắng nghe...", Environment.ProcessId, me.Username);
 
             _botClient.StartReceiving(
                 updateHandler: HandleUpdateAsync,
                 errorHandler: HandlePollingErrorAsync,
                 receiverOptions: new ReceiverOptions { AllowedUpdates = [] },
-                cancellationToken: stoppingToken
+                cancellationToken: pollingCancellationTokenSource.Token
             );
 
-            await Task.Delay(Timeout.Infinite, stoppingToken);
+            await Task.Delay(Timeout.Infinite, pollingCancellationTokenSource.Token);
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested || pollingCancellationTokenSource.IsCancellationRequested)
+        {
+            _logger.LogInformation("[TelegramBot] PID {ProcessId}: Bot đã dừng.", Environment.ProcessId);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "[TelegramBot] Lỗi khởi động Bot");
+        }
+        finally
+        {
+            if (ownsPolling)
+            {
+                pollingMutex.ReleaseMutex();
+            }
+
+            _pollingCancellationTokenSource = null;
         }
     }
 
     // xử lý tin nhắn
     private async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken ct)
     {
+        if (!ProcessedUpdates.TryAdd(update.Id, 0))
+        {
+            _logger.LogWarning("[TelegramBot] PID {ProcessId}: Bỏ qua update trùng: {UpdateId}", Environment.ProcessId, update.Id);
+            return;
+        }
+
         if (update.Message is not { Text: { } messageText } message) return;
         var chatId = message.Chat.Id;
 
@@ -161,6 +197,13 @@ public partial class TelegramBotBackgroundService : BackgroundService
 
     private Task HandlePollingErrorAsync(ITelegramBotClient bot, Exception ex, CancellationToken ct)
     {
+        if (ex.Message.Contains("409: Conflict", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogWarning("[TelegramBot] PID {ProcessId}: Một instance khác đang dùng cùng bot token. Dừng polling Telegram ở process này.", Environment.ProcessId);
+            _pollingCancellationTokenSource?.Cancel();
+            return Task.CompletedTask;
+        }
+
         _logger.LogError(ex, "[TelegramBot] Lỗi polling Telegram API");
         return Task.CompletedTask;
     }
