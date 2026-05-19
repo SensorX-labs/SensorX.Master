@@ -1,56 +1,35 @@
 using System;
 using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using SensorX.Master.Infrastructure.DI;
 using SensorX.Master.Infrastructure.Persistences;
-using SensorX.Master.WebApi;
 using SensorX.Master.WebApi.API;
 using SensorX.Master.WebApi.Configurations;
 using SensorX.Master.WebApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
-
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.UseInlineDefinitionsForEnums();
-});
-
-// Authentication
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.Authority = builder.Configuration["Jwt:Authority"];
-        options.Audience = builder.Configuration["Jwt:Audience"];
-        options.RequireHttpsMetadata = builder.Configuration.GetValue<bool>("Jwt:RequireHttpsMetadata");
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = false,
-            NameClaimType = "name",
-            RoleClaimType = "role"
-        };
-    });
-
+// Cấu hình Authentication & Authorization (Tin tưởng Gateway)
+builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
+builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, AuthorizationResultHandler>();
 
 builder.Services.AddServices(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddHttpClient();
-builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    // Yêu cầu .NET tự động chuyển đổi giữa String và Enum
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
+builder.Services.AddSwaggerGen(options =>
+{
+    options.UseInlineDefinitionsForEnums();
+    options.CustomSchemaIds(x => x.FullName);
+});
+
 builder.Services.AddProblemDetails();
 
 builder.Services.AddCors(options =>
@@ -76,7 +55,7 @@ app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 
 app.UseAuthentication();
-app.UseUserContext();
+app.UseMiddleware<UserContextMiddleware>();
 app.UseAuthorization();
 
 app.MapApi();
@@ -92,6 +71,21 @@ if (autoApplyMigration)
             using var scope = app.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             await dbContext.Database.MigrateAsync();
+            await dbContext.Database.ExecuteSqlRawAsync(@"
+                CREATE TABLE IF NOT EXISTS ""WarehouseInventoryProjections"" (
+                    ""WarehouseId"" uuid NOT NULL,
+                    ""ProductId"" uuid NOT NULL,
+                    ""ProductCode"" character varying(100) NULL,
+                    ""ProductName"" character varying(500) NULL,
+                    ""Unit"" character varying(50) NULL,
+                    ""PhysicalQuantity"" integer NOT NULL,
+                    ""AllocatedQuantity"" integer NOT NULL,
+                    ""WarehouseName"" character varying(200) NULL,
+                    ""BrandZone"" character varying(200) NULL,
+                    ""RackCode"" character varying(200) NULL,
+                    ""LastSyncAt"" timestamp with time zone NOT NULL,
+                    CONSTRAINT ""PK_WarehouseInventoryProjections"" PRIMARY KEY (""WarehouseId"", ""ProductId"")
+                );");
             app.Logger.LogInformation("Database migration applied successfully.");
             break;
         }

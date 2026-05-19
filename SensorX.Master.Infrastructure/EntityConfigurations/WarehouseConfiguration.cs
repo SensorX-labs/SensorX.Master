@@ -1,14 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
 
 namespace SensorX.Master.Infrastructure.EntityConfigurations;
 
-public class WarehouseConfiguration : IEntityTypeConfiguration<Warehouse>
+public class WarehouseConfiguration : IEntityTypeConfiguration<SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate.Warehouse>
 {
-    public void Configure(EntityTypeBuilder<Warehouse> builder)
+    public void Configure(EntityTypeBuilder<SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate.Warehouse> builder)
     {
         builder.ToTable("Warehouses");
 
@@ -25,11 +24,6 @@ public class WarehouseConfiguration : IEntityTypeConfiguration<Warehouse>
         builder.Property(w => w.Address)
             .HasMaxLength(500);
 
-        builder.Property(w => w.ApiEndpointUrl)
-            .HasConversion(url => url.Value, v => ApiEndpointUrl.From(v))
-            .IsRequired()
-            .HasMaxLength(500);
-
         builder.Property(w => w.IsActive)
             .IsRequired();
 
@@ -38,6 +32,13 @@ public class WarehouseConfiguration : IEntityTypeConfiguration<Warehouse>
 
         builder.Property(w => w.UpdatedAt);
 
-        builder.HasIndex(w => w.ApiEndpointUrl).IsUnique();
+        builder.OwnsOne(w => w.Location, ownedBuilder =>
+        {
+            ownedBuilder.Property(g => g.Latitude)
+                .IsRequired();
+
+            ownedBuilder.Property(g => g.Longitude)
+                .IsRequired();
+        });
     }
 }

@@ -190,6 +190,121 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                     b.ToTable("OutboxState");
                 });
 
+            modelBuilder.Entity("SensorX.Master.Application.Common.ReadModel.Customer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CompanyName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RecipientName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RecipientPhone")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ShippingAddress")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TaxCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CustomerSnapshots", (string)null);
+                });
+
+            modelBuilder.Entity("SensorX.Master.Application.Common.ReadModel.Product", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Manufacturer")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ProductSnapshots", (string)null);
+                });
+
+            modelBuilder.Entity("SensorX.Master.Application.Common.ReadModel.SaleStaff", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AvatarUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SaleStaffSnapshots", (string)null);
+                });
+
             modelBuilder.Entity("SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAggregate.Invoice", b =>
                 {
                     b.Property<Guid>("Id")
@@ -472,11 +587,6 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
-                    b.Property<string>("ApiEndpointUrl")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -493,10 +603,53 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ApiEndpointUrl")
-                        .IsUnique();
-
                     b.ToTable("Warehouses", (string)null);
+                });
+
+            modelBuilder.Entity("SensorX.Master.Domain.Contexts.SupplyChainContext.ReadModels.WarehouseInventoryProjection", b =>
+                {
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AllocatedQuantity")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("BrandZone")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset>("LastSyncAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PhysicalQuantity")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ProductCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ProductName")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("RackCode")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Unit")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("WarehouseName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("WarehouseId", "ProductId");
+
+                    b.ToTable("WarehouseInventoryProjections", (string)null);
                 });
 
             modelBuilder.Entity("MassTransit.EntityFrameworkCoreIntegration.OutboxMessage", b =>
@@ -642,6 +795,11 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                                 .IsRequired()
                                 .HasColumnType("text")
                                 .HasColumnName("CustomerRecipientPhone");
+
+                            b1.Property<string>("ShippingAddress")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CustomerShippingAddress");
 
                             b1.Property<string>("TaxCode")
                                 .IsRequired()
@@ -790,6 +948,11 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("RecipientPhone");
 
+                            b1.Property<string>("ShippingAddress")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CustomerShippingAddress");
+
                             b1.Property<string>("TaxCode")
                                 .IsRequired()
                                 .HasColumnType("text")
@@ -915,6 +1078,11 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("RecipientPhone");
 
+                            b1.Property<string>("ShippingAddress")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CustomerShippingAddress");
+
                             b1.Property<string>("TaxCode")
                                 .IsRequired()
                                 .HasColumnType("text")
@@ -967,8 +1135,7 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                                 .HasForeignKey("RFQId");
                         });
 
-                    b.Navigation("CustomerInfo")
-                        .IsRequired();
+                    b.Navigation("CustomerInfo");
 
                     b.Navigation("Items");
                 });
@@ -1096,6 +1263,31 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                         });
 
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate.Warehouse", b =>
+                {
+                    b.OwnsOne("SensorX.Master.Domain.ValueObjects.Geolocation", "Location", b1 =>
+                        {
+                            b1.Property<Guid>("WarehouseId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<double>("Latitude")
+                                .HasColumnType("double precision");
+
+                            b1.Property<double>("Longitude")
+                                .HasColumnType("double precision");
+
+                            b1.HasKey("WarehouseId");
+
+                            b1.ToTable("Warehouses");
+
+                            b1.WithOwner()
+                                .HasForeignKey("WarehouseId");
+                        });
+
+                    b.Navigation("Location")
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

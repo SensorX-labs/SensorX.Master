@@ -22,6 +22,6 @@ public static class OffsetPaginationExtensions
         this IQueryable<T> query,
         OffsetPagedQuery request)
     {
-        return query.ApplyOffsetPagination(request.PageNumber, request.PageSize);
+        return query.ApplyOffsetPagination(request.PageNumber ?? 1, request.PageSize ?? 10);
     }
 }

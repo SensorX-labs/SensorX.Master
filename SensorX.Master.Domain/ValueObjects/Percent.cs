@@ -1,12 +1,14 @@
+using System.Text.Json.Serialization;
 using SensorX.Master.Domain.Common.Exceptions;
 
 namespace SensorX.Master.Domain.ValueObjects;
 
 public record Percent
 {
-    public decimal Value { get; }
+    public decimal Value { get; init; }
 
-    private Percent(decimal value)
+    [JsonConstructor]
+    public Percent(decimal value)
     {
         // Thường Percent trong kinh doanh nằm từ 0 - 100
         // Tuy nhiên có trường hợp tăng trưởng > 100% nên chỉ chặn số âm

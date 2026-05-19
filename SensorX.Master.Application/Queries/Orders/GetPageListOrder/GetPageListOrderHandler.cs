@@ -44,8 +44,8 @@ public class GetPageListOrderHandler(
         {
             Items = items,
             TotalCount = totalCount,
-            PageNumber = request.PageNumber,
-            PageSize = request.PageSize
+            PageNumber = request.PageNumber ?? 1,
+            PageSize = request.PageSize ?? 10
         };
 
         return Result<OffsetPagedResult<GetPageListOrderResponse>>.Success(result);

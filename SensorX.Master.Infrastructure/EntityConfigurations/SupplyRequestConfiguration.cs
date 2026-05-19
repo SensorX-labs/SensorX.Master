@@ -59,7 +59,7 @@ public class SupplyRequestConfiguration : IEntityTypeConfiguration<SupplyRequest
                 .HasConversion(qty => qty.Value, v => new Quantity(v));
         });
 
-        builder.HasOne<Warehouse>()
+        builder.HasOne<SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate.Warehouse>()
             .WithMany()
             .HasForeignKey(sr => sr.WarehouseId)
             .OnDelete(DeleteBehavior.Restrict);
