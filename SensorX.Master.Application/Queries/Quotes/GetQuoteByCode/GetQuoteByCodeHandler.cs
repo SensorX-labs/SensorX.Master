@@ -23,7 +23,6 @@ public class GetQuoteByCodeHandler(
                 x.Status.ToString(),
                 x.QuoteDate,
                 x.CustomerId.Value,
-                x.CustomerInfo.RecipientName,
                 x.CustomerInfo.CompanyName,
                 x.GetGrandTotal().Amount,
                 x.LineItems.Count,

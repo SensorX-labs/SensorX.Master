@@ -18,18 +18,18 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
             Code code,
             RFQId rFQId,
             CustomerId customerId,
+            StaffId createdBy,
             CustomerInfo customerInfo,
             QuoteStatus status,
-            DateTimeOffset quoteDate,
             string reasonReject
         ) : base(id)
         {
             Code = code;
             RFQId = rFQId;
             CustomerId = customerId;
+            CreatedBy = createdBy;
             CustomerInfo = customerInfo;
             Status = status;
-            QuoteDate = quoteDate;
             ReasonReject = reasonReject;
             AddDomainEvent(new QuoteCreatedEvent(Id.Value));
         }
@@ -37,8 +37,8 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         public static Quote CreateDraft(
             RFQId rFQId,
             CustomerId customerId,
-            CustomerInfo customerInfo,
-            DateTimeOffset quoteDate
+            StaffId createdBy,
+            CustomerInfo customerInfo
         )
         {
             return new Quote(
@@ -46,9 +46,9 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
                 Code.Create("QTE"),
                 rFQId,
                 customerId,
+                createdBy,
                 customerInfo,
                 QuoteStatus.Draft,
-                quoteDate,
                 string.Empty
             );
         }
@@ -56,11 +56,12 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         public Code Code { get; private set; }
         public RFQId RFQId { get; private set; }
         public CustomerId CustomerId { get; private set; }
+        public StaffId CreatedBy { get; private set; }
         public CustomerInfo CustomerInfo { get; private set; }
         public string? Note { get; private set; }
         public QuoteStatus Status { get; private set; }
         public QuoteResponse? Response { get; private set; }
-        public DateTimeOffset QuoteDate { get; private set; }
+        public DateTimeOffset? QuoteDate { get; private set; }
         public string ReasonReject { get; private set; }
 
         private readonly List<QuoteItem> _lineItems = [];
@@ -88,6 +89,13 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
             Percent taxRate
         )
         {
+            var existingItem = _lineItems.FirstOrDefault(x => x.ProductId == productId);
+            if (existingItem is not null)
+            {
+                existingItem.Update(quantity, unitPrice, taxRate);
+                return;
+            }
+
             var quoteItem = new QuoteItem(
                 QuoteItemId.New(),
                 productId,
@@ -102,13 +110,17 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
             UpdatedAt = DateTimeOffset.UtcNow;
         }
 
-        /// <summary>
-        /// Removes an item from the quote based on its ID and updates the last modified timestamp.
-        /// </summary>
-        public void RemoveItem(QuoteItemId quoteItemId)
+        // <summary>
+        // Removes an item from the quote based on its product ID and updates the last modified timestamp.
+        // </summary>
+        public void RemoveItem(ProductId productId)
         {
-            _lineItems.RemoveAll(item => item.Id == quoteItemId);
-            UpdatedAt = DateTimeOffset.UtcNow;
+            var quoteItem = _lineItems.FirstOrDefault(item => item.ProductId == productId);
+            if (quoteItem is not null)
+            {
+                _lineItems.Remove(quoteItem);
+                UpdatedAt = DateTimeOffset.UtcNow;
+            }
         }
 
         /// <summary>
@@ -221,6 +233,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
             if (Status is QuoteStatus.Approved)
             {
                 Status = QuoteStatus.Sent;
+                QuoteDate = DateTimeOffset.UtcNow;
                 UpdatedAt = DateTimeOffset.UtcNow;
             }
             else

@@ -12,7 +12,8 @@ public static class Api
         // viết api cho master
         api.MapRFQQueriesApi();
         api.MapRFQCommandApi();
-        api.MapQuoteApi();
+        api.MapQuoteQueriesApi();
+        api.MapQuoteCommandApi();
         api.MapOrderApi();
         api.MapInvoiceApi();
         api.MapTransferOrderApi();

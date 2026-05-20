@@ -39,6 +39,13 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         public Money GetLineAmount() => UnitPrice * Quantity;
         public Money GetTaxAmount() => GetLineAmount() * TaxRate;
         public Money GetTotalLineAmount() => GetLineAmount() + GetTaxAmount();
+
+        public void Update(Quantity quantity, Money unitPrice, Percent taxRate)
+        {
+            Quantity = quantity;
+            UnitPrice = unitPrice;
+            TaxRate = taxRate;
+        }
     }
 }
 

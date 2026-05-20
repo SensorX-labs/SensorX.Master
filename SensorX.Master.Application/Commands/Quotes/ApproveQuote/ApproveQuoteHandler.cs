@@ -11,6 +11,9 @@ public class ApproveQuoteHandler(
     IRepository<Quote> _quoteRepository
 ) : IRequestHandler<ApproveQuoteCommand, Result>
 {
+    /// <summary>
+    /// Quản lý phê duyệt báo giá của nhân viên khi ở trạng thái pending
+    /// </summary>
     public async Task<Result> Handle(ApproveQuoteCommand request, CancellationToken cancellationToken)
     {
         try
@@ -25,7 +28,7 @@ public class ApproveQuoteHandler(
 
             quote.Approve();
 
-            await _quoteRepository.UpdateAsync(quote, cancellationToken);
+            await _quoteRepository.SaveChangesAsync(cancellationToken);
 
             return Result.Success("Phê duyệt báo giá thành công.");
         }

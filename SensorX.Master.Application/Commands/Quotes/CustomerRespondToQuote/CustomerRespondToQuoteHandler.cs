@@ -15,7 +15,7 @@ public class CustomerRespondToQuoteHandler(
     {
         try
         {
-            var quoteId = new QuoteId(request.QuoteId);
+            var quoteId = new QuoteId(request.Id);
             var quote = await _quoteRepository.GetByIdAsync(quoteId, cancellationToken);
 
             if (quote is null)
@@ -23,17 +23,15 @@ public class CustomerRespondToQuoteHandler(
                 return Result.Failure("Không tìm thấy báo giá.");
             }
 
-            var response = new QuoteResponse
-            {
-                ResponseType = request.ResponseType,
-                PaymentTerm = request.PaymentTerm,
-                ShippingAddress = request.ShippingAddress ?? quote.CustomerInfo.Address,
-                Feedback = request.Feedback
-            };
-
-            quote.Publish();
+            var response = new QuoteResponse(
+                request.ResponseType,
+                request.PaymentTerm,
+                request.ShippingAddress ?? quote.CustomerInfo.Address,
+                request.RecipientName,
+                request.RecipientPhone,
+                request.Feedback
+            );
             quote.Accept(response);
-
             await _quoteRepository.UpdateAsync(quote, cancellationToken);
 
             return Result.Success("Khách hàng đã chấp nhận báo giá thành công.");

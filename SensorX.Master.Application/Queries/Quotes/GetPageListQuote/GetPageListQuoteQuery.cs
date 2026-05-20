@@ -12,7 +12,7 @@ public record GetPageListQuoteResponse(
     Guid Id,
     string Code,
     string Status,
-    DateTimeOffset QuoteDate,
+    DateTimeOffset? QuoteDate,
     Guid CustomerId,
     string RecipientName,
     string CompanyName,

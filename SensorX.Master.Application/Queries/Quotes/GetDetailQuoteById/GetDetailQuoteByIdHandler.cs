@@ -24,23 +24,24 @@ public class GetDetailQuoteByIdHandler(
                                 q.Code.Value,
                                 q.RFQId.Value,
                                 q.CustomerId.Value,
-                                q.Status.ToString(),
+                                q.Status,
                                 q.QuoteDate,
                                 q.Note,
                                 q.ReasonReject,
 
                                 // Map Customer Info
-                                string.Empty,
-                                q.CustomerInfo.Phone.Value,
                                 q.CustomerInfo.CompanyName,
+                                q.CustomerInfo.Phone.Value,
                                 q.CustomerInfo.Email.Value,
                                 q.CustomerInfo.Address,
                                 q.CustomerInfo.TaxCode,
 
                                 // Map Response Info
-                                q.Response != null ? q.Response.ResponseType.ToString() : null,
+                                q.Response != null ? (QuoteResponseStatus?)q.Response.ResponseType : null,
+                                q.Response != null ? (PaymentTerm?)q.Response.PaymentTerm : null,
                                 q.Response != null ? q.Response.ShippingAddress : null,
-                                q.Response != null ? q.Response.PaymentTerm.ToString() : null,
+                                q.Response != null ? q.Response.RecipientName : null,
+                                q.Response != null ? q.Response.RecipientPhone : null,
                                 q.Response != null ? q.Response.Feedback : null,
 
                                 // Calculations from Domain

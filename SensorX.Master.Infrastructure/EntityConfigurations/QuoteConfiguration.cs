@@ -28,12 +28,17 @@ public class QuoteConfiguration : IEntityTypeConfiguration<Quote>
         builder.Property(q => q.CustomerId)
             .HasConversion(id => id.Value, v => new CustomerId(v));
 
+        builder.Property(q => q.CreatedBy)
+            .HasConversion(id => id.Value, v => new StaffId(v))
+            .HasColumnName("CreatedBy")
+            .IsRequired();
+
         builder.OwnsOne(q => q.CustomerInfo, c =>
         {
             c.Property(p => p.CompanyName).HasColumnName("CompanyName");
             c.Property(p => p.Phone)
                 .HasConversion(p => p.Value, v => Phone.From(v))
-                .HasColumnName("RecipientPhone");
+                .HasColumnName("Phone");
             c.Property(p => p.Email)
                 .HasConversion(e => e.Value, v => Email.From(v))
                 .HasColumnName("Email");
@@ -46,6 +51,8 @@ public class QuoteConfiguration : IEntityTypeConfiguration<Quote>
             r.Property(p => p.ResponseType).HasColumnName("ResponseType");
             r.Property(p => p.PaymentTerm).HasColumnName("PaymentTerm");
             r.Property(p => p.ShippingAddress).HasColumnName("ShippingAddress");
+            r.Property(p => p.RecipientName).HasColumnName("RecipientName");
+            r.Property(p => p.RecipientPhone).HasColumnName("RecipientPhone");
             r.Property(p => p.Feedback).HasColumnName("Feedback");
         });
 

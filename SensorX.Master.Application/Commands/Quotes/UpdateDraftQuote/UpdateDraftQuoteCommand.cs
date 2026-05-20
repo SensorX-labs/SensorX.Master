@@ -1,13 +1,14 @@
+using System.Text.Json.Serialization;
 using MediatR;
 using SensorX.Master.Application.Common.ResponseClient;
 
-namespace SensorX.Master.Application.Commands.Quotes.CreateDraftQuote;
+namespace SensorX.Master.Application.Commands.Quotes.UpdateDraftQuote;
 
-public record CreateDraftQuoteCommand(
-    Guid RFQId,
+public record UpdateDraftQuoteCommand(
+    [property: JsonIgnore] Guid Id,
     string Note,
     List<QuoteItemDto> Items
-) : IRequest<Result<Guid>>;
+) : IRequest<Result>;
 
 public record QuoteItemDto
 {

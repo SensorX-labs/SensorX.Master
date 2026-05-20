@@ -26,14 +26,18 @@ public class CreateDraftQuoteCommandHandler(
             {
                 return Result<Guid>.Failure("Không tìm thấy RFQ tương ứng");
             }
+            if (rfq.StaffId is null)
+            {
+                return Result<Guid>.Failure("Không tìm thấy nhân viên phụ trách tương ứng");
+            }
 
             var customerInfo = await GetCustomerInfo(rfq, request, cancellationToken);
 
             var quote = Quote.CreateDraft(
                 new RFQId(request.RFQId),
                 rfq.CustomerId,
-                customerInfo,
-                request.QuoteDate
+                new StaffId(rfq.StaffId),
+                customerInfo
             );
 
             // Add quote items
@@ -68,7 +72,7 @@ public class CreateDraftQuoteCommandHandler(
             quote.AddItem(
                 new ProductId(item.ProductId),
                 item.ProductCode,
-                item.Manufacturer,
+                item.Manufacturer ?? "Default",
                 item.Unit,
                 new Quantity((int)item.Quantity),
                 mapItem.UnitPrice,
