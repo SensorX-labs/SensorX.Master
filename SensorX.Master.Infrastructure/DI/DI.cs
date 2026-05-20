@@ -129,19 +129,21 @@ namespace SensorX.Master.Infrastructure.DI
             // Chạy Quartz dưới dạng Hosted Service
             services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 
-            // Đăng ký Telegram Bot
+            // Đăng ký Telegram Bot + 9router Intent Router
             services.Configure<TelegramOptions>(configuration.GetSection(TelegramOptions.SectionName));
-            services.AddSingleton<ITelegramBotClient>(sp =>
+            var telegramEnabled = configuration.GetValue<bool>("Telegram:Enabled");
+            if (telegramEnabled)
             {
-                var options = sp.GetRequiredService<IOptions<TelegramOptions>>().Value;
-                if (string.IsNullOrEmpty(options.Token))
+                services.AddSingleton<ITelegramBotClient>(sp =>
                 {
-                    // Tránh crash nếu chưa cấu hình token, nhưng log cảnh báo
-                    return new TelegramBotClient("DUMMY_TOKEN"); 
-                }
-                return new TelegramBotClient(options.Token);
-            });
-            services.AddHostedService<TelegramBotBackgroundService>();
+                    var options = sp.GetRequiredService<IOptions<TelegramOptions>>().Value;
+                    if (string.IsNullOrEmpty(options.Token))
+                        return new TelegramBotClient("DUMMY_TOKEN");
+                    return new TelegramBotClient(options.Token);
+                });
+                services.AddHttpClient("NineRouter");
+                services.AddHostedService<TelegramBotBackgroundService>();
+            }
 
             return services;
 
