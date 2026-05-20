@@ -22,13 +22,12 @@ public class CreateOrderHandler(
                 return Result<Guid>.Failure("Order must have at least one item.");
             }
 
-            var customerInfo = new CustomerInfo(
+            var deliveryInfo = DeliveryInfo.Create(
                 request.CustomerInfo.RecipientName,
-                Phone.From(request.CustomerInfo.RecipientPhone),
+                request.CustomerInfo.RecipientPhone,
                 request.CustomerInfo.ShippingAddress,
                 request.CustomerInfo.CompanyName,
                 Email.From(request.CustomerInfo.Email),
-                request.CustomerInfo.Address,
                 request.CustomerInfo.TaxCode
             );
 
@@ -43,7 +42,7 @@ public class CreateOrderHandler(
                 new QuoteId(request.QuoteId),
                 string.IsNullOrWhiteSpace(request.Code) ? Code.Create("ORD") : Code.From(request.Code),
                 new CustomerId(request.CustomerId),
-                customerInfo,
+                deliveryInfo,
                 senderInfo,
                 OrderStatus.Processing,
                 request.OrderDate ?? DateTimeOffset.UtcNow

@@ -14,8 +14,8 @@ public static class OrderSearch
         var term = searchTerm.Trim().ToLower();
 
         return query.Where(o =>
-            o.CustomerInfo.CompanyName.ToLower().Contains(term) ||
-            o.CustomerInfo.RecipientName.ToLower().Contains(term) ||
-            o.CustomerInfo.Address.ToLower().Contains(term));
+            o.DeliveryInfo.CompanyName.ToLower().Contains(term) ||
+            o.DeliveryInfo.RecipientName.ToLower().Contains(term) ||
+            o.DeliveryInfo.ShippingAddress.ToLower().Contains(term));
     }
 }

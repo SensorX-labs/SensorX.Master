@@ -7,7 +7,10 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
 {
     public class RFQ : Entity<RFQId>, IAggregateRoot, ICreationTrackable, IUpdateTrackable
     {
+#pragma warning disable CS8618 // EF Core requires parameterless constructor
         private RFQ() : base() { }
+#pragma warning restore CS8618
+
         public RFQ(
             RFQId id,
             Code code,

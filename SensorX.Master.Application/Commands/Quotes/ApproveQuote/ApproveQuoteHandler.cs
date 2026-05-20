@@ -18,7 +18,7 @@ public class ApproveQuoteHandler(
             var quoteId = new QuoteId(request.QuoteId);
             var quote = await _quoteRepository.GetByIdAsync(quoteId, cancellationToken);
 
-            if (quote == null)
+            if (quote is null)
             {
                 return Result.Failure("Không tìm thấy báo giá.");
             }

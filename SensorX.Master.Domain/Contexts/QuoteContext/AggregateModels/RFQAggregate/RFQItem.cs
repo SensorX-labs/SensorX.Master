@@ -7,7 +7,9 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
     public class RFQItem : Entity<RFQItemId>
 
     {
+#pragma warning disable CS8618 // EF Core requires parameterless constructor
         private RFQItem() : base() { }
+#pragma warning restore CS8618
 
         public RFQItem(RFQItemId id, ProductId productId, string productName, Quantity quantity, Code productCode, string manufacturer, string unit) : base(id)
         {

@@ -30,8 +30,8 @@ public class GetDetailQuoteByIdHandler(
                                 q.ReasonReject,
 
                                 // Map Customer Info
-                                q.CustomerInfo.RecipientName,
-                                q.CustomerInfo.RecipientPhone.Value,
+                                string.Empty,
+                                q.CustomerInfo.Phone.Value,
                                 q.CustomerInfo.CompanyName,
                                 q.CustomerInfo.Email.Value,
                                 q.CustomerInfo.Address,

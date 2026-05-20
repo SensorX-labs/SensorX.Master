@@ -30,12 +30,10 @@ public class QuoteConfiguration : IEntityTypeConfiguration<Quote>
 
         builder.OwnsOne(q => q.CustomerInfo, c =>
         {
-            c.Property(p => p.RecipientName).HasColumnName("RecipientName");
-            c.Property(p => p.RecipientPhone)
+            c.Property(p => p.CompanyName).HasColumnName("CompanyName");
+            c.Property(p => p.Phone)
                 .HasConversion(p => p.Value, v => Phone.From(v))
                 .HasColumnName("RecipientPhone");
-            c.Property(p => p.CompanyName).HasColumnName("CompanyName");
-            c.Property(p => p.ShippingAddress).HasColumnName("CustomerShippingAddress");
             c.Property(p => p.Email)
                 .HasConversion(e => e.Value, v => Email.From(v))
                 .HasColumnName("Email");

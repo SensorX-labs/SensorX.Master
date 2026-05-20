@@ -15,14 +15,13 @@ public class OrderContextTests
     public void Order_ShouldCalculateCorrectTotals()
     {
         // Arrange
-        var customerInfo = new CustomerInfo
+        var deliveryInfo = DeliveryInfo.Create
         (
             "Nguyễn Văn A",
-            Phone.Create("0123456789"),
+            "0123456789",
             "Shipping Address",
             "Company",
             Email.From("test@test.com"),
-            "Hà Nội",
             "123456"
         );
 
@@ -37,7 +36,7 @@ public class OrderContextTests
             new QuoteId(Guid.NewGuid()),
             Code.Create("ORD"),
             new CustomerId(Guid.NewGuid()),
-            customerInfo,
+            deliveryInfo,
             senderInfo,
             OrderStatus.PendingPayment,
             DateTimeOffset.Now
@@ -121,14 +120,13 @@ public class OrderContextTests
 
     private Order CreateSampleOrder()
     {
-        var customerInfo = new CustomerInfo
+        var deliveryInfo = DeliveryInfo.Create
         (
             "Test",
-            Phone.Create("0123456789"),
+            "0123456789",
             "Shipping Address",
             "Test Company",
             Email.From("a@b.com"),
-            "Test Address",
             "123456"
         );
 
@@ -143,7 +141,7 @@ public class OrderContextTests
             new QuoteId(Guid.NewGuid()),
             Code.Create("ORD"),
             new CustomerId(Guid.NewGuid()),
-            customerInfo,
+            deliveryInfo,
             senderInfo,
             OrderStatus.Processing,
             DateTimeOffset.Now

@@ -13,15 +13,13 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         private Quote() : base() { }
 #pragma warning restore CS8618
 
-        public Quote(
+        private Quote(
             QuoteId id,
             Code code,
             RFQId rFQId,
             CustomerId customerId,
             CustomerInfo customerInfo,
-            string? note,
             QuoteStatus status,
-            QuoteResponse? response,
             DateTimeOffset quoteDate,
             string reasonReject
         ) : base(id)
@@ -30,12 +28,29 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
             RFQId = rFQId;
             CustomerId = customerId;
             CustomerInfo = customerInfo;
-            Note = note;
             Status = status;
-            Response = response;
             QuoteDate = quoteDate;
             ReasonReject = reasonReject;
             AddDomainEvent(new QuoteCreatedEvent(Id.Value));
+        }
+
+        public static Quote CreateDraft(
+            RFQId rFQId,
+            CustomerId customerId,
+            CustomerInfo customerInfo,
+            DateTimeOffset quoteDate
+        )
+        {
+            return new Quote(
+                QuoteId.New(),
+                Code.Create("QTE"),
+                rFQId,
+                customerId,
+                customerInfo,
+                QuoteStatus.Draft,
+                quoteDate,
+                string.Empty
+            );
         }
 
         public Code Code { get; private set; }
@@ -54,12 +69,36 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
         public DateTimeOffset? UpdatedAt { get; set; }
 
+        public void SetNote(string note)
+        {
+            Note = note;
+            UpdatedAt = DateTimeOffset.UtcNow;
+        }
+
         /// <summary>
         /// Adds a new item to the quote and updates the last modified timestamp.
         /// </summary>
-        public void AddItem(QuoteItem item)
+        public void AddItem(
+            ProductId productId,
+            Code productCode,
+            string manufacturer,
+            string unit,
+            Quantity quantity,
+            Money unitPrice,
+            Percent taxRate
+        )
         {
-            _lineItems.Add(item);
+            var quoteItem = new QuoteItem(
+                QuoteItemId.New(),
+                productId,
+                productCode,
+                manufacturer,
+                unit,
+                quantity,
+                unitPrice,
+                taxRate
+            );
+            _lineItems.Add(quoteItem);
             UpdatedAt = DateTimeOffset.UtcNow;
         }
 

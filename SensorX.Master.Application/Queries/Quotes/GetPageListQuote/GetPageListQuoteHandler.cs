@@ -30,7 +30,7 @@ public class GetPageListQuoteHandler(
             x.Status.ToString(),
             x.QuoteDate,
             x.CustomerId.Value,
-            x.CustomerInfo.RecipientName,
+            string.Empty,
             x.CustomerInfo.CompanyName,
             x.GetGrandTotal().Amount,
             x.LineItems.Count,

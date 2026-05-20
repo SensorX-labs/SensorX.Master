@@ -28,7 +28,7 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(o => o.CustomerId)
             .HasConversion(id => id.Value, v => new CustomerId(v));
 
-        builder.OwnsOne(o => o.CustomerInfo, c =>
+        builder.OwnsOne(o => o.DeliveryInfo, c =>
         {
             // For Owned entity, column names will by default be prefixed,
             // mapping them explicitly to avoid prefix if preferred, or keeping prefix.
@@ -40,7 +40,6 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             c.Property(p => p.CompanyName).HasColumnName("CustomerCompanyName");
             c.Property(p => p.ShippingAddress).HasColumnName("CustomerShippingAddress");
             c.Property(p => p.Email).HasConversion(e => e.Value, v => Email.From(v)).HasColumnName("CustomerEmail");
-            c.Property(p => p.Address).HasColumnName("CustomerAddress");
             c.Property(p => p.TaxCode).HasColumnName("CustomerTaxCode");
         });
 

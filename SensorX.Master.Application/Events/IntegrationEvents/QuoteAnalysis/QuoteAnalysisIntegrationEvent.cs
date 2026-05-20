@@ -100,7 +100,7 @@ public class QuoteAnalysisIntegrationEvent : IConsumer<IQuoteCreatedEvent>
                 Customer: new CustomerAnalysisData(
                     CustomerId: quote.CustomerId.Value.ToString(),
                     CompanyName: quote.CustomerInfo.CompanyName,
-                    RecipientName: quote.CustomerInfo.RecipientName,
+                    RecipientName: string.Empty,
                     TotalQuotes: customerQuotes.Count,
                     AcceptedQuotes: customerQuotes.Count(q => q.Status == QuoteStatus.Ordered),
                     RejectedOrExpiredQuotes: customerQuotes.Count(q => q.Status == QuoteStatus.Returned || q.Status == QuoteStatus.Expired)

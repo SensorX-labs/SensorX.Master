@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using SensorX.Master.Application.Commands.Quotes.CustomerRespondToQuote;
 using SensorX.Master.Application.Commands.Quotes.ApproveQuote;
-// using SensorX.Master.Application.Commands.Quotes.CreateQuote;
+using SensorX.Master.Application.Commands.Quotes.CreateDraftQuote;
 using SensorX.Master.Application.Commands.Quotes.SubmitQuoteForApproval;
 using SensorX.Master.Application.Common.Interfaces;
 using SensorX.Master.Application.Queries.Quotes.GetDetailQuoteById;
@@ -14,36 +14,18 @@ using SensorX.Master.Application.Queries.Quotes.GetPageListQuote;
 using SensorX.Master.WebApi.Configurations;
 using SensorX.Master.WebApi.Extensions;
 
-namespace SensorX.Master.WebApi.API
+namespace SensorX.Master.WebApi.API.Commands
 {
-    public static class QuoteApi
+    public static class QuoteCommandApi
     {
-        public static IEndpointRouteBuilder MapQuoteApi(this IEndpointRouteBuilder app)
+        public static IEndpointRouteBuilder MapQuoteCommandApi(this IEndpointRouteBuilder app)
         {
-            var api = app.MapGroup("quotes").WithTags("Quotes");
+            var api = app.MapGroup("quotes").WithTags("Quotes Commands");
 
-            // api.MapPost("", CreateQuote).WithOpenApi(operation =>
-            // {
-            //     operation.Summary = "Tạo báo giá mới";
-            //     operation.Description = "Tạo báo giá (Draft) dựa trên thông tin gửi xuống từ Frontend (kế thừa từ RFQ).";
-            //     return operation;
-            // });
-
-            api.MapGet("{quoteId:guid}", GetDetailQuoteById).WithOpenApi(operation =>
+            api.MapPost("", CreateDraftQuote).WithOpenApi(operation =>
             {
-                operation.Summary = "Lấy chi tiết báo giá";
-                return operation;
-            });
-
-            api.MapGet("", GetPageListQuote).WithOpenApi(operation =>
-            {
-                operation.Summary = "Lấy danh sách báo giá có phân trang";
-                return operation;
-            });
-
-            api.MapGet("my-quotes", GetMyQuotes).WithOpenApi(operation =>
-            {
-                operation.Summary = "Lấy danh sách báo giá của tôi (Trang của khách hàng)";
+                operation.Summary = "Tạo bản thảo báo giá mới";
+                operation.Description = "Tạo báo giá (Draft) dựa trên thông tin gửi xuống từ Frontend (kế thừa từ RFQ).";
                 return operation;
             });
 
@@ -68,40 +50,12 @@ namespace SensorX.Master.WebApi.API
             return api;
         }
 
-        // private static async Task<IResult> CreateQuote(
-        //     [FromBody] CreateQuoteCommand command,
-        //     [FromServices] IMediator mediator
-        // )
-        // {
-        //     var result = await mediator.Send(command);
-        //     return result.ToResult();
-        // }
-
-        private static async Task<IResult> GetDetailQuoteById(
-            [FromRoute] Guid quoteId,
+        private static async Task<IResult> CreateDraftQuote(
+            [FromBody] CreateDraftQuoteCommand command,
             [FromServices] IMediator mediator
         )
         {
-            var result = await mediator.Send(new GetDetailQuoteByIdQuery(quoteId));
-            return result.ToResult();
-        }
-
-        private static async Task<IResult> GetPageListQuote(
-            [AsParameters] GetPageListQuoteQuery query,
-            [FromServices] IMediator mediator
-        )
-        {
-            var result = await mediator.Send(query);
-            return result.ToResult();
-        }
-
-        [AuthorizeRole(Role.Customer)]
-        private static async Task<IResult> GetMyQuotes(
-            [AsParameters] GetMyQuotesQuery query,
-            [FromServices] IMediator mediator
-        )
-        {
-            var result = await mediator.Send(query);
+            var result = await mediator.Send(command);
             return result.ToResult();
         }
 

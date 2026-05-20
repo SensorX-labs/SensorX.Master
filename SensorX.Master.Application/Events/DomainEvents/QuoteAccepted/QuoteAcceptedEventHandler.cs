@@ -26,9 +26,9 @@ public class QuoteAcceptedEventHandler(
         if (quote != null)
         {
             var customerInfo = new CustomerInfoDto(
-                RecipientName: quote.CustomerInfo.RecipientName,
-                RecipientPhone: quote.CustomerInfo.RecipientPhone.Value,
-                ShippingAddress: quote.CustomerInfo.ShippingAddress,
+                RecipientName: quote.CustomerInfo.CompanyName,
+                RecipientPhone: quote.CustomerInfo.Phone.Value,
+                ShippingAddress: quote.Response?.ShippingAddress ?? quote.CustomerInfo.Address,
                 CompanyName: quote.CustomerInfo.CompanyName,
                 Email: quote.CustomerInfo.Email.Value,
                 Address: quote.CustomerInfo.Address,

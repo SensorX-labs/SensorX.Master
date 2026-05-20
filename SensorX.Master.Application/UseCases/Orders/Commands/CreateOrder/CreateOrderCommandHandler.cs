@@ -21,13 +21,12 @@ public class CreateOrderCommandHandler(
         var quoteId = new QuoteId(request.QuoteId);
         var code = Code.From(request.Code);
         var customerId = new CustomerId(request.CustomerId);
-        var customerInfo = new CustomerInfo(
+        var deliveryInfo = DeliveryInfo.Create(
             request.CustomerInfo.RecipientName,
-            Phone.From(request.CustomerInfo.RecipientPhone),
+            request.CustomerInfo.RecipientPhone,
             request.CustomerInfo.ShippingAddress,
             request.CustomerInfo.CompanyName,
             Email.From(request.CustomerInfo.Email),
-            request.CustomerInfo.Address,
             request.CustomerInfo.TaxCode
         );
         var senderInfo = new SenderInfo
@@ -41,7 +40,7 @@ public class CreateOrderCommandHandler(
             quoteId,
             code,
             customerId,
-            customerInfo,
+            deliveryInfo,
             senderInfo,
             OrderStatus.Processing,
             request.OrderDate
