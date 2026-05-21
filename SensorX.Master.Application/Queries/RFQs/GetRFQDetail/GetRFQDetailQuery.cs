@@ -17,11 +17,8 @@ public record GetRFQDetailResponse
     DateTimeOffset? UpdatedAt,
 
     // Flat Customer Info
-    string? RecipientName,
-    string? RecipientPhone,
-    string? ShippingAddress,
-
     string CompanyName,
+    string Phone,
     string Email,
     string Address,
     string TaxCode,

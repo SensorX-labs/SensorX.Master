@@ -13,29 +13,44 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         private Quote() : base() { }
 #pragma warning restore CS8618
 
-        public Quote(
+        private Quote(
             QuoteId id,
             Code code,
             RFQId rFQId,
             CustomerId customerId,
+            SenderInfo sender,
             CustomerInfo customerInfo,
-            string? note,
             QuoteStatus status,
-            QuoteResponse? response,
-            DateTimeOffset quoteDate,
             string reasonReject
         ) : base(id)
         {
             Code = code;
             RFQId = rFQId;
             CustomerId = customerId;
+            SenderInfo = sender;
             CustomerInfo = customerInfo;
-            Note = note;
             Status = status;
-            Response = response;
-            QuoteDate = quoteDate;
             ReasonReject = reasonReject;
-            AddDomainEvent(new QuoteCreatedEvent(Id.Value));
+            AddDomainEvent(new QuoteCreatedEvent(Id, rFQId));
+        }
+
+        public static Quote CreateDraft(
+            RFQId rFQId,
+            CustomerId customerId,
+            SenderInfo sender,
+            CustomerInfo customerInfo
+        )
+        {
+            return new Quote(
+                QuoteId.New(),
+                Code.Create("QTE"),
+                rFQId,
+                customerId,
+                sender,
+                customerInfo,
+                QuoteStatus.Draft,
+                string.Empty
+            );
         }
 
         public Code Code { get; private set; }
@@ -44,8 +59,9 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         public CustomerInfo CustomerInfo { get; private set; }
         public string? Note { get; private set; }
         public QuoteStatus Status { get; private set; }
+        public SenderInfo SenderInfo { get; private set; }
         public QuoteResponse? Response { get; private set; }
-        public DateTimeOffset QuoteDate { get; private set; }
+        public DateTimeOffset? QuoteDate { get; private set; }
         public string ReasonReject { get; private set; }
 
         private readonly List<QuoteItem> _lineItems = [];
@@ -54,22 +70,63 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
         public DateTimeOffset? UpdatedAt { get; set; }
 
-        /// <summary>
-        /// Adds a new item to the quote and updates the last modified timestamp.
-        /// </summary>
-        public void AddItem(QuoteItem item)
+        public void SetNote(string note)
         {
-            _lineItems.Add(item);
+            Note = note;
+            UpdatedAt = DateTimeOffset.UtcNow;
+        }
+
+        public void SetSenderInfo(SenderInfo sender)
+        {
+            SenderInfo = sender;
             UpdatedAt = DateTimeOffset.UtcNow;
         }
 
         /// <summary>
-        /// Removes an item from the quote based on its ID and updates the last modified timestamp.
+        /// Adds a new item to the quote and updates the last modified timestamp.
         /// </summary>
-        public void RemoveItem(QuoteItemId quoteItemId)
+        public void AddItem(
+            ProductId productId,
+            Code productCode,
+            string manufacturer,
+            string unit,
+            Quantity quantity,
+            Money unitPrice,
+            Percent taxRate
+        )
         {
-            _lineItems.RemoveAll(item => item.Id == quoteItemId);
+            var existingItem = _lineItems.FirstOrDefault(x => x.ProductId == productId);
+            if (existingItem is not null)
+            {
+                existingItem.Update(quantity, unitPrice, taxRate);
+                return;
+            }
+
+            var quoteItem = new QuoteItem(
+                QuoteItemId.New(),
+                productId,
+                productCode,
+                manufacturer,
+                unit,
+                quantity,
+                unitPrice,
+                taxRate
+            );
+            _lineItems.Add(quoteItem);
             UpdatedAt = DateTimeOffset.UtcNow;
+        }
+
+        // <summary>
+        // Removes an item from the quote based on its product ID and updates the last modified timestamp.
+        // </summary>
+        public void RemoveItem(ProductId productId)
+        {
+            var quoteItem = _lineItems.FirstOrDefault(item => item.ProductId == productId);
+            if (quoteItem is not null)
+            {
+                _lineItems.Remove(quoteItem);
+                UpdatedAt = DateTimeOffset.UtcNow;
+            }
         }
 
         /// <summary>
@@ -104,8 +161,19 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         /// </summary>
         public void RecordCustomerResponse(QuoteResponse response)
         {
-            Response = response;
-            UpdatedAt = DateTimeOffset.UtcNow;
+            if (Response is not null)
+                throw new DomainException("Customer has already responded to the quote.");
+
+            if (Status is QuoteStatus.Sent)
+            {
+                Response = response;
+                UpdatedAt = DateTimeOffset.UtcNow;
+                AddDomainEvent(new CustomerRespondedQuoteEvent(Id, RFQId, response));
+            }
+            else
+            {
+                throw new DomainException("Quote is not in a valid state to be accepted.");
+            }
         }
 
         /// <summary>
@@ -182,7 +250,9 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
             if (Status is QuoteStatus.Approved)
             {
                 Status = QuoteStatus.Sent;
+                QuoteDate = DateTimeOffset.UtcNow;
                 UpdatedAt = DateTimeOffset.UtcNow;
+                AddDomainEvent(new PublishQuoteEvent(Id, RFQId));
             }
             else
             {
@@ -191,22 +261,24 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         }
 
         /// <summary>
-        /// Handles customer acceptance of the quote.
-        /// Transitions status to Ordered and records the response.
+        /// Staff Cancelled quote or when staff publish 1 quote then any quote have rfqId Cancelled
         /// </summary>
-        public void Accept(QuoteResponse response)
+        public void Cancel()
         {
-            if (Status is QuoteStatus.Sent)
-            {
-                RecordCustomerResponse(response);
-                Status = QuoteStatus.Ordered;
-                UpdatedAt = DateTimeOffset.UtcNow;
-                AddDomainEvent(new QuoteAcceptedEvent(Id.Value));
-            }
-            else
-            {
-                throw new DomainException("Quote is not in a valid state to be accepted.");
-            }
+            Status = QuoteStatus.Cancelled;
+            UpdatedAt = DateTimeOffset.UtcNow;
+        }
+
+        /// <summary>
+        /// Transitions the quote status to Ordered when an order is created from it.
+        /// </summary>
+        public void MarkAsOrdered()
+        {
+            if (Status != QuoteStatus.Sent)
+                throw new DomainException("Chỉ có báo giá đã gửi mới có thể chuyển sang trạng thái đã sinh đơn.");
+
+            Status = QuoteStatus.Ordered;
+            UpdatedAt = DateTimeOffset.UtcNow;
         }
     }
 }

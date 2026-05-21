@@ -22,22 +22,22 @@ public class GetMyQuotesHandler(
             .Select(c => c.Id);
         var customerIdVal = await _queryExecutor.FirstOrDefaultAsync(customerQuery, cancellationToken);
 
-
         if (customerIdVal == null)
         {
-            return Result<GetMyQuotesResult>.Failure("Khong tim thay khach hang cho tai khoan hien tai");
+            return Result<GetMyQuotesResult>.Failure("Không tìm thấy thông tin khách hàng");
         }
 
         var customerId = new CustomerId(customerIdVal);
 
         var query = _quoteBuilder.QueryAsNoTracking.Where(quote => quote.CustomerId == customerId);
+        query = query.Where(quote => quote.Status != QuoteStatus.Draft && quote.Status != QuoteStatus.Returned && quote.Status != QuoteStatus.Cancelled);
 
 
         if (!string.IsNullOrEmpty(request.SearchTerm))
         {
             query = query.Where(quote => ((string)quote.Code).Contains(request.SearchTerm));
         }
-        if (request.Status.HasValue)
+        if (request.Status.HasValue && request.Status != QuoteStatus.Draft && request.Status != QuoteStatus.Returned && request.Status != QuoteStatus.Cancelled)
         {
             query = query.Where(quote => quote.Status == request.Status);
         }

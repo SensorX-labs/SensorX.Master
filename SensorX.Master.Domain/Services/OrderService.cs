@@ -11,10 +11,10 @@ public class OrderService
         var taxAmount = order.GetTotalTax();
         var billingInfo = new BillingInfo
         {
-            CompanyName = order.CustomerInfo.CompanyName,
-            TaxCode = order.CustomerInfo.TaxCode,
-            Address = order.CustomerInfo.Address,
-            Email = order.CustomerInfo.Email
+            CompanyName = order.DeliveryInfo.CompanyName,
+            TaxCode = order.DeliveryInfo.TaxCode,
+            Address = order.DeliveryInfo.ShippingAddress,
+            Email = order.DeliveryInfo.Email
         };
         var invoice = Invoice.Create(order.Id, billingInfo, subTotal, taxAmount);
         foreach (var item in order.Items)

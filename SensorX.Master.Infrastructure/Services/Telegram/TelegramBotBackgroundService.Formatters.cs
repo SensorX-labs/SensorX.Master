@@ -15,8 +15,8 @@ public partial class TelegramBotBackgroundService
         {
             var q = items[i];
             sb.AppendLine($"*{i + 1}. {q.Code}*")
-              .AppendLine($"   {QuoteEmoji(q.Status)} `{q.Status}`")
-              .AppendLine($"   👤 {q.RecipientName} - {q.CompanyName}")
+              .AppendLine($"   {QuoteEmoji(q.Status.ToString())} `{q.Status}`")
+              .AppendLine($"   👤 {q.CompanyName}")
               .AppendLine($"   💰 `{q.GrandTotal:N0} VNĐ` | 📦 {q.ItemCount} SP")
               .AppendLine($"   📅 {q.CreatedAt:dd/MM/yyyy HH:mm}")
               .AppendLine();
@@ -26,10 +26,10 @@ public partial class TelegramBotBackgroundService
 
     private static string QuoteEmoji(string s) => s.ToLower() switch
     {
-        var x when x.Contains("draft")                          => "📝",
+        var x when x.Contains("draft") => "📝",
         var x when x.Contains("pending") || x.Contains("submitted") => "⏳",
-        var x when x.Contains("approved")                       => "✅",
-        var x when x.Contains("accepted")                       => "🎉",
+        var x when x.Contains("approved") => "✅",
+        var x when x.Contains("accepted") => "🎉",
         var x when x.Contains("rejected") || x.Contains("cancel") => "❌",
         _ => "📄"
     };

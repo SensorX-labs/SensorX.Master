@@ -28,14 +28,27 @@ public class QuoteConfiguration : IEntityTypeConfiguration<Quote>
         builder.Property(q => q.CustomerId)
             .HasConversion(id => id.Value, v => new CustomerId(v));
 
+        builder.OwnsOne(q => q.SenderInfo, c =>
+        {
+            c.Property(p => p.Id)
+                .HasConversion(id => id.Value, v => new StaffId(v))
+                .HasColumnName("SenderId")
+                .IsRequired();
+            c.Property(p => p.Name).HasColumnName("SenderName");
+            c.Property(p => p.Phone)
+                .HasConversion(p => p.Value, v => Phone.From(v))
+                .HasColumnName("SenderPhone");
+            c.Property(p => p.Email)
+                .HasConversion(e => e.Value, v => Email.From(v))
+                .HasColumnName("SenderEmail");
+        });
+
         builder.OwnsOne(q => q.CustomerInfo, c =>
         {
-            c.Property(p => p.RecipientName).HasColumnName("RecipientName");
-            c.Property(p => p.RecipientPhone)
-                .HasConversion(p => p.Value, v => Phone.From(v))
-                .HasColumnName("RecipientPhone");
             c.Property(p => p.CompanyName).HasColumnName("CompanyName");
-            c.Property(p => p.ShippingAddress).HasColumnName("CustomerShippingAddress");
+            c.Property(p => p.Phone)
+                .HasConversion(p => p.Value, v => Phone.From(v))
+                .HasColumnName("Phone");
             c.Property(p => p.Email)
                 .HasConversion(e => e.Value, v => Email.From(v))
                 .HasColumnName("Email");
@@ -48,6 +61,8 @@ public class QuoteConfiguration : IEntityTypeConfiguration<Quote>
             r.Property(p => p.ResponseType).HasColumnName("ResponseType");
             r.Property(p => p.PaymentTerm).HasColumnName("PaymentTerm");
             r.Property(p => p.ShippingAddress).HasColumnName("ShippingAddress");
+            r.Property(p => p.RecipientName).HasColumnName("RecipientName");
+            r.Property(p => p.RecipientPhone).HasColumnName("RecipientPhone");
             r.Property(p => p.Feedback).HasColumnName("Feedback");
         });
 

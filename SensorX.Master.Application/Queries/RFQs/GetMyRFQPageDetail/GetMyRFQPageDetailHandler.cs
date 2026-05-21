@@ -70,15 +70,15 @@ public class GetMyRFQPageDetailHandler(
         if (rfqData.CustomerInfo != null && rfqData.Status != RFQStatus.Draft)
         {
             var shippingInfo = new ShippingInfo(
-                rfqData.CustomerInfo.RecipientName ?? string.Empty,
-                rfqData.CustomerInfo.RecipientPhone?.ToString() ?? string.Empty,
-                rfqData.CustomerInfo.ShippingAddress ?? string.Empty
+                string.Empty,
+                rfqData.CustomerInfo.Phone?.Value ?? string.Empty,
+                rfqData.CustomerInfo.Address ?? string.Empty
             );
             return new MyRfqDetailCustomer(
-                rfqData.CustomerId,
+                rfqData.CustomerId.Value,
                 rfqData.CustomerInfo.CompanyName,
-                rfqData.CustomerInfo.Email.ToString(),
-                rfqData.CustomerInfo.RecipientPhone?.ToString(),
+                rfqData.CustomerInfo.Email.Value,
+                rfqData.CustomerInfo.Phone?.Value,
                 rfqData.CustomerInfo.Address,
                 shippingInfo
             );
@@ -90,14 +90,14 @@ public class GetMyRFQPageDetailHandler(
         {
             var shippingInfo = new ShippingInfo(
                 customer.RecipientName ?? string.Empty,
-                customer.RecipientPhone ?? string.Empty,
+                customer.RecipientPhone?.Value ?? string.Empty,
                 customer.ShippingAddress ?? string.Empty
             );
             return new MyRfqDetailCustomer(
                 customer.Id.Value,
                 customer.CompanyName,
-                customer.Email.ToString(),
-                customer.Phone?.ToString(),
+                customer.Email.Value,
+                customer.Phone?.Value,
                 customer.Address,
                 shippingInfo
             );

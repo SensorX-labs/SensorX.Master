@@ -7,7 +7,10 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
 {
     public class RFQ : Entity<RFQId>, IAggregateRoot, ICreationTrackable, IUpdateTrackable
     {
+#pragma warning disable CS8618 // EF Core requires parameterless constructor
         private RFQ() : base() { }
+#pragma warning restore CS8618
+
         public RFQ(
             RFQId id,
             Code code,
@@ -119,7 +122,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
         public void MarkAsResponded()
         {
             if (Status != RFQStatus.Accepted)
-                throw new DomainException("Ghi nhận phản hồi báo giá không thành công.");
+                throw new DomainException($"Ghi nhận phản hồi báo giá không thành công do trạng thái không hợp lệ: {Status}.");
 
             Status = RFQStatus.Responded;
             UpdatedAt = DateTimeOffset.UtcNow;
@@ -133,6 +136,15 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
                 throw new DomainException("Ghi nhận chuyển đổi yêu cầu báo giá không thành công.");
 
             Status = RFQStatus.Converted;
+            UpdatedAt = DateTimeOffset.UtcNow;
+        }
+
+        public void Cancel()
+        {
+            if (Status != RFQStatus.Responded)
+                throw new DomainException("Ghi nhận hủy yêu cầu báo giá không thành công.");
+
+            Status = RFQStatus.Cancelled;
             UpdatedAt = DateTimeOffset.UtcNow;
         }
 

@@ -18,14 +18,14 @@ public class SubmitQuoteForApprovalHandler(
             var quoteId = new QuoteId(request.QuoteId);
             var quote = await _quoteRepository.GetByIdAsync(quoteId, cancellationToken);
 
-            if (quote == null)
+            if (quote is null)
             {
                 return Result.Failure("Không tìm thấy báo giá.");
             }
 
             quote.SubmitForApproval();
 
-            await _quoteRepository.UpdateAsync(quote, cancellationToken);
+            await _quoteRepository.SaveChangesAsync(cancellationToken);
 
             return Result.Success("Đã gửi báo giá để chờ duyệt thành công.");
         }

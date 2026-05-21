@@ -4,29 +4,31 @@ namespace SensorX.Master.Domain.ValueObjects;
 
 public record DeliveryInfo
 {
-    public string ReceiverName { get; init; }
-    public Phone ReceiverPhone { get; init; }
-    public string DeliveryAddress { get; init; }
+    public string RecipientName { get; init; }
+    public Phone RecipientPhone { get; init; }
     public string CompanyName { get; init; }
+    public Email Email { get; init; }
+    public string ShippingAddress { get; init; }
     public string TaxCode { get; init; }
 
     [JsonConstructor]
-    public DeliveryInfo(string receiverName, Phone receiverPhone, string deliveryAddress, string companyName, string taxCode)
+    public DeliveryInfo(string recipientName, Phone recipientPhone, string companyName, Email email, string shippingAddress, string taxCode)
     {
-        ReceiverName = receiverName;
-        ReceiverPhone = receiverPhone;
-        DeliveryAddress = deliveryAddress;
+        RecipientName = recipientName;
+        RecipientPhone = recipientPhone;
         CompanyName = companyName;
+        Email = email;
+        ShippingAddress = shippingAddress;
         TaxCode = taxCode;
     }
 
-    public static DeliveryInfo Create(string receiverName, string receiverPhone, string deliveryAddress, string companyName, string taxCode)
+    public static DeliveryInfo Create(string recipientName, string recipientPhone, string shippingAddress, string companyName, Email email, string taxCode)
     {
-        if (string.IsNullOrWhiteSpace(receiverName)) throw new DomainException("ReceiverName cannot be empty.");
-        if (string.IsNullOrWhiteSpace(deliveryAddress)) throw new DomainException("DeliveryAddress cannot be empty.");
+        if (string.IsNullOrWhiteSpace(recipientName)) throw new DomainException("RecipientName cannot be empty.");
+        if (string.IsNullOrWhiteSpace(shippingAddress)) throw new DomainException("ShippingAddress cannot be empty.");
         if (string.IsNullOrWhiteSpace(companyName)) throw new DomainException("CompanyName cannot be empty.");
         if (string.IsNullOrWhiteSpace(taxCode)) throw new DomainException("TaxCode cannot be empty.");
 
-        return new DeliveryInfo(receiverName, Phone.Create(receiverPhone), deliveryAddress, companyName, taxCode);
+        return new DeliveryInfo(recipientName, Phone.Create(recipientPhone), companyName, email, shippingAddress, taxCode);
     }
 }

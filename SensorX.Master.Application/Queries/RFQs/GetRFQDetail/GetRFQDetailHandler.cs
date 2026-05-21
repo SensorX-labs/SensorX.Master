@@ -33,15 +33,12 @@ public class GetRFQDetailHandler(
                         q.Status.ToString(),
                         q.CreatedAt,
                         q.UpdatedAt,
-                        // Contact Info
-                        q.CustomerInfo!.RecipientName,
-                        q.CustomerInfo.RecipientPhone,
-                        q.CustomerInfo.ShippingAddress,
-                        // Company Info
-                        q.CustomerInfo.CompanyName,
-                        q.CustomerInfo.Email.Value,
-                        q.CustomerInfo.Address,
-                        q.CustomerInfo.TaxCode,
+                        // Flat Customer Info (CompanyName, Phone, Email, Address, TaxCode)
+                        q.CustomerInfo == null ? string.Empty : q.CustomerInfo.CompanyName,
+                        q.CustomerInfo == null ? string.Empty : q.CustomerInfo.Phone,
+                        q.CustomerInfo == null ? string.Empty : q.CustomerInfo.Email,
+                        q.CustomerInfo == null ? string.Empty : q.CustomerInfo.Address,
+                        q.CustomerInfo == null ? string.Empty : q.CustomerInfo.TaxCode,
                         // Map Items
                         q.Items.Select(i => new RFQItemResponse
                         (

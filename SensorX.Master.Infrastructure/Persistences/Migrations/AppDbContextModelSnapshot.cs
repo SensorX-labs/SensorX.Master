@@ -456,7 +456,7 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                     b.Property<string>("Note")
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset>("QuoteDate")
+                    b.Property<DateTimeOffset?>("QuoteDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("RFQId")
@@ -652,6 +652,34 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                     b.ToTable("WarehouseInventoryProjections", (string)null);
                 });
 
+            modelBuilder.Entity("SensorX.Master.Domain.SeedWork.DomainEventOutbox", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Error")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DomainEventOutboxes");
+                });
+
             modelBuilder.Entity("MassTransit.EntityFrameworkCoreIntegration.OutboxMessage", b =>
                 {
                     b.HasOne("MassTransit.EntityFrameworkCoreIntegration.OutboxState", null)
@@ -766,54 +794,6 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.OwnsOne("SensorX.Master.Domain.ValueObjects.CustomerInfo", "CustomerInfo", b1 =>
-                        {
-                            b1.Property<Guid>("OrderId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<string>("Address")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("CustomerAddress");
-
-                            b1.Property<string>("CompanyName")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("CustomerCompanyName");
-
-                            b1.Property<string>("Email")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("CustomerEmail");
-
-                            b1.Property<string>("RecipientName")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("CustomerRecipientName");
-
-                            b1.Property<string>("RecipientPhone")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("CustomerRecipientPhone");
-
-                            b1.Property<string>("ShippingAddress")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("CustomerShippingAddress");
-
-                            b1.Property<string>("TaxCode")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("CustomerTaxCode");
-
-                            b1.HasKey("OrderId");
-
-                            b1.ToTable("Orders");
-
-                            b1.WithOwner()
-                                .HasForeignKey("OrderId");
-                        });
-
                     b.OwnsMany("SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate.OrderItem", "Items", b1 =>
                         {
                             b1.Property<Guid>("Id")
@@ -886,7 +866,50 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                                 .HasForeignKey("OrderId");
                         });
 
-                    b.Navigation("CustomerInfo")
+                    b.OwnsOne("SensorX.Master.Domain.ValueObjects.DeliveryInfo", "DeliveryInfo", b1 =>
+                        {
+                            b1.Property<Guid>("OrderId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("CompanyName")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CustomerCompanyName");
+
+                            b1.Property<string>("Email")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CustomerEmail");
+
+                            b1.Property<string>("RecipientName")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CustomerRecipientName");
+
+                            b1.Property<string>("RecipientPhone")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CustomerRecipientPhone");
+
+                            b1.Property<string>("ShippingAddress")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CustomerShippingAddress");
+
+                            b1.Property<string>("TaxCode")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CustomerTaxCode");
+
+                            b1.HasKey("OrderId");
+
+                            b1.ToTable("Orders");
+
+                            b1.WithOwner()
+                                .HasForeignKey("OrderId");
+                        });
+
+                    b.Navigation("DeliveryInfo")
                         .IsRequired();
 
                     b.Navigation("Items");
@@ -938,20 +961,10 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("Email");
 
-                            b1.Property<string>("RecipientName")
+                            b1.Property<string>("Phone")
                                 .IsRequired()
                                 .HasColumnType("text")
-                                .HasColumnName("RecipientName");
-
-                            b1.Property<string>("RecipientPhone")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("RecipientPhone");
-
-                            b1.Property<string>("ShippingAddress")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("CustomerShippingAddress");
+                                .HasColumnName("Phone");
 
                             b1.Property<string>("TaxCode")
                                 .IsRequired()
@@ -1021,6 +1034,16 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                                 .HasColumnType("integer")
                                 .HasColumnName("PaymentTerm");
 
+                            b1.Property<string>("RecipientName")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("RecipientName");
+
+                            b1.Property<string>("RecipientPhone")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("RecipientPhone");
+
                             b1.Property<int>("ResponseType")
                                 .HasColumnType("integer")
                                 .HasColumnName("ResponseType");
@@ -1038,12 +1061,46 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                                 .HasForeignKey("QuoteId");
                         });
 
+                    b.OwnsOne("SensorX.Master.Domain.ValueObjects.SenderInfo", "SenderInfo", b1 =>
+                        {
+                            b1.Property<Guid>("QuoteId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Email")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("SenderEmail");
+
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid")
+                                .HasColumnName("SenderId");
+
+                            b1.Property<string>("Name")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("SenderName");
+
+                            b1.Property<string>("Phone")
+                                .HasColumnType("text")
+                                .HasColumnName("SenderPhone");
+
+                            b1.HasKey("QuoteId");
+
+                            b1.ToTable("Quotes");
+
+                            b1.WithOwner()
+                                .HasForeignKey("QuoteId");
+                        });
+
                     b.Navigation("CustomerInfo")
                         .IsRequired();
 
                     b.Navigation("LineItems");
 
                     b.Navigation("Response");
+
+                    b.Navigation("SenderInfo")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate.RFQ", b =>
@@ -1068,20 +1125,10 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("Email");
 
-                            b1.Property<string>("RecipientName")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("RecipientName");
-
-                            b1.Property<string>("RecipientPhone")
+                            b1.Property<string>("Phone")
                                 .IsRequired()
                                 .HasColumnType("text")
                                 .HasColumnName("RecipientPhone");
-
-                            b1.Property<string>("ShippingAddress")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("CustomerShippingAddress");
 
                             b1.Property<string>("TaxCode")
                                 .IsRequired()

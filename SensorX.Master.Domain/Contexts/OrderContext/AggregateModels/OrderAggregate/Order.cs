@@ -11,7 +11,7 @@ public class Order : Entity<OrderId>, IAggregateRoot, ICreationTrackable, IUpdat
     public QuoteId QuoteId { get; private set; } = null!;
     public Code Code { get; private set; } = null!;
     public CustomerId CustomerId { get; private set; } = null!;
-    public CustomerInfo CustomerInfo { get; private set; } = null!;
+    public DeliveryInfo DeliveryInfo { get; private set; } = null!;
     public SenderInfo SenderInfo { get; private set; } = null!;
     public OrderStatus Status { get; private set; }
     public DateTimeOffset OrderDate { get; private set; }
@@ -23,12 +23,12 @@ public class Order : Entity<OrderId>, IAggregateRoot, ICreationTrackable, IUpdat
 
     private Order() : base() { }
 
-    public Order(OrderId id, QuoteId quoteId, Code code, CustomerId customerId, CustomerInfo customerInfo, SenderInfo senderInfo, OrderStatus status, DateTimeOffset orderDate) : base(id)
+    public Order(OrderId id, QuoteId quoteId, Code code, CustomerId customerId, DeliveryInfo deliveryInfo, SenderInfo senderInfo, OrderStatus status, DateTimeOffset orderDate) : base(id)
     {
         QuoteId = quoteId;
         Code = code;
         CustomerId = customerId;
-        CustomerInfo = customerInfo;
+        DeliveryInfo = deliveryInfo;
         SenderInfo = senderInfo;
         Status = status;
         OrderDate = orderDate;
@@ -45,11 +45,11 @@ public class Order : Entity<OrderId>, IAggregateRoot, ICreationTrackable, IUpdat
             this,
             Id.Value,
             Code.Value,
-            CustomerInfo.RecipientName,
-            CustomerInfo.RecipientPhone.Value,
-            CustomerInfo.Address,
-            CustomerInfo.CompanyName,
-            CustomerInfo.TaxCode
+            DeliveryInfo.RecipientName,
+            DeliveryInfo.RecipientPhone.Value,
+            DeliveryInfo.ShippingAddress,
+            DeliveryInfo.CompanyName,
+            DeliveryInfo.TaxCode
         ));
     }
 
