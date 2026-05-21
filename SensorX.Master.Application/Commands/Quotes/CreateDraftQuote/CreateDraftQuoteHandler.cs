@@ -22,7 +22,7 @@ public class CreateDraftQuoteCommandHandler(
     {
         try
         {
-            var rfq = await _rfqRepository.GetByIdAsync(new RFQId(request.RFQId), cancellationToken);
+            var rfq = await _rfqRepository.GetByIdAsync(new RFQId(request.RfqId), cancellationToken);
             if (rfq is null)
             {
                 return Result<Guid>.Failure("Không tìm thấy RFQ tương ứng");
