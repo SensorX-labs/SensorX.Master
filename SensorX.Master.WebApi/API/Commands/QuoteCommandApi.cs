@@ -79,6 +79,7 @@ namespace SensorX.Master.WebApi.API.Commands
             return api;
         }
 
+        [AuthorizeRole(Role.SaleStaff)]
         private static async Task<IResult> CreateDraftQuote(
             [FromBody] CreateDraftQuoteCommand command,
             [FromServices] IMediator mediator
@@ -88,6 +89,7 @@ namespace SensorX.Master.WebApi.API.Commands
             return result.ToResult();
         }
 
+        [AuthorizeRole(Role.SaleStaff)]
         private static async Task<IResult> UpdateDraftQuote(
             [FromRoute] Guid quoteId,
             [FromBody] UpdateDraftQuoteCommand command,
@@ -99,6 +101,7 @@ namespace SensorX.Master.WebApi.API.Commands
             return result.ToResult();
         }
 
+        [AuthorizeRole(Role.SaleStaff)]
         private static async Task<IResult> SubmitQuoteForApproval(
             [FromRoute] Guid quoteId,
             [FromServices] IMediator mediator
@@ -108,6 +111,7 @@ namespace SensorX.Master.WebApi.API.Commands
             return result.ToResult();
         }
 
+        [AuthorizeRole(Role.SaleStaff)]
         private static async Task<IResult> WithdrawQuote(
             [FromRoute] Guid quoteId,
             [FromServices] IMediator mediator
@@ -117,6 +121,7 @@ namespace SensorX.Master.WebApi.API.Commands
             return result.ToResult();
         }
 
+        [AuthorizeRole(Role.SaleStaff)]
         private static async Task<IResult> PublishQuote(
             [FromRoute] Guid quoteId,
             [FromServices] IMediator mediator
@@ -126,6 +131,7 @@ namespace SensorX.Master.WebApi.API.Commands
             return result.ToResult();
         }
 
+        [AuthorizeRole(Role.Manager)]
         private static async Task<IResult> RejectQuote(
             [FromRoute] Guid quoteId,
             [FromBody] RejectQuoteCommand command,
@@ -137,6 +143,7 @@ namespace SensorX.Master.WebApi.API.Commands
             return result.ToResult();
         }
 
+        [AuthorizeRole(Role.Manager)]
         private static async Task<IResult> ApproveQuote(
             [FromRoute] Guid quoteId,
             [FromServices] IMediator mediator
@@ -146,6 +153,7 @@ namespace SensorX.Master.WebApi.API.Commands
             return result.ToResult();
         }
 
+        [AuthorizeRole(Role.Customer)]
         private static async Task<IResult> CustomerRespondToQuote(
             [FromRoute] Guid quoteId,
             [FromBody] CustomerRespondToQuoteCommand command,
