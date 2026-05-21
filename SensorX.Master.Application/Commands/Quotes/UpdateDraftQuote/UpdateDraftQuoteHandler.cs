@@ -35,10 +35,10 @@ public class UpdateDraftQuoteCommandHandler(
             {
                 return Result.Failure("Quote must have at least one item.");
             }
-
+            quote.SetNote(request.Note);
             await _quoteRepository.SaveChangesAsync(cancellationToken);
 
-            return Result.Success("Cập nhật bản thảo báo giá thành công");
+            return Result.Success("Cập nhật báo giá thành công");
         }
         catch (DomainException ex)
         {
