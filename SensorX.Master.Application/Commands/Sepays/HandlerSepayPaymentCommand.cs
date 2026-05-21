@@ -1,6 +1,8 @@
+using MediatR;
+
 namespace SensorX.Master.Application.Commands.Sepays
 {
-  public record  HandlerPaymentSepayCommand
+  public record HandlerPaymentSepayCommand : IRequest<bool>
   {
     public int Id { get; set; }
     public string? Gateway { get; set; }

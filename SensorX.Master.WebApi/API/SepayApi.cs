@@ -15,8 +15,8 @@ public static class SepayApi
         group.MapPost("/webhooks", async ([FromServices] IMediator mediator, HandlerPaymentSepayCommand command) =>
         {
             var result = await mediator.Send(command);
-            return result.IsSuccess
-                ? Results.Created(result)
+            return result
+                ? Results.Created($"/sepay/webhooks/{command.Id}", null)
                 : Results.BadRequest(result);
         })
             .WithName("HandleSepayPayment")
