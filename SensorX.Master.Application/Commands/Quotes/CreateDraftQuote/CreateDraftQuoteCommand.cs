@@ -4,7 +4,7 @@ using SensorX.Master.Application.Common.ResponseClient;
 namespace SensorX.Master.Application.Commands.Quotes.CreateDraftQuote;
 
 public record CreateDraftQuoteCommand(
-    Guid RFQId,
+    Guid RfqId,
     string Note,
     List<QuoteItemDto> Items
 ) : IRequest<Result<Guid>>;

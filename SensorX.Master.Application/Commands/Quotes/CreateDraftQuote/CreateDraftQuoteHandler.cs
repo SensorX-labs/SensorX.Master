@@ -40,7 +40,7 @@ public class CreateDraftQuoteCommandHandler(
             }
             SenderInfo sender = new SenderInfo(saleStaff.Id, saleStaff.Name, saleStaff.Email, saleStaff.Phone);
             var quote = Quote.CreateDraft(
-                new RFQId(request.RFQId),
+                new RFQId(request.RfqId),
                 rfq.CustomerId,
                 sender,
                 customerInfo
