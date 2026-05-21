@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Routing;
 using SensorX.Master.Application.Commands.Quotes.ApproveQuote;
 using SensorX.Master.Application.Commands.Quotes.CreateDraftQuote;
 using SensorX.Master.Application.Commands.Quotes.CustomerRespondToQuote;
+using SensorX.Master.Application.Commands.Quotes.DeleteQuote;
 using SensorX.Master.Application.Commands.Quotes.PublishQuote;
 using SensorX.Master.Application.Commands.Quotes.RejectQuote;
 using SensorX.Master.Application.Commands.Quotes.SubmitQuoteForApproval;
@@ -76,7 +77,23 @@ namespace SensorX.Master.WebApi.API.Commands
                 return operation;
             });
 
+            api.MapDelete("{quoteId:guid}", DeleteQuote).WithOpenApi(operation =>
+            {
+                operation.Summary = "Xóa báo giá";
+                return operation;
+            });
+
             return api;
+        }
+
+        [AuthorizeRole(Role.SaleStaff)]
+        private static async Task<IResult> DeleteQuote(
+            [FromRoute] Guid quoteId,
+            [FromServices] IMediator mediator
+        )
+        {
+            var result = await mediator.Send(new DeleteQuoteCommand(quoteId));
+            return result.ToResult();
         }
 
         [AuthorizeRole(Role.SaleStaff)]

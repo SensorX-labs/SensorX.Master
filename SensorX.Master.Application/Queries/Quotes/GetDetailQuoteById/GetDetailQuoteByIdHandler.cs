@@ -23,26 +23,10 @@ public class GetDetailQuoteByIdHandler(
                                 q.Id.Value,
                                 q.Code.Value,
                                 q.RFQId.Value,
-                                q.CustomerId.Value,
                                 q.Status,
                                 q.QuoteDate,
                                 q.Note,
                                 q.ReasonReject,
-
-                                // Map Customer Info
-                                q.CustomerInfo.CompanyName,
-                                q.CustomerInfo.Phone.Value,
-                                q.CustomerInfo.Email.Value,
-                                q.CustomerInfo.Address,
-                                q.CustomerInfo.TaxCode,
-
-                                // Map Response Info
-                                q.Response != null ? (QuoteResponseStatus?)q.Response.ResponseType : null,
-                                q.Response != null ? (PaymentTerm?)q.Response.PaymentTerm : null,
-                                q.Response != null ? q.Response.ShippingAddress : null,
-                                q.Response != null ? q.Response.RecipientName : null,
-                                q.Response != null ? q.Response.RecipientPhone : null,
-                                q.Response != null ? q.Response.Feedback : null,
 
                                 // Calculations from Domain
                                 q.GetSubtotal().Amount,
@@ -63,7 +47,37 @@ public class GetDetailQuoteByIdHandler(
                                     i.GetLineAmount().Amount,
                                     i.GetTaxAmount().Amount,
                                     i.GetTotalLineAmount().Amount
-                                )).ToList()
+                                )).ToList(),
+
+                                // Map Sender Info
+                                new SenderInfoResponse(
+                                    q.SenderInfo.Id,
+                                    q.SenderInfo.Name,
+                                    q.SenderInfo.Email,
+                                    q.SenderInfo.Phone
+                                ),
+
+                                // Map Customer Info
+                                new CustomerInfoResponse(
+                                    q.CustomerId.Value,
+                                    q.CustomerInfo.CompanyName,
+                                    q.CustomerInfo.Phone.Value,
+                                    q.CustomerInfo.Email.Value,
+                                    q.CustomerInfo.Address,
+                                    q.CustomerInfo.TaxCode
+                                ),
+
+                                // Map Customer Feedback (nullable)
+                                q.Response != null
+                                    ? new QuoteCustomerResponse(
+                                        q.Response.ResponseType,
+                                        q.Response.PaymentTerm,
+                                        q.Response.ShippingAddress,
+                                        q.Response.RecipientName,
+                                        q.Response.RecipientPhone,
+                                        q.Response.Feedback
+                                    )
+                                    : null
                             ));
 
 

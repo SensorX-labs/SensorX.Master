@@ -31,7 +31,7 @@ public class CreateOrderHandler(
                 request.CustomerInfo.TaxCode
             );
 
-            var senderInfo = new SenderInfo
+            var senderInfo = new SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate.SenderInfo
             {
                 Name = request.SenderInfo.SenderName,
                 Email = Email.From(request.SenderInfo.SenderEmail)

@@ -18,7 +18,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
             Code code,
             RFQId rFQId,
             CustomerId customerId,
-            StaffId createdBy,
+            SenderInfo sender,
             CustomerInfo customerInfo,
             QuoteStatus status,
             string reasonReject
@@ -27,7 +27,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
             Code = code;
             RFQId = rFQId;
             CustomerId = customerId;
-            CreatedBy = createdBy;
+            SenderInfo = sender;
             CustomerInfo = customerInfo;
             Status = status;
             ReasonReject = reasonReject;
@@ -37,7 +37,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         public static Quote CreateDraft(
             RFQId rFQId,
             CustomerId customerId,
-            StaffId createdBy,
+            SenderInfo sender,
             CustomerInfo customerInfo
         )
         {
@@ -46,7 +46,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
                 Code.Create("QTE"),
                 rFQId,
                 customerId,
-                createdBy,
+                sender,
                 customerInfo,
                 QuoteStatus.Draft,
                 string.Empty
@@ -56,10 +56,10 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         public Code Code { get; private set; }
         public RFQId RFQId { get; private set; }
         public CustomerId CustomerId { get; private set; }
-        public StaffId CreatedBy { get; private set; }
         public CustomerInfo CustomerInfo { get; private set; }
         public string? Note { get; private set; }
         public QuoteStatus Status { get; private set; }
+        public SenderInfo SenderInfo { get; private set; }
         public QuoteResponse? Response { get; private set; }
         public DateTimeOffset? QuoteDate { get; private set; }
         public string ReasonReject { get; private set; }

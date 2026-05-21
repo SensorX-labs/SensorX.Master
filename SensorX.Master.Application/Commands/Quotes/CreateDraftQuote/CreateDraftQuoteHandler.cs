@@ -14,6 +14,7 @@ namespace SensorX.Master.Application.Commands.Quotes.CreateDraftQuote;
 public class CreateDraftQuoteCommandHandler(
     IRepository<Quote> _quoteRepository,
     IRepository<RFQ> _rfqRepository,
+    IRepository<SaleStaff> _saleStaffRepository,
     IRepository<Customer> _customerRepository
 ) : IRequestHandler<CreateDraftQuoteCommand, Result<Guid>>
 {
@@ -32,11 +33,16 @@ public class CreateDraftQuoteCommandHandler(
             }
 
             var customerInfo = await GetCustomerInfo(rfq, request, cancellationToken);
-
+            var saleStaff = await _saleStaffRepository.GetByIdAsync(new StaffId(rfq.StaffId), cancellationToken);
+            if (saleStaff is null)
+            {
+                return Result<Guid>.Failure("Không tìm thấy nhân viên phụ trách tương ứng");
+            }
+            SenderInfo sender = new SenderInfo(saleStaff.Id, saleStaff.Name, saleStaff.Email, saleStaff.Phone);
             var quote = Quote.CreateDraft(
                 new RFQId(request.RFQId),
                 rfq.CustomerId,
-                new StaffId(rfq.StaffId),
+                sender,
                 customerInfo
             );
 

@@ -1,20 +1,21 @@
 using MediatR;
 using SensorX.Master.Application.Common.QueryExtensions.OffsetPagination;
 using SensorX.Master.Application.Common.ResponseClient;
+using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 
 namespace SensorX.Master.Application.Queries.Quotes.GetPageListQuote;
 
 public record GetPageListQuoteQuery(
-    string? SearchTerm
+    string? SearchTerm,
+    QuoteStatus? Status
 ) : OffsetPagedQuery, IRequest<Result<OffsetPagedResult<GetPageListQuoteResponse>>>;
 
 public record GetPageListQuoteResponse(
     Guid Id,
     string Code,
-    string Status,
+    QuoteStatus Status,
     DateTimeOffset? QuoteDate,
     Guid CustomerId,
-    string RecipientName,
     string CompanyName,
     decimal GrandTotal,
     int ItemCount,

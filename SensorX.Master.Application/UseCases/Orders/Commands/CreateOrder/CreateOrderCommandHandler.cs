@@ -1,9 +1,9 @@
+using MediatR;
 using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
-using MediatR;
 
 namespace SensorX.Master.Application.UseCases.Orders.Commands.CreateOrder;
 
@@ -29,7 +29,7 @@ public class CreateOrderCommandHandler(
             Email.From(request.CustomerInfo.Email),
             request.CustomerInfo.TaxCode
         );
-        var senderInfo = new SenderInfo
+        var senderInfo = new SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate.SenderInfo
         {
             Name = request.SenderInfo.SenderName,
             Email = Email.From(request.SenderInfo.SenderEmail)

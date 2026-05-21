@@ -7,6 +7,7 @@ using SensorX.Master.Application.Common.Interfaces;
 using SensorX.Master.Application.Queries.Quotes.GetDetailQuoteById;
 using SensorX.Master.Application.Queries.Quotes.GetMyQuotes;
 using SensorX.Master.Application.Queries.Quotes.GetPageListQuote;
+using SensorX.Master.Application.Queries.Quotes.GetQuoteStats;
 using SensorX.Master.WebApi.Configurations;
 using SensorX.Master.WebApi.Extensions;
 
@@ -21,6 +22,12 @@ namespace SensorX.Master.WebApi.API.Queries
             api.MapGet("{quoteId:guid}", GetDetailQuoteById).WithOpenApi(operation =>
             {
                 operation.Summary = "Lấy chi tiết báo giá";
+                return operation;
+            });
+
+            api.MapGet("stats", GetQuoteStats).WithOpenApi(operation =>
+            {
+                operation.Summary = "Lấy thống kê báo giá";
                 return operation;
             });
 
@@ -48,6 +55,17 @@ namespace SensorX.Master.WebApi.API.Queries
             return result.ToResult();
         }
 
+        [AuthorizeRole(Role.SaleStaff, Role.Manager)]
+        private static async Task<IResult> GetQuoteStats(
+            [AsParameters] GetQuoteStatsQuery query,
+            [FromServices] IMediator mediator
+        )
+        {
+            var result = await mediator.Send(query);
+            return result.ToResult();
+        }
+
+        [AuthorizeRole(Role.SaleStaff, Role.Manager)]
         private static async Task<IResult> GetPageListQuote(
             [AsParameters] GetPageListQuoteQuery query,
             [FromServices] IMediator mediator

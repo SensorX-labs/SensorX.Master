@@ -25,7 +25,7 @@ public class OrderContextTests
             "123456"
         );
 
-        var senderInfo = new SenderInfo
+        var senderInfo = new SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate.SenderInfo
         {
             Name = "Sender Name",
             Email = Email.From("sender@test.com")
@@ -130,7 +130,7 @@ public class OrderContextTests
             "123456"
         );
 
-        var senderInfo = new SenderInfo
+        var senderInfo = new SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate.SenderInfo
         {
             Name = "Sender",
             Email = Email.From("sender@test.com")

@@ -4,42 +4,57 @@ using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate
 
 namespace SensorX.Master.Application.Queries.Quotes.GetDetailQuoteById;
 
-public record GetDetailQuoteByIdQuery(Guid QuoteId) : IRequest<Result<GetDetailQuoteByIdResponse>>;
+public sealed record GetDetailQuoteByIdQuery(Guid QuoteId) : IRequest<Result<GetDetailQuoteByIdResponse>>;
 
-public record GetDetailQuoteByIdResponse
+public sealed record GetDetailQuoteByIdResponse
 (
     Guid Id,
     string Code,
     Guid RFQId,
-    Guid CustomerId,
     QuoteStatus Status,
     DateTimeOffset? QuoteDate,
     string? Note,
     string? ReasonReject,
 
-    // thong tin khách hàng
+    decimal Subtotal,
+    decimal TotalTax,
+    decimal GrandTotal,
+    List<QuoteItemResponse> Items,
+
+    SenderInfoResponse Sender,
+    CustomerInfoResponse Customer,
+    QuoteCustomerResponse? CustomerFeedback
+);
+
+public sealed record SenderInfoResponse
+(
+    Guid Id,
+    string Name,
+    string Email,
+    string? Phone
+);
+
+public sealed record CustomerInfoResponse
+(
+    Guid Id,
     string CompanyName,
     string Phone,
     string Email,
     string Address,
-    string TaxCode,
-
-    // feedback customer
-    QuoteResponseStatus? ResponseType,
-    PaymentTerm? PaymentTerm,
-    string? ShippingAddress,
-    string? RecipientName,
-    string? RecipientPhone,
-    string? Feedback,
-
-    decimal Subtotal,
-    decimal TotalTax,
-    decimal GrandTotal,
-
-    List<QuoteItemResponse> Items
+    string TaxCode
 );
 
-public record QuoteItemResponse
+public sealed record QuoteCustomerResponse
+(
+    QuoteResponseStatus ResponseType,
+    PaymentTerm PaymentTerm,
+    string ShippingAddress,
+    string RecipientName,
+    string RecipientPhone,
+    string? Feedback
+);
+
+public sealed record QuoteItemResponse
 (
     Guid Id,
     Guid ProductId,
