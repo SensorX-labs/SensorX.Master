@@ -268,5 +268,17 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
             Status = QuoteStatus.Cancelled;
             UpdatedAt = DateTimeOffset.UtcNow;
         }
+
+        /// <summary>
+        /// Transitions the quote status to Ordered when an order is created from it.
+        /// </summary>
+        public void MarkAsOrdered()
+        {
+            if (Status != QuoteStatus.Sent)
+                throw new DomainException("Chỉ có báo giá đã gửi mới có thể chuyển sang trạng thái đã sinh đơn.");
+
+            Status = QuoteStatus.Ordered;
+            UpdatedAt = DateTimeOffset.UtcNow;
+        }
     }
 }

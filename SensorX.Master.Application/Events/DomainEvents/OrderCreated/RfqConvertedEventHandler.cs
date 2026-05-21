@@ -3,7 +3,6 @@ namespace SensorX.Master.Application.Events.DomainEvents.OrderCreated;
 using MediatR;
 using SensorX.Master.Application.Common.DomainEvent;
 using SensorX.Master.Application.Common.Interfaces;
-using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 using SensorX.Master.Domain.Events;
@@ -12,7 +11,6 @@ using SensorX.Master.Domain.StrongIDs;
 
 public class RFQConvertedEventHandler(
     IRepository<RFQ> _rfqRepository,
-    IQueryBuilder<Order> _orderBuilder,
     IQueryBuilder<Quote> _quoteBuilder,
     IQueryExecutor _queryExecutor
 ) : INotificationHandler<DomainEventNotification<OrderCreatedDomainEvent>>
@@ -23,17 +21,21 @@ public class RFQConvertedEventHandler(
     {
         var domainEvent = notification.DomainEvent;
 
-        var query = from o in _orderBuilder.QueryAsNoTracking
-                    join q in _quoteBuilder.QueryAsNoTracking on o.QuoteId equals q.Id
-                    where o.Id == domainEvent.OrderId
+        var quoteId = domainEvent.Order.QuoteId;
+
+        // Use read model to find RFQId without loading Quote aggregate
+        var query = from q in _quoteBuilder.QueryAsNoTracking
+                    where q.Id == quoteId
                     select q.RFQId;
 
         var rfqId = await _queryExecutor.FirstOrDefaultAsync(query, cancellationToken);
+        if (rfqId is null) return;
 
         var rfq = await _rfqRepository.GetByIdAsync(rfqId, cancellationToken);
         if (rfq is null) return;
 
-        rfq.Cancel();
+        rfq.MarkAsConverted();
+
         await _rfqRepository.SaveChangesAsync(cancellationToken);
     }
 }
