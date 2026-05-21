@@ -28,6 +28,11 @@ public sealed class GetQuoteStatsHandler(
 
             query = query.Where(x => x.SenderInfo.Id == staffId);
         }
+        else
+        {
+            query = query.Where(x => x.Status != QuoteStatus.Draft);
+        }
+
         var totalCount = await _queryExecutor.CountAsync(query, cancellationToken);
         var draftCount = await _queryExecutor.CountAsync(query.Where(x => x.Status == QuoteStatus.Draft), cancellationToken);
         var pendingCount = await _queryExecutor.CountAsync(query.Where(x => x.Status == QuoteStatus.Pending), cancellationToken);

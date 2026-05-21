@@ -33,6 +33,10 @@ public class GetPageListQuoteHandler(
 
             sourceQuery = sourceQuery.Where(x => x.SenderInfo.Id == staffId);
         }
+        else
+        {
+            sourceQuery = sourceQuery.Where(x => x.Status != QuoteStatus.Draft);
+        }
 
         if (request.Status is not null)
         {
