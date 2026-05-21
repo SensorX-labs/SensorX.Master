@@ -76,6 +76,12 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
             UpdatedAt = DateTimeOffset.UtcNow;
         }
 
+        public void SetSenderInfo(SenderInfo sender)
+        {
+            SenderInfo = sender;
+            UpdatedAt = DateTimeOffset.UtcNow;
+        }
+
         /// <summary>
         /// Adds a new item to the quote and updates the last modified timestamp.
         /// </summary>
