@@ -37,14 +37,26 @@ namespace SensorX.Master.Application.Commands.Sepays
                     // Dùng IQueryExecutor
                     var order = await _queryExecutor.FirstOrDefaultAsync(
                         _orderRepository.AsQueryable()
-                            .Where(o => o.Code.Value == orderCode),
+                            .Where(o => o.Code == orderCode),
                         cancellationToken
                     );
 
-                    if (order != null)
+                    if (order is not null)
                     {
+                        // Sepay can retry callbacks with the same Id, so skip duplicate inserts.
+                        var existingPayment = await _queryExecutor.FirstOrDefaultAsync(
+                            _paymentHistoryRepository.AsQueryable()
+                                .Where(p => p.Id == request.Id),
+                            cancellationToken
+                        );
+
+                        if (existingPayment != null)
+                        {
+                            return true;
+                        }
+
                         var paymentHistory = new PaymentHistory(
-                            request.Id,
+                            request.Id!,
                             request.Gateway ?? string.Empty,
                             request.TransactionDate ?? string.Empty,
                             request.SubAccount,

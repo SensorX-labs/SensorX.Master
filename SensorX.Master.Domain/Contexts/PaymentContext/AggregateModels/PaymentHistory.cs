@@ -1,6 +1,7 @@
 
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
+using System.Globalization;
 
 namespace SensorX.Master.Domain.Contexts.PaymentContext.AggregateModels;
 
@@ -27,7 +28,14 @@ public class PaymentHistory : IAggregateRoot
     {
         Id = id;
         Gateway = gateway;
-        TransactionDate = DateTime.Parse(transactionDate);
+        if (string.IsNullOrWhiteSpace(transactionDate))
+            throw new ArgumentException("TransactionDate cannot be null or empty.", nameof(transactionDate));
+
+        // Parse transaction date and force UTC to match PostgreSQL timestamptz expectations.
+        TransactionDate = DateTime.Parse(
+            transactionDate,
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
         SubAccount = subAccount;
         Code = code;
         AccountNumber = accountNumber;

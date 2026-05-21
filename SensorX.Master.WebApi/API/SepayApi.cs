@@ -12,15 +12,17 @@ public static class SepayApi
 
         group.WithOpenApi();
 
-        group.MapPost("/webhooks", async ([FromServices] IMediator mediator, HandlerPaymentSepayCommand command) =>
+        group.MapPost("/webhooks", async ([FromServices] IMediator mediator, [FromBody] HandlerPaymentSepayCommand command) =>
         {
             var result = await mediator.Send(command);
             return result
-                ? Results.Created($"/sepay/webhooks/{command.Id}", null)
-                : Results.BadRequest(result);
+                ? Results.Ok(new { success = true })
+                : Results.BadRequest(new { success = false });
         })
+            .AllowAnonymous()
             .WithName("HandleSepayPayment")
-            .WithDescription("Handle Sepay payment webhook");
+            .WithDescription("Handle Sepay payment webhook")
+            .DisableAntiforgery();
         return app;
     }
 }
