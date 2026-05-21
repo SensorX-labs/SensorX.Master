@@ -31,7 +31,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
             CustomerInfo = customerInfo;
             Status = status;
             ReasonReject = reasonReject;
-            AddDomainEvent(new QuoteCreatedEvent(Id.Value));
+            AddDomainEvent(new QuoteCreatedEvent(Id, rFQId));
         }
 
         public static Quote CreateDraft(
@@ -161,8 +161,16 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         /// </summary>
         public void RecordCustomerResponse(QuoteResponse response)
         {
-            Response = response;
-            UpdatedAt = DateTimeOffset.UtcNow;
+            if (Status is QuoteStatus.Sent)
+            {
+                Response = response;
+                UpdatedAt = DateTimeOffset.UtcNow;
+                AddDomainEvent(new CustomerRespondedQuoteEvent(Id, RFQId, response));
+            }
+            else
+            {
+                throw new DomainException("Quote is not in a valid state to be accepted.");
+            }
         }
 
         /// <summary>
@@ -245,25 +253,6 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
             else
             {
                 throw new DomainException("Quote is not in a valid state to be published.");
-            }
-        }
-
-        /// <summary>
-        /// Handles customer acceptance of the quote.
-        /// Transitions status to Ordered and records the response.
-        /// </summary>
-        public void Accept(QuoteResponse response)
-        {
-            if (Status is QuoteStatus.Sent)
-            {
-                RecordCustomerResponse(response);
-                Status = QuoteStatus.Ordered;
-                UpdatedAt = DateTimeOffset.UtcNow;
-                AddDomainEvent(new QuoteAcceptedEvent(Id.Value));
-            }
-            else
-            {
-                throw new DomainException("Quote is not in a valid state to be accepted.");
             }
         }
     }

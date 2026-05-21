@@ -31,7 +31,7 @@ public class CustomerRespondToQuoteHandler(
                 request.RecipientPhone,
                 request.Feedback
             );
-            quote.Accept(response);
+            quote.RecordCustomerResponse(response);
             await _quoteRepository.UpdateAsync(quote, cancellationToken);
 
             return Result.Success("Khách hàng đã chấp nhận báo giá thành công.");

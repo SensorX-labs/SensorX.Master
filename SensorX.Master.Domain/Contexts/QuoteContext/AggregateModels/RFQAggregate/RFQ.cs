@@ -139,6 +139,15 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
             UpdatedAt = DateTimeOffset.UtcNow;
         }
 
+        public void Cancel()
+        {
+            if (Status != RFQStatus.Responded)
+                throw new DomainException("Ghi nhận hủy yêu cầu báo giá không thành công.");
+
+            Status = RFQStatus.Cancelled;
+            UpdatedAt = DateTimeOffset.UtcNow;
+        }
+
         public void AddItem(
             ProductId productId,
             string productName,

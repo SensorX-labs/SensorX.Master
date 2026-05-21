@@ -7,23 +7,24 @@ using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
 
-namespace SensorX.Master.Application.Events.DomainEvents.QuoteAccepted;
+namespace SensorX.Master.Application.Events.DomainEvents.CustomerRespondedQuote;
 
-public class QuoteAcceptedEventHandler(
+public class CreateOrderEventHandler(
     IRepository<Quote> _quoteRepository,
     IMediator _mediator
-) : INotificationHandler<DomainEventNotification<QuoteAcceptedEvent>>
+) : INotificationHandler<DomainEventNotification<CustomerRespondedQuoteEvent>>
 {
     public async Task Handle(
-        DomainEventNotification<QuoteAcceptedEvent> notification,
+        DomainEventNotification<CustomerRespondedQuoteEvent> notification,
         CancellationToken cancellationToken)
     {
         var domainEvent = notification.DomainEvent;
-        
-        var quoteId = new QuoteId(domainEvent.QuoteId);
-        var quote = await _quoteRepository.GetByIdAsync(quoteId, cancellationToken);
-        
-        if (quote != null)
+
+        if (domainEvent.QuoteResponse.ResponseType != QuoteResponseStatus.Accepted) return;
+
+        var quote = await _quoteRepository.GetByIdAsync(domainEvent.QuoteId, cancellationToken);
+
+        if (quote is not null)
         {
             var customerInfo = new CustomerInfoDto(
                 RecipientName: quote.CustomerInfo.CompanyName,
@@ -36,8 +37,8 @@ public class QuoteAcceptedEventHandler(
             );
 
             var senderInfo = new SenderInfoDto(
-                SenderName: "SensorX System",
-                SenderEmail: "admin@sensorx.com"
+                SenderName: quote.SenderInfo.Name,
+                SenderEmail: quote.SenderInfo.Email
             );
 
             var createOrderCommand = new CreateOrderCommand(
