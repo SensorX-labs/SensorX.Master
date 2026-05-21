@@ -161,6 +161,9 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         /// </summary>
         public void RecordCustomerResponse(QuoteResponse response)
         {
+            if (Response is not null)
+                throw new DomainException("Customer has already responded to the quote.");
+
             if (Status is QuoteStatus.Sent)
             {
                 Response = response;
@@ -249,11 +252,21 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
                 Status = QuoteStatus.Sent;
                 QuoteDate = DateTimeOffset.UtcNow;
                 UpdatedAt = DateTimeOffset.UtcNow;
+                AddDomainEvent(new PublishQuoteEvent(Id, RFQId));
             }
             else
             {
                 throw new DomainException("Quote is not in a valid state to be published.");
             }
+        }
+
+        /// <summary>
+        /// Staff Cancelled quote or when staff publish 1 quote then any quote have rfqId Cancelled
+        /// </summary>
+        public void Cancel()
+        {
+            Status = QuoteStatus.Cancelled;
+            UpdatedAt = DateTimeOffset.UtcNow;
         }
     }
 }

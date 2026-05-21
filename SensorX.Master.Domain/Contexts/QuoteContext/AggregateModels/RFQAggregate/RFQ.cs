@@ -122,7 +122,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
         public void MarkAsResponded()
         {
             if (Status != RFQStatus.Accepted)
-                throw new DomainException("Ghi nhận phản hồi báo giá không thành công.");
+                throw new DomainException($"Ghi nhận phản hồi báo giá không thành công do trạng thái không hợp lệ: {Status}.");
 
             Status = RFQStatus.Responded;
             UpdatedAt = DateTimeOffset.UtcNow;

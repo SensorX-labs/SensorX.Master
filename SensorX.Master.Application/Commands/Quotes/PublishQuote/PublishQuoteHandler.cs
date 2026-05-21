@@ -40,7 +40,6 @@ public class PublishQuoteHandler(
                 }
                 quote.SetSenderInfo(quote.SenderInfo with { Phone = saleStaff.Phone });
             }
-
             quote.Publish();
             await _quoteRepository.SaveChangesAsync(cancellationToken);
 

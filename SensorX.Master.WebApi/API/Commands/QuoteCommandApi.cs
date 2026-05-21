@@ -71,9 +71,9 @@ namespace SensorX.Master.WebApi.API.Commands
                 return operation;
             });
 
-            api.MapPost("{quoteId:guid}/accept", CustomerRespondToQuote).WithOpenApi(operation =>
+            api.MapPost("{quoteId:guid}/customer-response", CustomerRespondToQuote).WithOpenApi(operation =>
             {
-                operation.Summary = "Khách hàng chấp nhận báo giá";
+                operation.Summary = "Khách hàng phản hồi báo giá";
                 return operation;
             });
 

@@ -5,3 +5,4 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
 
 public sealed record QuoteCreatedEvent(QuoteId QuoteId, RFQId RFQId) : IDomainEvent;
 public sealed record CustomerRespondedQuoteEvent(QuoteId QuoteId, RFQId RFQId, QuoteResponse QuoteResponse) : IDomainEvent;
+public sealed record PublishQuoteEvent(QuoteId QuoteId, RFQId RFQId) : IDomainEvent;

@@ -40,8 +40,9 @@ public sealed class GetQuoteStatsHandler(
         var returnedCount = await _queryExecutor.CountAsync(query.Where(x => x.Status == QuoteStatus.Returned), cancellationToken);
         var sentCount = await _queryExecutor.CountAsync(query.Where(x => x.Status == QuoteStatus.Sent), cancellationToken);
         var orderedCount = await _queryExecutor.CountAsync(query.Where(x => x.Status == QuoteStatus.Ordered), cancellationToken);
+        var cancelledCount = await _queryExecutor.CountAsync(query.Where(x => x.Status == QuoteStatus.Cancelled), cancellationToken);
         var expiredCount = await _queryExecutor.CountAsync(
-            query.Where(x => (x.QuoteDate > DateTimeOffset.UtcNow.AddDays(7)) &&
+            query.Where(x => (x.QuoteDate > DateTimeOffset.UtcNow) &&
             x.Status != QuoteStatus.Ordered &&
             x.QuoteDate != null
         ), cancellationToken);
@@ -55,6 +56,7 @@ public sealed class GetQuoteStatsHandler(
             ReturnedCount = returnedCount,
             SentCount = sentCount,
             OrderedCount = orderedCount,
+            CancelledCount = cancelledCount,
             ExpiredCount = expiredCount
         });
     }

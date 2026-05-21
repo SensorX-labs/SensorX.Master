@@ -6,19 +6,19 @@ using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 using SensorX.Master.Domain.Events;
 using SensorX.Master.Domain.SeedWork;
 
-namespace SensorX.Master.Application.Events.DomainEvents.QuoteCreated;
+namespace SensorX.Master.Application.Events.DomainEvents.PublishQuote;
 
 public sealed class RFQResponsedHandler(
     IRepository<RFQ> _rfqRepository
-) : INotificationHandler<DomainEventNotification<QuoteCreatedEvent>>
+) : INotificationHandler<DomainEventNotification<PublishQuoteEvent>>
 {
     public async Task Handle(
-        DomainEventNotification<QuoteCreatedEvent> notification,
+        DomainEventNotification<PublishQuoteEvent> notification,
         CancellationToken cancellationToken)
     {
         var domainEvent = notification.DomainEvent;
 
-        var rfq = await _rfqRepository.GetByIdAsync(domainEvent.RFQId.Value, cancellationToken);
+        var rfq = await _rfqRepository.GetByIdAsync(domainEvent.RFQId, cancellationToken);
         if (rfq is null) return;
 
         rfq.MarkAsResponded();

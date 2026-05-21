@@ -8,6 +8,6 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         Approved, //Đã duyệt
         Sent, //Đã gửi
         Ordered, //Đã sinh đơn hàng
-        Expired //Hết hiệu lực
+        Cancelled //Đã hủy
     }
 }

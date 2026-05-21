@@ -45,6 +45,7 @@ public class CreateDraftQuoteCommandHandler(
                 sender,
                 customerInfo
             );
+            quote.SetNote(request.Note);
 
             // Add quote items
             if (request.Items != null && request.Items.Count > 0)

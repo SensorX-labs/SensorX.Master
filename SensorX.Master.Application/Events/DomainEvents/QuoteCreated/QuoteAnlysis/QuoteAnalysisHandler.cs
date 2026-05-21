@@ -88,7 +88,7 @@ public sealed class QuoteCreatedEventHandler(
                     RecipientName: string.Empty,
                     TotalQuotes: customerQuotes.Count,
                     AcceptedQuotes: customerQuotes.Count(q => q.Status == QuoteStatus.Ordered),
-                    RejectedOrExpiredQuotes: customerQuotes.Count(q => q.Status == QuoteStatus.Returned || q.Status == QuoteStatus.Expired)
+                    RejectedOrExpiredQuotes: customerQuotes.Count(q => q.Status == QuoteStatus.Returned || q.QuoteDate > DateTimeOffset.UtcNow)
                 ),
                 Staff: new StaffAnalysisData(
                     StaffId: staffId?.ToString() ?? "N/A",
