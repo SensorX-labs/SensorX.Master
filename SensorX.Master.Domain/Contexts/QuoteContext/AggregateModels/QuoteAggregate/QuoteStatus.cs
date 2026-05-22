@@ -1,4 +1,4 @@
-namespace SensorX.Master.Domain.Contexts.QuoteContext
+namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate
 {
     public enum QuoteStatus
     {
@@ -8,6 +8,6 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext
         Approved, //Đã duyệt
         Sent, //Đã gửi
         Ordered, //Đã sinh đơn hàng
-        Expired //Hết hiệu lực
+        Cancelled //Đã hủy
     }
 }

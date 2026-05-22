@@ -4,7 +4,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Quartz;
 using SensorX.Master.Application.Common.Interfaces;
-using SensorX.Master.Application.Events.IntegrationEvents.QuoteAnalysis;
 using SensorX.Master.Application.Events.IntegrationEvents.WarehouseInventory;
 using SensorX.Master.Application.Services;
 using SensorX.Master.Domain.SeedWork;
@@ -58,7 +57,6 @@ namespace SensorX.Master.Infrastructure.DI
             services.AddMassTransit(x =>
             {
                 x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("master", false));
-                x.AddConsumer<QuoteAnalysisIntegrationEvent>();
                 x.AddConsumer<SensorX.Master.Application.Events.Consumers.StaffSnapshot.StaffSnapshotConsumer>();
                 x.AddConsumer<SensorX.Master.Application.Events.Consumers.ProductSnapshot.ProductSnapshotConsumer>();
                 x.AddConsumer<SensorX.Master.Application.Events.Consumers.CustomerSnapshot.CustomerSnapshotConsumer>();

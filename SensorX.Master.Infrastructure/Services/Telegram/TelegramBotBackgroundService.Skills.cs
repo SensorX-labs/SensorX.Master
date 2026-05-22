@@ -9,22 +9,22 @@ public partial class TelegramBotBackgroundService
 {
     private async Task<string> HandleQuotesAsync(IMediator mediator, string statusFilter, CancellationToken ct)
     {
-        var result = await mediator.Send(new GetPageListQuoteQuery(null) { PageNumber = 1, PageSize = 10 }, ct);
+        var result = await mediator.Send(new GetPageListQuoteQuery(null, null) { PageNumber = 1, PageSize = 10 }, ct);
         if (!result.IsSuccess || result.Value is null) return "Không thể truy vấn báo giá từ database.";
-        
+
         var items = result.Value.Items.AsEnumerable();
         if (statusFilter == "Pending")
         {
             string[] pending = ["PendingApproval", "Pending", "Submitted"];
-            items = items.Where(q => pending.Any(s => q.Status.Contains(s, StringComparison.OrdinalIgnoreCase)));
+            items = items.Where(q => pending.Any(s => q.Status.ToString().Contains(s, StringComparison.OrdinalIgnoreCase)));
             return FormatQuoteList(items.ToList(), "Báo Giá Chờ Duyệt");
         }
         else if (statusFilter == "Approved")
         {
-            items = items.Where(q => q.Status.Contains("Approved", StringComparison.OrdinalIgnoreCase));
+            items = items.Where(q => q.Status.ToString().Contains("Approved", StringComparison.OrdinalIgnoreCase));
             return FormatQuoteList(items.ToList(), "Báo Giá Đã Duyệt");
         }
-        
+
         return FormatQuoteList(items.ToList(), "Danh Sách Báo Giá");
     }
 
@@ -46,7 +46,7 @@ public partial class TelegramBotBackgroundService
             return $"Không thể duyệt báo giá *{quoteCode}*: {result.Message}";
 
         return $"✅ Đã phê duyệt thành công báo giá *{quoteCode}*\n" +
-               $"   👤 {quote.RecipientName} - {quote.CompanyName}\n" +
+               $"   👤 {quote.CompanyName}\n" +
                $"   💰 `{quote.GrandTotal:N0} VNĐ`";
     }
 }

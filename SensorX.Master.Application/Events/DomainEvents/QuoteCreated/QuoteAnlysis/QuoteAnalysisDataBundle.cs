@@ -1,9 +1,9 @@
 using MassTransit;
 
-namespace SensorX.Master.Application.Events.IntegrationEvents.QuoteAnalysis;
+namespace SensorX.Master.Application.Events.DomainEvents.QuoteCreated.QuoteAnlysis;
 
 [EntityName("quote-analysis-bundle")]
-public record QuoteAnalysisDataBundle(
+public sealed record QuoteAnalysisDataBundle(
     string QuoteId,
     string QuoteCode,
     CustomerAnalysisData Customer,
@@ -12,7 +12,7 @@ public record QuoteAnalysisDataBundle(
     DateTimeOffset GeneratedAt
 );
 
-public record QuoteOverviewData(
+public sealed record QuoteOverviewData(
     decimal TotalAmount,
     int ItemCount,
     decimal TotalQuantity,
@@ -20,7 +20,7 @@ public record QuoteOverviewData(
     List<AnalyzedItemData> Items
 );
 
-public record AnalyzedItemData(
+public sealed record AnalyzedItemData(
     string ProductCode,
     string ProductName,
     string Manufacturer,
@@ -32,9 +32,9 @@ public record AnalyzedItemData(
     List<PriceTierData> PriceTiers
 );
 
-public record PriceTierData(int MinQuantity, decimal Price);
+public sealed record PriceTierData(decimal MinQuantity, decimal Price);
 
-public record CustomerAnalysisData(
+public sealed record CustomerAnalysisData(
     string CustomerId,
     string CompanyName,
     string RecipientName,
@@ -43,7 +43,7 @@ public record CustomerAnalysisData(
     int RejectedOrExpiredQuotes // Số báo giá thất bại (Rejected/Expired)
 );
 
-public record StaffAnalysisData(
+public sealed record StaffAnalysisData(
     string StaffId,
     string StaffName,
     string Department,

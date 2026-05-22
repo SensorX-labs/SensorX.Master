@@ -5,35 +5,33 @@ using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 
-namespace SensorX.Master.Application.Commands.Quotes.AcceptQuote;
+namespace SensorX.Master.Application.Commands.Quotes.CustomerRespondToQuote;
 
-public class AcceptQuoteHandler(
+public class CustomerRespondToQuoteHandler(
     IRepository<Quote> _quoteRepository
-) : IRequestHandler<AcceptQuoteCommand, Result>
+) : IRequestHandler<CustomerRespondToQuoteCommand, Result>
 {
-    public async Task<Result> Handle(AcceptQuoteCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(CustomerRespondToQuoteCommand request, CancellationToken cancellationToken)
     {
         try
         {
-            var quoteId = new QuoteId(request.QuoteId);
+            var quoteId = new QuoteId(request.Id);
             var quote = await _quoteRepository.GetByIdAsync(quoteId, cancellationToken);
 
-            if (quote == null)
+            if (quote is null)
             {
                 return Result.Failure("Không tìm thấy báo giá.");
             }
 
-            var response = new QuoteResponse
-            {
-                ResponseType = request.ResponseType,
-                PaymentTerm = request.PaymentTerm,
-                ShippingAddress = request.ShippingAddress ?? quote.CustomerInfo.Address,
-                Feedback = request.Feedback
-            };
-
-            quote.Publish();
-            quote.Accept(response);
-
+            var response = new QuoteResponse(
+                request.ResponseType,
+                request.PaymentTerm,
+                request.ShippingAddress ?? quote.CustomerInfo.Address,
+                request.RecipientName,
+                request.RecipientPhone,
+                request.Feedback
+            );
+            quote.RecordCustomerResponse(response);
             await _quoteRepository.UpdateAsync(quote, cancellationToken);
 
             return Result.Success("Khách hàng đã chấp nhận báo giá thành công.");

@@ -41,12 +41,12 @@ public class GetDetailOrderByIdHandler(
                 order.Status.ToString(),
                 order.OrderDate,
 
-                order.CustomerInfo.RecipientName,
-                order.CustomerInfo.RecipientPhone.Value,
-                order.CustomerInfo.CompanyName,
-                order.CustomerInfo.Email.Value,
-                order.CustomerInfo.Address,
-                order.CustomerInfo.TaxCode,
+                order.DeliveryInfo.RecipientName,
+                order.DeliveryInfo.RecipientPhone.Value,
+                order.DeliveryInfo.CompanyName,
+                order.DeliveryInfo.Email.Value,
+                order.DeliveryInfo.ShippingAddress,
+                order.DeliveryInfo.TaxCode,
 
                 order.SenderInfo.Name,
                 order.SenderInfo.Email.Value,

@@ -25,7 +25,7 @@ public class GetOrdersQueryHandler(IRepository<Order> orderRepository) : IReques
             o.Id.Value,
             o.Code.Value,
             o.CustomerId.Value,
-            o.CustomerInfo.RecipientName,
+            o.DeliveryInfo.RecipientName,
             o.Status.ToString(),
             o.OrderDate
         )).ToList();

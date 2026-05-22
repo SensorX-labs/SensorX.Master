@@ -30,19 +30,21 @@ public class CustomerSendRFQCommandHandler(
             return Result.Failure("Không tìm thấy khách hàng liên kết với yêu cầu báo giá này.");
         }
 
-        if (customer.RecipientPhone == null || customer.Address == null || customer.RecipientName == null || customer.ShippingAddress == null)
+        if (string.IsNullOrWhiteSpace(customer.CompanyName) ||
+            string.IsNullOrWhiteSpace(customer.Email.Value) ||
+            string.IsNullOrWhiteSpace(customer.Address) ||
+            string.IsNullOrWhiteSpace(customer.TaxCode)
+        )
         {
-            return Result.Failure("Thông tin khách hàng không đầy đủ. Vui lòng bổ sung hồ sơ trước khi gửi yêu cầu báo giá !");
+            return Result.Failure("Thông tin doanh nghiệp của khách hàng không đầy đủ. Vui lòng bổ sung thông tin công ty!");
         }
 
         var customerInfo = new CustomerInfo(
-            customer.RecipientName,
-            customer.RecipientPhone,
-            customer.ShippingAddress,
             customer.CompanyName,
             customer.Email,
             customer.Address,
-            customer.TaxCode
+            customer.TaxCode,
+            customer.Phone ?? Phone.Create("0000000000")
         );
 
         rfq.Send(customerInfo);
