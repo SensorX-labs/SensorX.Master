@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.PaymentAggregate;
 using SensorX.Master.Domain.Contexts.PaymentContext.AggregateModels;
 using SensorX.Master.Domain.StrongIDs;
 
@@ -22,6 +23,15 @@ public class PaymentHistoryConfiguration : IEntityTypeConfiguration<PaymentHisto
       builder.Property(ph => ph.ReferenceCode).IsRequired();
       builder.Property(ph => ph.Accumulated).IsRequired();
       builder.Property(ph => ph.Status).IsRequired();
+      builder.Property(ph => ph.PaymentId).IsRequired().HasConversion(x => x.Value, x => new PaymentId(x));
       builder.Property(ph => ph.OrderId).IsRequired().HasConversion(x => x.Value, x => new OrderId(x));
+
+      builder.HasOne<Payment>()
+        .WithMany()
+        .HasForeignKey(ph => ph.PaymentId)
+        .OnDelete(DeleteBehavior.Cascade);
+
+      builder.HasIndex(ph => new { ph.PaymentId, ph.ReferenceCode }).IsUnique();
+      builder.HasIndex(ph => ph.OrderId);
     }
 }

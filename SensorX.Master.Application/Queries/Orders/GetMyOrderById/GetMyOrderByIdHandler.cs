@@ -3,12 +3,15 @@ using SensorX.Master.Application.Common.Interfaces;
 using SensorX.Master.Application.Common.ResponseClient;
 using SensorX.Master.Application.Queries.Orders.GetDetailOrderById;
 using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
+using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.PaymentAggregate;
 using SensorX.Master.Domain.StrongIDs;
+using SensorX.Master.Domain.SeedWork;
 
 namespace SensorX.Master.Application.Queries.Orders.GetMyOrderById;
 
 public class GetMyOrderByIdHandler(
     IQueryBuilder<Order> orderQueryBuilder,
+    IRepository<Payment> paymentRepository,
     IQueryExecutor queryExecutor,
     ICurrentUser currentUser,
     IDataServiceClient dataServiceClient
@@ -33,6 +36,10 @@ public class GetMyOrderByIdHandler(
         if (order == null)
             return Result<GetDetailOrderByIdResponse>.Failure("Khong tim thay don hang");
 
+        var payment = await queryExecutor.FirstOrDefaultAsync(
+            paymentRepository.AsQueryable().Where(p => p.OrderId == order.Id),
+            cancellationToken);
+
         var response = new GetDetailOrderByIdResponse(
             order.Id.Value,
             order.QuoteId.Value,
@@ -51,6 +58,11 @@ public class GetMyOrderByIdHandler(
             order.GetSubtotal().Amount,
             order.GetTotalTax().Amount,
             order.GetGrandTotal().Amount,
+            payment?.Id.Value,
+            payment?.Status.ToString(),
+            payment?.PaymentType.ToString(),
+            payment?.PaymentQRURls,
+            payment?.Amount.Amount,
             order.Items.Select(i => new OrderItemResponse(
                 i.Id.Value,
                 i.ProductId.Value,

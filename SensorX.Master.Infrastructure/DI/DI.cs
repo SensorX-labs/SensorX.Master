@@ -43,6 +43,8 @@ namespace SensorX.Master.Infrastructure.DI
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IWarehouseRepository, WarehouseRepository>();
             services.AddScoped<IWarehouseQueryService, WarehouseQueryService>(); // Add Query Service
+            services.AddScoped<IInventoryAvailabilityService, InventoryAvailabilityService>();
+            services.AddScoped<ISepayQRBuilder, SepayQRBuilder>();
             services.AddScoped<ICurrentUser, CurrentUser>();
             services.AddScoped<IGeolocationQueryService, GeolocationQueryService>();
 

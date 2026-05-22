@@ -1,4 +1,5 @@
 
+using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.PaymentAggregate;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 using System.Globalization;
@@ -20,11 +21,12 @@ public class PaymentHistory : IAggregateRoot
     public string ReferenceCode { get; set; } = string.Empty;
     public int Accumulated { get; set; }
     public PaymentHistoryStatus Status { get; set; }
-    public required OrderId OrderId { get; set; }
+    public PaymentId PaymentId { get; set; } = new(Guid.Empty);
+    public OrderId OrderId { get; set; } = new(Guid.Empty);
     
     public PaymentHistory() { }
     
-    public PaymentHistory(int id, string gateway, string transactionDate, string? subAccount, string? code, string accountNumber, string content, string transferType, string? description, decimal transferAmount, string referenceCode, int accumulated, PaymentHistoryStatus status, OrderId orderId)
+    public PaymentHistory(int id, string gateway, string transactionDate, string? subAccount, string? code, string accountNumber, string content, string transferType, string? description, decimal transferAmount, string referenceCode, int accumulated, PaymentHistoryStatus status, PaymentId paymentId, OrderId orderId)
     {
         Id = id;
         Gateway = gateway;
@@ -46,6 +48,7 @@ public class PaymentHistory : IAggregateRoot
         ReferenceCode = referenceCode;
         Accumulated = accumulated;
         Status = status;
+        PaymentId = paymentId;
         OrderId = orderId;
     }
 }
