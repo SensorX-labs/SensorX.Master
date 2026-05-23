@@ -2,36 +2,43 @@ using MediatR;
 using SensorX.Master.Application.Common.ResponseClient;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 
-namespace SensorX.Master.Application.Queries.Quotes.GetDetailQuoteById;
+namespace SensorX.Master.Application.Queries.Quotes.GetMyQuoteDetail;
 
-public sealed record GetDetailQuoteByIdQuery(Guid QuoteId) : IRequest<Result<GetDetailQuoteByIdResponse>>;
+public sealed record GetMyQuoteDetailQuery(Guid QuoteId) : IRequest<Result<GetMyQuoteDetailResponse>>;
 
-public sealed record GetDetailQuoteByIdResponse
+public sealed record GetMyQuoteDetailResponse
 (
     Guid Id,
     string Code,
-    Guid RFQId,
-    QuoteStatus Status,
+    Guid RfqId,
+    Guid? OrderId,
+    string? OrderCode,
+    StatusCustomerCanSeeQuote Status,
     DateTimeOffset? QuoteDate,
-    string? Note,
-    string? ReasonReject,
-
     decimal Subtotal,
     decimal TotalTax,
     decimal GrandTotal,
     List<QuoteItemResponse> Items,
 
     SenderInfoResponse Sender,
-    CustomerInfoResponse Customer,
-    QuoteCustomerResponse? CustomerFeedback
+    CustomerInfoResponse Customer
 );
+
+public enum StatusCustomerCanSeeQuote
+{
+    Pending,
+    Accepted,
+    Declined,
+    Expired
+}
 
 public sealed record SenderInfoResponse
 (
     Guid Id,
     string Name,
     string Email,
-    string? Phone
+    string? Phone,
+    string? AvatarUrl
 );
 
 public sealed record CustomerInfoResponse
@@ -42,16 +49,6 @@ public sealed record CustomerInfoResponse
     string Email,
     string Address,
     string TaxCode
-);
-
-public sealed record QuoteCustomerResponse
-(
-    QuoteResponseStatus? ResponseType,
-    PaymentTerm? PaymentTerm,
-    string? ShippingAddress,
-    string? RecipientName,
-    string? RecipientPhone,
-    string? Feedback
 );
 
 public sealed record QuoteItemResponse

@@ -1,4 +1,5 @@
 using MediatR;
+using SensorX.Master.Application.Common.Exceptions;
 using SensorX.Master.Application.Common.Interfaces;
 using SensorX.Master.Application.Common.QueryExtensions.LoadMore;
 using SensorX.Master.Application.Common.ReadModel;
@@ -30,18 +31,37 @@ public class GetMyQuotesHandler(
         var customerId = new CustomerId(customerIdVal);
 
         var query = _quoteBuilder.QueryAsNoTracking.Where(quote => quote.CustomerId == customerId);
-        query = query.Where(quote => quote.Status != QuoteStatus.Draft && quote.Status != QuoteStatus.Returned && quote.Status != QuoteStatus.Cancelled);
+
+        // Filter out quotes that customer cannot see
+        query = query.Where(quote => quote.Status != QuoteStatus.Draft &&
+                                    quote.Status != QuoteStatus.Pending &&
+                                    quote.Status != QuoteStatus.Returned &&
+                                    quote.Status != QuoteStatus.Cancelled &&
+                                    quote.Status != QuoteStatus.Approved);
 
 
         if (!string.IsNullOrEmpty(request.SearchTerm))
         {
             query = query.Where(quote => ((string)quote.Code).Contains(request.SearchTerm));
         }
-        if (request.Status.HasValue && request.Status != QuoteStatus.Draft && request.Status != QuoteStatus.Returned && request.Status != QuoteStatus.Cancelled)
+        if (request.Status.HasValue)
         {
-            query = query.Where(quote => quote.Status == request.Status);
+            switch (request.Status)
+            {
+                case StatusCustomerCanSeeQuote.Pending:
+                    query = query.Where(quote => quote.Status == QuoteStatus.Sent && quote.Response == null);
+                    break;
+                case StatusCustomerCanSeeQuote.Accepted:
+                    query = query.Where(quote => quote.Response != null && quote.Response.ResponseType == QuoteResponseStatus.Accepted);
+                    break;
+                case StatusCustomerCanSeeQuote.Declined:
+                    query = query.Where(quote => quote.Response != null && quote.Response.ResponseType == QuoteResponseStatus.Declined);
+                    break;
+                case StatusCustomerCanSeeQuote.Expired:
+                    query = query.Where(quote => quote.QuoteDate >= DateTimeOffset.UtcNow);
+                    break;
+            }
         }
-
 
         var pageQuery = query.ApplyLoadMoreWithOrder(
             request.LastValue.ToCursor<DateTimeOffset>(),
@@ -60,7 +80,7 @@ public class GetMyQuotesHandler(
         var responseItems = items.Select(x => new GetMyQuoteResponse(
             x.Id,
             x.Code,
-            x.Status.ToString(),
+            GetResponseStatus(x),
             x.GetGrandTotal().Amount,
             x.CreatedAt
         )).ToList();
@@ -76,5 +96,24 @@ public class GetMyQuotesHandler(
         };
 
         return Result<GetMyQuotesResult>.Success(result);
+    }
+
+    private static StatusCustomerCanSeeQuote GetResponseStatus(Quote quote)
+    {
+        var quoteStatus = quote.Status;
+        var quoteResponse = quote.Response;
+
+        if (quoteResponse != null)
+        {
+            if (quoteResponse.ResponseType == QuoteResponseStatus.Accepted)
+                return StatusCustomerCanSeeQuote.Accepted;
+            if (quoteResponse.ResponseType == QuoteResponseStatus.Declined)
+                return StatusCustomerCanSeeQuote.Declined;
+        }
+
+        if (quoteStatus == QuoteStatus.Sent)
+            return StatusCustomerCanSeeQuote.Pending;
+
+        return StatusCustomerCanSeeQuote.Expired;
     }
 }

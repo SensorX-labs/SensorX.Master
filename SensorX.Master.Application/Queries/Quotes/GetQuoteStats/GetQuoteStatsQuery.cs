@@ -16,4 +16,6 @@ public sealed record QuoteStatsResponse
     public int OrderedCount { get; set; }
     public int ExpiredCount { get; set; }
     public int CancelledCount { get; set; }
+    public int CustomerAcceptedCount { get; set; }
+    public int CustomerDeclinedCount { get; set; }
 }
