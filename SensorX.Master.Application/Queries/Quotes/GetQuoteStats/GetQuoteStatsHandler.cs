@@ -38,7 +38,7 @@ public sealed class GetQuoteStatsHandler(
         var pendingCount = await _queryExecutor.CountAsync(query.Where(x => x.Status == QuoteStatus.Pending), cancellationToken);
         var approvedCount = await _queryExecutor.CountAsync(query.Where(x => x.Status == QuoteStatus.Approved), cancellationToken);
         var returnedCount = await _queryExecutor.CountAsync(query.Where(x => x.Status == QuoteStatus.Returned), cancellationToken);
-        var sentCount = await _queryExecutor.CountAsync(query.Where(x => x.Status == QuoteStatus.Sent), cancellationToken);
+        var sentCount = await _queryExecutor.CountAsync(query.Where(x => x.Status == QuoteStatus.Sent || x.Status == QuoteStatus.Ordered), cancellationToken);
         var orderedCount = await _queryExecutor.CountAsync(query.Where(x => x.Status == QuoteStatus.Ordered), cancellationToken);
         var cancelledCount = await _queryExecutor.CountAsync(query.Where(x => x.Status == QuoteStatus.Cancelled), cancellationToken);
         var expiredCount = await _queryExecutor.CountAsync(
@@ -46,6 +46,9 @@ public sealed class GetQuoteStatsHandler(
             x.Status != QuoteStatus.Ordered &&
             x.QuoteDate != null
         ), cancellationToken);
+
+        var customerAcceptedCount = await _queryExecutor.CountAsync(query.Where(x => x.Response != null && x.Response.ResponseType == QuoteResponseStatus.Accepted), cancellationToken);
+        var customerDeclinedCount = await _queryExecutor.CountAsync(query.Where(x => x.Response != null && x.Response.ResponseType == QuoteResponseStatus.Declined), cancellationToken);
 
         return Result<QuoteStatsResponse>.Success(new QuoteStatsResponse
         {
@@ -57,7 +60,9 @@ public sealed class GetQuoteStatsHandler(
             SentCount = sentCount,
             OrderedCount = orderedCount,
             CancelledCount = cancelledCount,
-            ExpiredCount = expiredCount
+            ExpiredCount = expiredCount,
+            CustomerAcceptedCount = customerAcceptedCount,
+            CustomerDeclinedCount = customerDeclinedCount
         });
     }
 }

@@ -46,11 +46,11 @@ public sealed record CustomerInfoResponse
 
 public sealed record QuoteCustomerResponse
 (
-    QuoteResponseStatus ResponseType,
-    PaymentTerm PaymentTerm,
-    string ShippingAddress,
-    string RecipientName,
-    string RecipientPhone,
+    QuoteResponseStatus? ResponseType,
+    PaymentTerm? PaymentTerm,
+    string? ShippingAddress,
+    string? RecipientName,
+    string? RecipientPhone,
     string? Feedback
 );
 

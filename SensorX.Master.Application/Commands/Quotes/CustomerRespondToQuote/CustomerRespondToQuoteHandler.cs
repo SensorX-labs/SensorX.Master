@@ -20,7 +20,7 @@ public class CustomerRespondToQuoteHandler(
 
             if (quote is null)
             {
-                return Result.Failure("Không tìm thấy báo giá.");
+                return Result.Failure("Không tìm thấy thông tin báo giá.");
             }
 
             var response = new QuoteResponse(
@@ -34,11 +34,11 @@ public class CustomerRespondToQuoteHandler(
             quote.RecordCustomerResponse(response);
             await _quoteRepository.UpdateAsync(quote, cancellationToken);
 
-            return Result.Success("Khách hàng đã chấp nhận báo giá thành công.");
+            return Result.Success("Phản hồi báo giá thành công.");
         }
         catch (Exception ex)
         {
-            return Result.Failure($"Lỗi khi chấp nhận báo giá: {ex.Message}");
+            return Result.Failure($"Lỗi khi phản hồi báo giá: {ex.Message}");
         }
     }
 }
