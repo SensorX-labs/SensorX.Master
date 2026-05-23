@@ -38,7 +38,7 @@ public class Order : Entity<OrderId>, IAggregateRoot, ICreationTrackable, IUpdat
     {
         _items.Add(item);
     }
-
+    // Event tạo order
     public void RaiseCreatedDomainEvent()
     {
         AddDomainEvent(new OrderCreatedDomainEvent(

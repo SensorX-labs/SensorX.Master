@@ -31,6 +31,7 @@ public class CustomerRespondToQuoteHandler(
                 request.RecipientPhone,
                 request.Feedback
             );
+            quote.ChangeStatus(QuoteStatus.Sent);
             quote.RecordCustomerResponse(response);
             await _quoteRepository.UpdateAsync(quote, cancellationToken);
 

@@ -72,4 +72,9 @@ public class Payment : Entity<PaymentId>, IAggregateRoot, ICreationTrackable, IU
 
         MarkAsPartiallyPaid();
     }
+    public void Cancel()
+    {
+        Status = PaymentStatus.Cancelled;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
 }
