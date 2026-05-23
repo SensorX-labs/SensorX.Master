@@ -52,6 +52,7 @@ namespace SensorX.Master.WebApi.API.Queries
             return api;
         }
 
+        [AuthorizeRole(Role.SaleStaff, Role.Manager)]
         private static async Task<IResult> GetDetailQuoteById(
             [FromRoute] Guid quoteId,
             [FromServices] IMediator mediator
