@@ -13,7 +13,6 @@ public sealed record GetMyQuotesQuery(
 
 public enum StatusCustomerCanSeeQuote
 {
-    All,
     Pending,
     Accepted,
     Declined,

@@ -22,6 +22,10 @@ public class CustomerRespondToQuoteHandler(
             {
                 return Result.Failure("Không tìm thấy thông tin báo giá.");
             }
+            if (quote.Response != null)
+            {
+                return Result.Warning("Báo giá đã được phản hồi. Vui lòng chờ phản hồi từ nhân viên kinh doanh.");
+            }
 
             var response = new QuoteResponse(
                 request.ResponseType,
