@@ -256,7 +256,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
                 Status = QuoteStatus.Sent;
                 QuoteDate = DateTimeOffset.UtcNow;
                 UpdatedAt = DateTimeOffset.UtcNow;
-                AddDomainEvent(new PublishQuoteEvent(Id, RFQId));
+                AddDomainEvent(new PublishQuoteEvent(Id, RFQId, SenderInfo.Id));
             }
             else
             {

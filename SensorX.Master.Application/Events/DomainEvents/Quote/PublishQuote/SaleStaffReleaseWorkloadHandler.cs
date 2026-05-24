@@ -1,13 +1,14 @@
 using MediatR;
 using SensorX.Master.Application.Common.DomainEvent;
+using SensorX.Master.Application.Common.ReadModel;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 using SensorX.Master.Domain.Events;
 using SensorX.Master.Domain.SeedWork;
 
 namespace SensorX.Master.Application.Events.DomainEvents.Quote.PublishQuote;
 
-public sealed class RFQResponsedHandler(
-    IRepository<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate.RFQ> _rfqRepository
+public sealed class SaleStaffReleaseWorkloadHandler(
+    IRepository<SaleStaff> _saleStaffRepository
 ) : INotificationHandler<DomainEventNotification<PublishQuoteEvent>>
 {
     public async Task Handle(
@@ -15,11 +16,9 @@ public sealed class RFQResponsedHandler(
         CancellationToken cancellationToken)
     {
         var domainEvent = notification.DomainEvent;
-
-        var rfq = await _rfqRepository.GetByIdAsync(domainEvent.RFQId, cancellationToken);
-        if (rfq is null) return;
-
-        rfq.MarkAsResponded();
-        await _rfqRepository.SaveChangesAsync(cancellationToken);
+        var saleStaff = await _saleStaffRepository.GetByIdAsync(domainEvent.StaffId, cancellationToken)
+        ?? throw new InvalidOperationException($"Không tìm thấy SaleStaff {domainEvent.StaffId}");
+        saleStaff.ReleaseWorkload();
+        await _saleStaffRepository.SaveChangesAsync(cancellationToken);
     }
 }
