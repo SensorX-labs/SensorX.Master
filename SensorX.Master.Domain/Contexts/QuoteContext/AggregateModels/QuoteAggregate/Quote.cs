@@ -87,6 +87,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         /// </summary>
         public void AddItem(
             ProductId productId,
+            Guid categoryId,
             Code productCode,
             string manufacturer,
             string unit,
@@ -99,13 +100,14 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
             var existingItem = _lineItems.FirstOrDefault(x => x.ProductId == productId);
             if (existingItem is not null)
             {
-                existingItem.Update(quantity, unitPrice, floorPrice, taxRate);
+                existingItem.Update(categoryId, quantity, unitPrice, floorPrice, taxRate);
                 return;
             }
 
             var quoteItem = new QuoteItem(
                 QuoteItemId.New(),
                 productId,
+                categoryId,
                 productCode,
                 manufacturer,
                 unit,

@@ -6,7 +6,7 @@ using SensorX.Master.Domain.Common.Exceptions;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 using SensorX.Master.Domain.SeedWork;
 
-namespace SensorX.Master.Application.Events.DomainEvents.RFQSended;
+namespace SensorX.Master.Application.Events.DomainEvents.RFQ.RFQSended;
 
 public class RunAIAssignmentEventHandler(
     IAIAssignmentService _aiAssignmentService,
@@ -18,9 +18,9 @@ public class RunAIAssignmentEventHandler(
     {
         var domainEvent = notification.DomainEvent;
         _logger.LogInformation("Nhận sự kiện RFQSendedEvent cho RFQ {Id}, tiến hành phân bổ AI...", domainEvent.RfqId.Value);
-        
+
         var rfq = await _rfqRepository.GetByIdAsync(domainEvent.RfqId, cancellationToken);
-        if (rfq == null) throw new DomainException("RFQ không tồn tại.");
+        if (rfq is null) throw new DomainException("RFQ không tồn tại.");
 
         await _aiAssignmentService.AssignStaffToRFQAsync(rfq, cancellationToken);
         await _rfqRepository.SaveChangesAsync(cancellationToken);

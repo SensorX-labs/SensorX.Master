@@ -17,7 +17,7 @@ public static class RFQSearch
         // CustomerInfo là owned type với cột string thuần túy -> EF Core dịch được
         // Không dùng Code.Value vì Code là Value Object qua HasConversion -> không dịch được
         return query.Where(p =>
-            p.CustomerInfo.CompanyName.ToLower().Contains(term)
+            p.CustomerInfo != null && p.CustomerInfo.CompanyName.Contains(term, StringComparison.OrdinalIgnoreCase)
         );
     }
 }

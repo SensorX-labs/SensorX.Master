@@ -19,9 +19,8 @@ public class RunAIAssignmentEventHandler(
         var domainEvent = notification.DomainEvent;
         _logger.LogInformation("Nhận sự kiện RFQRejectedEvent cho RFQ {Id} (Staff {StaffId} từ chối). Phân bổ lại...", domainEvent.RfqId.Value, domainEvent.StaffId?.Value);
 
-
-        var rfq = await _rfqRepository.GetByIdAsync(domainEvent.RfqId, cancellationToken);
-        if (rfq is null) throw new DomainException("RFQ không tồn tại.");
+        var rfq = await _rfqRepository.GetByIdAsync(domainEvent.RfqId, cancellationToken)
+        ?? throw new SensorX.Master.Application.Common.Exceptions.ApplicationException("RFQ không tồn tại.");
 
         await _aiAssignmentService.AssignStaffToRFQAsync(rfq, cancellationToken);
         await _rfqRepository.SaveChangesAsync(cancellationToken);

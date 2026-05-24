@@ -82,6 +82,8 @@ public class QuoteConfiguration : IEntityTypeConfiguration<Quote>
             item.Property(i => i.ProductId)
                 .HasConversion(id => id.Value, v => new ProductId(v));
 
+            item.Property(i => i.CategoryId).HasColumnName("CategoryId");
+
             item.Property(i => i.Quantity)
                 .HasConversion(qty => qty.Value, v => new Quantity(v));
 

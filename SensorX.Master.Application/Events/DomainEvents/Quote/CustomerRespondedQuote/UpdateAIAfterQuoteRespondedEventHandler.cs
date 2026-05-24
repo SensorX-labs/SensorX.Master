@@ -32,13 +32,7 @@ public class UpdateAIAfterQuoteRespondedEventHandler(
         if (quote is null) return;
 
         var staffId = quote.SenderInfo.Id; // Lấy ID của SaleStaff tạo Quote
-        var productIds = quote.LineItems.Select(x => x.ProductId.Value).Distinct().ToArray();
-
-
-        var productPolicies = await _dataServiceClient.GetProductPricingAsync(productIds);
-        if (productPolicies == null || productPolicies.Length == 0) return;
-
-        var categoryIds = productPolicies.Select(p => p.CategoryId).Distinct().ToList();
+        var categoryIds = quote.LineItems.Select(x => x.CategoryId).Distinct().ToList();
 
         var query = _performanceBuilder.QueryAsNoTracking.Where(p => p.StaffId == staffId && categoryIds.Contains(p.CategoryId));
         var existingPerformances = await _queryExecutor.ToListAsync(query, cancellationToken);
@@ -66,8 +60,7 @@ public class UpdateAIAfterQuoteRespondedEventHandler(
             {
                 perf.SuccessCount++;
                 // Tính margin cho các item thuộc category này (Tổng (Giá Quote - Giá Sàn) * Số lượng)
-                var catProducts = productPolicies.Where(p => p.CategoryId == categoryId).Select(p => p.ProductId).ToList();
-                foreach (var item in quote.LineItems.Where(i => catProducts.Contains(i.ProductId.Value)))
+                foreach (var item in quote.LineItems.Where(i => i.CategoryId == categoryId))
                 {
                     var margin = (item.UnitPrice.Amount - item.FloorPrice.Amount) * item.Quantity.Value;
                     perf.TotalMarginAccumulated += (double)margin;
