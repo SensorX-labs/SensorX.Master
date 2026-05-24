@@ -61,18 +61,16 @@ public class RFQConfiguration : IEntityTypeConfiguration<RFQ>
                 .HasConversion(qty => qty.Value, v => new Quantity(v));
         });
 
-        builder.Property(r => r.RejectedByStaffIds)
-            .HasField("_rejectedByStaffIds")
-            .HasConversion(
-                v => string.Join(',', v.Select(x => x.Value)),
-                v => string.IsNullOrEmpty(v) ? new List<StaffId>() : v.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(x => new StaffId(Guid.Parse(x))).ToList()
-            )
-            .Metadata.SetValueComparer(
-                new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<IReadOnlyList<StaffId>>(
-                    (c1, c2) => c1 != null && c2 != null ? c1.SequenceEqual(c2) : c1 == c2,
-                    c => c != null ? c.Aggregate(0, (a, v) => HashCode.Combine(a, v.Value.GetHashCode())) : 0,
-                    c => c != null ? c.ToList() : new List<StaffId>()
-                )
-            );
+        builder.OwnsMany(r => r.RejectedLogs, a =>
+        {
+            a.ToJson();
+            a.Property(l => l.StaffId)
+                .HasConversion(id => id.Value, v => new StaffId(v));
+        });
+
+        builder.OwnsMany(r => r.AllocationLogs, a =>
+        {
+            a.ToJson();
+        });
     }
 }

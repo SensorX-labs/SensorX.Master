@@ -22,6 +22,7 @@ public sealed record GetPageListRFQResponse
     DateTimeOffset? UpdatedAt,
     Guid? StaffId,
     string? StaffName,
-    int ItemCount
+    int ItemCount,
+    double? FinalScore = null
 );
 public sealed class GetPageListRFQResult : OffsetPagedResult<GetPageListRFQResponse>;

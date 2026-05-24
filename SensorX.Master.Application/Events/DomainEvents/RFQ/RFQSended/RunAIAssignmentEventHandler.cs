@@ -1,7 +1,9 @@
+using System.Text.Json;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using SensorX.Master.Application.Common.DomainEvent;
 using SensorX.Master.Application.Common.Interfaces;
+using SensorX.Master.Application.Services.AIAssignment;
 using SensorX.Master.Domain.Common.Exceptions;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 using SensorX.Master.Domain.SeedWork;
@@ -11,7 +13,6 @@ namespace SensorX.Master.Application.Events.DomainEvents.RFQ.RFQSended;
 public class RunAIAssignmentEventHandler(
     IAIAssignmentService _aiAssignmentService,
     IRepository<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate.RFQ> _rfqRepository,
-    IRepository<SensorX.Master.Application.Common.ReadModel.SaleStaff> _staffRepository,
     IUnitOfWork _unitOfWork,
     ILogger<RunAIAssignmentEventHandler> _logger
 ) : INotificationHandler<DomainEventNotification<RFQSendedEvent>>
@@ -39,12 +40,11 @@ public class RunAIAssignmentEventHandler(
             throw new Exception("RFQ không có sản phẩm");
         }
 
-        var bestStaffId = await _aiAssignmentService.FindBestStaffForRFQAsync(rfq, cancellationToken);
-        if (bestStaffId != null)
+        var allocationResult = await _aiAssignmentService.FindBestStaffForRFQAsync(rfq, cancellationToken);
+        if (allocationResult.WinnerStaffId != null)
         {
-            rfq.Assign(bestStaffId);
-            var dbStaff = await _staffRepository.GetByIdAsync(bestStaffId, cancellationToken) ?? throw new Exception("Nhân viên không tồn tại");
-            dbStaff?.AssignRfq();
+            string logJson = JsonSerializer.Serialize(allocationResult.CandidatesSnapshot);
+            rfq.Assign(allocationResult.WinnerStaffId, logJson);
         }
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("Phân bổ AI thành công cho RFQ {Id}", domainEvent.RfqId.Value);

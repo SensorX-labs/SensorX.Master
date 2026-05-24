@@ -7,7 +7,9 @@ using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 
-namespace SensorX.Master.Application.Services;
+using SensorX.Master.Application.Services.AIAssignment.Models;
+
+namespace SensorX.Master.Application.Services.AIAssignment;
 
 public class AIAssignmentService(
     IDataServiceClient _dataServiceClient,
@@ -17,12 +19,14 @@ public class AIAssignmentService(
     ILogger<AIAssignmentService> _logger
 ) : IAIAssignmentService
 {
-    public async Task<StaffId?> FindBestStaffForRFQAsync(RFQ rfq, CancellationToken cancellationToken = default)
+    public async Task<AIAllocationResult> FindBestStaffForRFQAsync(RFQ rfq, CancellationToken cancellationToken = default)
     {
+        var result = new AIAllocationResult();
+
         if (rfq.Items == null || rfq.Items.Count == 0)
         {
             _logger.LogWarning("RFQ {Id} không có sản phẩm nào để phân bổ", rfq.Id.Value);
-            return null;
+            return result;
         }
 
         // 1. Get Product Policies
@@ -32,7 +36,7 @@ public class AIAssignmentService(
         if (productPolicies == null || productPolicies.Length == 0)
         {
             _logger.LogWarning("Không lấy được dữ liệu chính sách giá cho RFQ {Id}", rfq.Id.Value);
-            return null;
+            return result;
         }
 
         // 2. Calculate Item Weights
@@ -44,7 +48,7 @@ public class AIAssignmentService(
         {
             _logger.LogWarning("Không còn SaleStaff nào hợp lệ cho RFQ {Id}, đánh dấu AllRejected.", rfq.Id.Value);
             rfq.MaskAsAllRejected();
-            return null;
+            return result;
         }
 
         // 4. Get Staff Performances
@@ -101,7 +105,7 @@ public class AIAssignmentService(
         var activeStaffsQuery = _staffBuilder.QueryAsNoTracking.Where(s => s.Status == StaffStatus.Active);
         var activeStaffs = await _queryExecutor.ToListAsync(activeStaffsQuery, cancellationToken);
 
-        var rejectedStaffIds = rfq.RejectedByStaffIds.Select(r => r.Value).ToList();
+        var rejectedStaffIds = rfq.RejectedLogs.Select(r => r.StaffId.Value).ToList();
         return activeStaffs.Where(s => !rejectedStaffIds.Contains(s.Id.Value)).ToList();
     }
 
@@ -113,7 +117,7 @@ public class AIAssignmentService(
         return await _queryExecutor.ToListAsync(performanceQuery, cancellationToken);
     }
 
-    private StaffId? FindBestStaff(
+    private AIAllocationResult FindBestStaff(
         RFQ rfq,
         List<SaleStaff> availableStaffs,
         List<StaffContextPerformance> performances,
@@ -122,6 +126,7 @@ public class AIAssignmentService(
     {
         SaleStaff? bestStaff = null;
         double highestFinalScore = -double.MaxValue;
+        var snapshotList = new List<AllocationSnapshot>();
 
         double k = 1.5; // Hệ số trừng phạt quá tải
         double idleWeight = 0.1; // Trọng số khuyến khích thời gian rảnh rỗi
@@ -155,6 +160,24 @@ public class AIAssignmentService(
             // Điểm chốt hạ
             double finalScore = staff.CalculateFinalAllocationScore(aggregatedSkillScore, k, idleWeight);
 
+            double idleHours = 0;
+            if (staff.LastAssignedAt.HasValue)
+            {
+                idleHours = (DateTimeOffset.UtcNow - staff.LastAssignedAt.Value).TotalHours;
+            }
+            if (idleHours > 48) idleHours = 48;
+
+            // Ghi nhận snapshot
+            snapshotList.Add(new AllocationSnapshot
+            {
+                StaffId = staff.Id.Value,
+                StaffName = staff.Name,
+                AggregatedSkillScore = Math.Round(aggregatedSkillScore, 4),
+                CurrentWorkload = staff.CurrentWorkload,
+                IdleHours = Math.Round(idleHours, 4),
+                FinalScore = Math.Round(finalScore, 4)
+            });
+
             if (finalScore > highestFinalScore)
             {
                 highestFinalScore = finalScore;
@@ -162,13 +185,21 @@ public class AIAssignmentService(
             }
         }
 
+        var result = new AIAllocationResult
+        {
+            CandidatesSnapshot = snapshotList.OrderByDescending(x => x.FinalScore).ToList()
+        };
+
         if (bestStaff != null)
         {
             _logger.LogInformation("Tìm thấy Best Staff {StaffId} cho RFQ {RfqId} với FinalScore={Score}", bestStaff.Id.Value, rfq.Id.Value, highestFinalScore);
-            return new StaffId(bestStaff.Id.Value);
+            result.WinnerStaffId = new StaffId(bestStaff.Id.Value);
+        }
+        else
+        {
+            _logger.LogWarning("Không tìm thấy Staff phù hợp nào cho RFQ {RfqId}", rfq.Id.Value);
         }
 
-        _logger.LogWarning("Không tìm thấy Staff phù hợp nào cho RFQ {RfqId}", rfq.Id.Value);
-        return null;
+        return result;
     }
 }

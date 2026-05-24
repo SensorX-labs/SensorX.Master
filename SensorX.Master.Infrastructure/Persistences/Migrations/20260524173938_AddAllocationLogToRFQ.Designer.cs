@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SensorX.Master.Infrastructure.Persistences;
@@ -11,9 +12,11 @@ using SensorX.Master.Infrastructure.Persistences;
 namespace SensorX.Master.Infrastructure.Persistences.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260524173938_AddAllocationLogToRFQ")]
+    partial class AddAllocationLogToRFQ
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -495,6 +498,10 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
 
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("RejectedByStaffIds")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<Guid?>("StaffId")
                         .HasColumnType("uuid");
@@ -1217,42 +1224,11 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                                 .HasForeignKey("RFQId");
                         });
 
-                    b.OwnsMany("SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate.RejectedLogEntry", "RejectedLogs", b1 =>
-                        {
-                            b1.Property<Guid>("RFQId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<int>("__synthesizedOrdinal")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("integer");
-
-                            b1.Property<string>("Reason")
-                                .IsRequired()
-                                .HasColumnType("text");
-
-                            b1.Property<DateTimeOffset>("RejectedAt")
-                                .HasColumnType("timestamp with time zone");
-
-                            b1.Property<Guid>("StaffId")
-                                .HasColumnType("uuid");
-
-                            b1.HasKey("RFQId", "__synthesizedOrdinal");
-
-                            b1.ToTable("RFQs");
-
-                            b1.ToJson("RejectedLogs");
-
-                            b1.WithOwner()
-                                .HasForeignKey("RFQId");
-                        });
-
                     b.Navigation("AllocationLogs");
 
                     b.Navigation("CustomerInfo");
 
                     b.Navigation("Items");
-
-                    b.Navigation("RejectedLogs");
                 });
 
             modelBuilder.Entity("SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.SupplyRequestAggregate.SupplyRequest", b =>
