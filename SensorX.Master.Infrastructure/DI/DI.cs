@@ -44,6 +44,7 @@ namespace SensorX.Master.Infrastructure.DI
             services.AddScoped<IWarehouseQueryService, WarehouseQueryService>(); // Add Query Service
             services.AddScoped<ICurrentUser, CurrentUser>();
             services.AddScoped<IGeolocationQueryService, GeolocationQueryService>();
+            services.AddScoped<IAIAssignmentService, AIAssignmentService>();
 
             // Đăng ký HttpClient cho Data Service
             services.AddHttpClient<IDataServiceClient, DataServiceClient>();
