@@ -29,10 +29,16 @@ public class RunAIAssignmentEventHandler(
             throw new SensorX.Master.Application.Common.Exceptions.ApplicationException("RFQ không có sản phẩm");
         }
 
-        var staff = await _staffRepository.GetByIdAsync(domainEvent.StaffId, cancellationToken);
+        if (domainEvent.StaffId == null)
+        {
+            _logger.LogError("Sự kiện từ chối RFQ {Id} bị thiếu thông tin StaffId", domainEvent.RfqId.Value);
+            throw new SensorX.Master.Application.Common.Exceptions.ApplicationException("Thiếu StaffId trong sự kiện từ chối.");
+        }
+
+        var staff = await _staffRepository.GetByIdAsync(domainEvent.StaffId!, cancellationToken);
         if (staff == null)
         {
-            _logger.LogError("Nhân viên {Id} không tồn tại", domainEvent.StaffId?.Value);
+            _logger.LogError("Nhân viên {Id} không tồn tại", domainEvent.StaffId.Value);
             throw new SensorX.Master.Application.Common.Exceptions.ApplicationException("Nhân viên không tồn tại.");
         }
         staff.ReleaseWorkload();
