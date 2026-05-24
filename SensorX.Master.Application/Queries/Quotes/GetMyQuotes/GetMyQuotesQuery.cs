@@ -8,13 +8,21 @@ namespace SensorX.Master.Application.Queries.Quotes.GetMyQuotes;
 
 public sealed record GetMyQuotesQuery(
     string? SearchTerm,
-    QuoteStatus? Status
+    StatusCustomerCanSeeQuote? Status
 ) : LoadMoreQuery, IRequest<Result<GetMyQuotesResult>>;
+
+public enum StatusCustomerCanSeeQuote
+{
+    Pending,
+    Accepted,
+    Declined,
+    Expired
+}
 
 public sealed record GetMyQuoteResponse(
     Guid Id,
     string Code,
-    string Status,
+    StatusCustomerCanSeeQuote Status,
     decimal TotalAmount,
     DateTimeOffset CreatedAt
 );

@@ -7,7 +7,9 @@ namespace SensorX.Master.Application.Queries.Quotes.GetPageListQuote;
 
 public record GetPageListQuoteQuery(
     string? SearchTerm,
-    QuoteStatus? Status
+    QuoteStatus? Status,
+    QuoteResponseStatus? ResponseType,
+    bool? IsExpired
 ) : OffsetPagedQuery, IRequest<Result<OffsetPagedResult<GetPageListQuoteResponse>>>;
 
 public record GetPageListQuoteResponse(
@@ -19,6 +21,7 @@ public record GetPageListQuoteResponse(
     string CompanyName,
     decimal GrandTotal,
     int ItemCount,
-    DateTimeOffset CreatedAt
+    DateTimeOffset CreatedAt,
+    QuoteResponseStatus? ResponseType
 );
 

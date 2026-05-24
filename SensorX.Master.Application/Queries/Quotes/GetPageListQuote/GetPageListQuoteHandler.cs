@@ -40,7 +40,27 @@ public class GetPageListQuoteHandler(
 
         if (request.Status is not null)
         {
-            sourceQuery = sourceQuery.Where(x => x.Status == request.Status);
+            if (request.Status == QuoteStatus.Sent)
+            {
+                sourceQuery = sourceQuery.Where(x => x.Status == QuoteStatus.Ordered || x.Status == request.Status);
+            }
+            else
+            {
+                sourceQuery = sourceQuery.Where(x => x.Status == request.Status);
+            }
+        }
+
+        if (request.ResponseType.HasValue)
+        {
+            sourceQuery = sourceQuery.Where(x => x.Response != null && x.Response.ResponseType == request.ResponseType.Value);
+        }
+
+        if (request.IsExpired == true)
+        {
+            sourceQuery = sourceQuery.Where(x => 
+                x.QuoteDate > DateTimeOffset.UtcNow && 
+                x.Status != QuoteStatus.Ordered && 
+                x.QuoteDate != null);
         }
 
         var pagedQuery = sourceQuery
@@ -57,7 +77,8 @@ public class GetPageListQuoteHandler(
             x.CustomerInfo.CompanyName,
             x.GetGrandTotal().Amount,
             x.LineItems.Count,
-            x.CreatedAt
+            x.CreatedAt,
+            x.Response != null ? x.Response.ResponseType : null
         ));
 
         var items = await _queryExecutor.ToListAsync(dtoQuery, cancellationToken);

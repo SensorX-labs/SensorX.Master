@@ -43,9 +43,16 @@ namespace SensorX.Master.WebApi.API.Queries
                 return operation;
             });
 
+            api.MapGet("my-quote/{quoteId:guid}", GetMyQuoteDetail).WithOpenApi(operation =>
+            {
+                operation.Summary = "Lấy chi tiết báo giá của tôi (Trang của khách hàng)";
+                return operation;
+            });
+
             return api;
         }
 
+        [AuthorizeRole(Role.SaleStaff, Role.Manager)]
         private static async Task<IResult> GetDetailQuoteById(
             [FromRoute] Guid quoteId,
             [FromServices] IMediator mediator
@@ -82,6 +89,15 @@ namespace SensorX.Master.WebApi.API.Queries
         )
         {
             var result = await mediator.Send(query);
+            return result.ToResult();
+        }
+        [AuthorizeRole(Role.Customer)]
+        private static async Task<IResult> GetMyQuoteDetail(
+            [FromRoute] Guid quoteId,
+            [FromServices] IMediator mediator
+        )
+        {
+            var result = await mediator.Send(new SensorX.Master.Application.Queries.Quotes.GetMyQuoteDetail.GetMyQuoteDetailQuery(quoteId));
             return result.ToResult();
         }
     }
