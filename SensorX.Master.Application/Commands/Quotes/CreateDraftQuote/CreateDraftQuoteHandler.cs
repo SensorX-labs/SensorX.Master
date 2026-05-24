@@ -83,7 +83,7 @@ public class CreateDraftQuoteCommandHandler(
             var mapItem = mapItems[item.ProductId];
             var policy = pricingPolicies?.FirstOrDefault(p => p.ProductId == item.ProductId);
             var floorPrice = policy != null ? Money.FromVnd(policy.FloorPrice) : Money.Zero();
-            var categoryId = policy != null ? policy.CategoryId : Guid.Empty;
+            var categoryId = policy != null ? new CategoryId(policy.CategoryId) : new CategoryId(Guid.Empty);
 
             quote.AddItem(
                 new ProductId(item.ProductId),

@@ -87,7 +87,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         /// </summary>
         public void AddItem(
             ProductId productId,
-            Guid categoryId,
+            CategoryId categoryId,
             Code productCode,
             string manufacturer,
             string unit,

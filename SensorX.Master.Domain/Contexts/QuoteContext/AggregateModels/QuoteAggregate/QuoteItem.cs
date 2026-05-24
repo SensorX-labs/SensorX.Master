@@ -11,7 +11,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         public QuoteItem(
             QuoteItemId id,
             ProductId productId,
-            Guid categoryId,
+            CategoryId categoryId,
             Code productCode,
             string manufacturer,
             string unit,
@@ -33,7 +33,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         }
 
         public ProductId ProductId { get; private set; }
-        public Guid CategoryId { get; private set; }
+        public CategoryId CategoryId { get; private set; }
         public Code ProductCode { get; private set; }
         public string Manufacturer { get; private set; }
         public string Unit { get; private set; }
@@ -46,7 +46,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         public Money GetTaxAmount() => GetLineAmount() * TaxRate;
         public Money GetTotalLineAmount() => GetLineAmount() + GetTaxAmount();
 
-        public void Update(Guid categoryId, Quantity quantity, Money unitPrice, Money floorPrice, Percent taxRate)
+        public void Update(CategoryId categoryId, Quantity quantity, Money unitPrice, Money floorPrice, Percent taxRate)
         {
             CategoryId = categoryId;
             Quantity = quantity;

@@ -32,7 +32,7 @@ public class UpdateAIAfterQuoteRespondedEventHandler(
         if (quote is null) return;
 
         var staffId = quote.SenderInfo.Id; // Lấy ID của SaleStaff tạo Quote
-        var categoryIds = quote.LineItems.Select(x => x.CategoryId).Distinct().ToList();
+        var categoryIds = quote.LineItems.Select(x => x.CategoryId.Value).Distinct().ToList();
 
         var query = _performanceBuilder.QueryAsNoTracking.Where(p => p.StaffId == staffId && categoryIds.Contains(p.CategoryId));
         var existingPerformances = await _queryExecutor.ToListAsync(query, cancellationToken);
@@ -60,7 +60,7 @@ public class UpdateAIAfterQuoteRespondedEventHandler(
             {
                 perf.SuccessCount++;
                 // Tính margin cho các item thuộc category này (Tổng (Giá Quote - Giá Sàn) * Số lượng)
-                foreach (var item in quote.LineItems.Where(i => i.CategoryId == categoryId))
+                foreach (var item in quote.LineItems.Where(i => i.CategoryId.Value == categoryId))
                 {
                     var margin = (item.UnitPrice.Amount - item.FloorPrice.Amount) * item.Quantity.Value;
                     perf.TotalMarginAccumulated += (double)margin;
