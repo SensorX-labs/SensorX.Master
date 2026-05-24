@@ -1,11 +1,11 @@
 using Microsoft.Extensions.Logging;
 using SensorX.Master.Application.Common.Interfaces;
+using SensorX.Master.Application.Common.Models.DataServiceModels;
 using SensorX.Master.Application.Common.ReadModel;
 using SensorX.Master.Domain.Common;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
-using SensorX.Master.Application.Common.Models.DataServiceModels;
 
 namespace SensorX.Master.Application.Services;
 
@@ -55,7 +55,20 @@ public class AIAssignmentService(
         return FindBestStaff(rfq, availableStaffs, performances, itemWeights, totalWeight);
     }
 
-    private (Dictionary<Guid, (Guid CategoryId, double Weight)> Weights, double TotalWeight) CalculateItemWeights(RFQ rfq, ProductPricingPolicyData[] productPolicies)
+    private static (Dictionary<Guid, (Guid CategoryId, double Weight)> Weights, double TotalWeight) CalculateItemWeights(RFQ rfq, ProductPricingPolicyData[] productPolicies)
+    {
+        var itemWeights = ExtractBaseItemWeights(rfq, productPolicies);
+        var totalWeight = itemWeights.Values.Sum(x => x.Weight);
+
+        if (totalWeight <= 0)
+        {
+            return ApplyFallbackWeights(rfq, productPolicies, itemWeights);
+        }
+
+        return (itemWeights, totalWeight);
+    }
+
+    private static Dictionary<Guid, (Guid CategoryId, double Weight)> ExtractBaseItemWeights(RFQ rfq, ProductPricingPolicyData[] productPolicies)
     {
         var itemWeights = new Dictionary<Guid, (Guid CategoryId, double Weight)>();
         foreach (var item in rfq.Items)
@@ -67,24 +80,20 @@ public class AIAssignmentService(
                 itemWeights.Add(item.ProductId.Value, (policy.CategoryId, weight));
             }
         }
+        return itemWeights;
+    }
 
-        var totalWeight = itemWeights.Values.Sum(x => x.Weight);
-        if (totalWeight <= 0)
+    private static (Dictionary<Guid, (Guid CategoryId, double Weight)>, double) ApplyFallbackWeights(RFQ rfq, ProductPricingPolicyData[] productPolicies, Dictionary<Guid, (Guid CategoryId, double Weight)> itemWeights)
+    {
+        foreach (var item in rfq.Items)
         {
-            // Fallback nếu weight = 0, chia đều weight
-            totalWeight = 1;
-            foreach (var item in rfq.Items)
+            var policy = productPolicies.FirstOrDefault(p => p.ProductId == item.ProductId.Value);
+            if (policy != null)
             {
-                var policy = productPolicies.FirstOrDefault(p => p.ProductId == item.ProductId.Value);
-                if (policy != null)
-                {
-                    itemWeights[item.ProductId.Value] = (policy.CategoryId, 1.0);
-                }
+                itemWeights[item.ProductId.Value] = (policy.CategoryId, 1.0);
             }
-            totalWeight = itemWeights.Count;
         }
-
-        return (itemWeights, totalWeight);
+        return (itemWeights, itemWeights.Count);
     }
 
     private async Task<List<SaleStaff>> GetAvailableStaffsAsync(RFQ rfq, CancellationToken cancellationToken)
@@ -105,10 +114,10 @@ public class AIAssignmentService(
     }
 
     private StaffId? FindBestStaff(
-        RFQ rfq, 
-        List<SaleStaff> availableStaffs, 
-        List<StaffContextPerformance> performances, 
-        Dictionary<Guid, (Guid CategoryId, double Weight)> itemWeights, 
+        RFQ rfq,
+        List<SaleStaff> availableStaffs,
+        List<StaffContextPerformance> performances,
+        Dictionary<Guid, (Guid CategoryId, double Weight)> itemWeights,
         double totalWeight)
     {
         SaleStaff? bestStaff = null;
