@@ -23,7 +23,7 @@ public class DataServiceClient : IDataServiceClient
     {
         try
         {
-            var response = await _httpClient.GetAsync($"/api/customers/{customerId}/buying-history");
+            var response = await _httpClient.GetAsync($"/api/internal-api/customers/{customerId}/buying-history");
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 return new CustomerBuyingHistoryApiResponse { Success = false, Message = "Không tìm thấy khách hàng" };
 
@@ -45,7 +45,7 @@ public class DataServiceClient : IDataServiceClient
             if (productIds == null || productIds.Length == 0) return Array.Empty<ProductPricingPolicyData>();
 
             var requestBody = new { productIds = productIds };
-            var response = await _httpClient.PostAsJsonAsync("/api/catalog/products/pricing-policy/batch", requestBody);
+            var response = await _httpClient.PostAsJsonAsync("/api/internal-api/catalog/products/batch", requestBody);
             
             if (!response.IsSuccessStatusCode)
             {
@@ -74,7 +74,7 @@ public class DataServiceClient : IDataServiceClient
     {
         try
         {
-            var response = await _httpClient.GetAsync($"/api/staff/{employeeId}");
+            var response = await _httpClient.GetAsync($"/api/internal-api/staff/{employeeId}/metrics");
             if (!response.IsSuccessStatusCode) 
                 return new StaffMetricsApiResponse { IsSuccess = false, Message = "Lỗi gọi API Staff" };
 
@@ -92,7 +92,7 @@ public class DataServiceClient : IDataServiceClient
     {
         try
         {
-            var response = await _httpClient.GetAsync($"/api/customer/account/{accountId}");
+            var response = await _httpClient.GetAsync($"/api/internal-api/customers/account/{accountId}");
             if (!response.IsSuccessStatusCode)
                 return new CustomerByAccountApiResponse { IsSuccess = false, Message = "Loi goi API Customer theo AccountId" };
 

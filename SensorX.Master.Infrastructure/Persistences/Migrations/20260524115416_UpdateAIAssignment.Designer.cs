@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SensorX.Master.Infrastructure.Persistences;
@@ -11,9 +12,11 @@ using SensorX.Master.Infrastructure.Persistences;
 namespace SensorX.Master.Infrastructure.Persistences.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260524115416_UpdateAIAssignment")]
+    partial class UpdateAIAssignment
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -668,8 +671,8 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp without time zone");
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Error")
                         .HasColumnType("text");
@@ -678,8 +681,8 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime?>("ProcessedAt")
-                        .HasColumnType("timestamp without time zone");
+                    b.Property<DateTimeOffset?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -989,13 +992,6 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                         {
                             b1.Property<Guid>("Id")
                                 .HasColumnType("uuid");
-
-                            b1.Property<Guid>("CategoryId")
-                                .HasColumnType("uuid")
-                                .HasColumnName("CategoryId");
-
-                            b1.Property<decimal>("FloorPrice")
-                                .HasColumnType("numeric");
 
                             b1.Property<string>("Manufacturer")
                                 .IsRequired()

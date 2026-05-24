@@ -1,26 +1,25 @@
 using MediatR;
 using SensorX.Master.Application.Common.DomainEvent;
 using SensorX.Master.Application.UseCases.Orders.Commands.CreateOrder;
-using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
-using SensorX.Master.Domain.Events;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
+using QuoteAggregate = SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 
-namespace SensorX.Master.Application.Events.DomainEvents.CustomerRespondedQuote;
+namespace SensorX.Master.Application.Events.DomainEvents.Quote.CustomerRespondedQuote;
 
 public class CreateOrderEventHandler(
-    IRepository<Quote> _quoteRepository,
+    IRepository<QuoteAggregate.Quote> _quoteRepository,
     IMediator _mediator
-) : INotificationHandler<DomainEventNotification<CustomerRespondedQuoteEvent>>
+) : INotificationHandler<DomainEventNotification<QuoteAggregate.CustomerRespondedQuoteEvent>>
 {
     public async Task Handle(
-        DomainEventNotification<CustomerRespondedQuoteEvent> notification,
+        DomainEventNotification<QuoteAggregate.CustomerRespondedQuoteEvent> notification,
         CancellationToken cancellationToken)
     {
         var domainEvent = notification.DomainEvent;
 
-        if (domainEvent.QuoteResponse.ResponseType != QuoteResponseStatus.Accepted) return;
+        if (domainEvent.QuoteResponse.ResponseType != QuoteAggregate.QuoteResponseStatus.Accepted) return;
 
         var quote = await _quoteRepository.GetByIdAsync(domainEvent.QuoteId, cancellationToken);
 

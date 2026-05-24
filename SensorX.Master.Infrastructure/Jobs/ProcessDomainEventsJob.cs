@@ -53,7 +53,7 @@ public class ProcessDomainEventsJob(AppDbContext dbContext, IMediator mediator, 
                 await mediator.Publish(notification, context.CancellationToken);
 
                 // 5. Đánh dấu thành công
-                message.ProcessedAt = DateTimeOffset.UtcNow;
+                message.ProcessedAt = DateTime.Now;
                 message.Error = null;
             }
             catch (Exception ex)

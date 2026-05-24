@@ -4,22 +4,20 @@ using Microsoft.Extensions.Logging;
 using SensorX.Master.Application.Common.DomainEvent;
 using SensorX.Master.Application.Common.Interfaces;
 using SensorX.Master.Application.Common.Models.DataServiceModels;
-using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
-using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 using SensorX.Master.Domain.Events;
-namespace SensorX.Master.Application.Events.DomainEvents.QuoteCreated.QuoteAnlysis;
+namespace SensorX.Master.Application.Events.DomainEvents.Quote.QuoteCreated.QuoteAnlysis;
 
 public sealed class QuoteCreatedEventHandler(
-    IQueryBuilder<Quote> _quoteQueryBuilder,
-    IQueryBuilder<RFQ> _rfqQueryBuilder,
+    IQueryBuilder<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate.Quote> _quoteQueryBuilder,
+    IQueryBuilder<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate.RFQ> _rfqQueryBuilder,
     IQueryExecutor _queryExecutor,
     IDataServiceClient _dataClient,
     IPublishEndpoint _publishEndpoint,
     ILogger<QuoteCreatedEventHandler> _logger
-) : INotificationHandler<DomainEventNotification<QuoteCreatedEvent>>
+) : INotificationHandler<DomainEventNotification<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate.QuoteCreatedEvent>>
 {
     public async Task Handle(
-        DomainEventNotification<QuoteCreatedEvent> notification,
+        DomainEventNotification<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate.QuoteCreatedEvent> notification,
         CancellationToken cancellationToken)
     {
         var domainEvent = notification.DomainEvent;
@@ -87,8 +85,8 @@ public sealed class QuoteCreatedEventHandler(
                     CompanyName: quote.CustomerInfo.CompanyName,
                     RecipientName: string.Empty,
                     TotalQuotes: customerQuotes.Count,
-                    AcceptedQuotes: customerQuotes.Count(q => q.Status == QuoteStatus.Ordered),
-                    RejectedOrExpiredQuotes: customerQuotes.Count(q => q.Status == QuoteStatus.Returned || q.QuoteDate > DateTimeOffset.UtcNow)
+                    AcceptedQuotes: customerQuotes.Count(q => q.Status == SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate.QuoteStatus.Ordered),
+                    RejectedOrExpiredQuotes: customerQuotes.Count(q => q.Status == SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate.QuoteStatus.Returned || q.QuoteDate > DateTimeOffset.UtcNow)
                 ),
                 Staff: new StaffAnalysisData(
                     StaffId: staffId?.ToString() ?? "N/A",

@@ -1,8 +1,6 @@
 using MediatR;
 using SensorX.Master.Application.Common.Interfaces;
-using SensorX.Master.Application.Common.ReadModel;
 using SensorX.Master.Application.Common.ResponseClient;
-using SensorX.Master.Domain.Common.Exceptions;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
@@ -12,8 +10,7 @@ namespace SensorX.Master.Application.Commands.RFQs.CustomerAddProduct;
 
 public class CustomerAddProductCommandHandler(
     IRepository<RFQ> _rfqRepository,
-    IQueryBuilder<Product> _productBuilder,
-    IQueryExecutor _queryExecutor
+    IDataServiceClient _dataServiceClient
 ) : IRequestHandler<CustomerAddProductCommand, Result>
 {
     public async Task<Result> Handle(CustomerAddProductCommand request, CancellationToken cancellationToken)
@@ -39,18 +36,17 @@ public class CustomerAddProductCommandHandler(
             .GroupBy(i => i.ProductId)
             .ToDictionary(g => g.Key, g => g.Sum(x => x.Quantity));
 
-        var productIds = itemQuantities.Keys.ToList(); // convert to list for query in EF
-        var productQuery = _productBuilder.QueryAsNoTracking.Where(c => productIds.Contains(c.Id));
-        var productList = await _queryExecutor.ToListAsync(productQuery, cancellationToken);
+        var productIds = itemQuantities.Keys.ToArray();
+        var productList = await _dataServiceClient.GetProductPricingAsync(productIds);
 
         foreach (var product in productList)
         {
             rfq.AddItem(
-                new ProductId(product.Id),
-                product.Name,
-                new Quantity(itemQuantities[product.Id]),
-                Code.From(product.Code),
-                product.Manufacturer,
+                new ProductId(product.ProductId),
+                product.ProductName,
+                new Quantity(itemQuantities[product.ProductId]),
+                Code.From(product.ProductCode),
+                product.Manufacture,
                 product.Unit
             );
         }

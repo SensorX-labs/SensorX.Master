@@ -1,15 +1,13 @@
-using MassTransit;
 using MediatR;
 using SensorX.Master.Application.Common.DomainEvent;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
-using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 using SensorX.Master.Domain.Events;
 using SensorX.Master.Domain.SeedWork;
 
-namespace SensorX.Master.Application.Events.DomainEvents.PublishQuote;
+namespace SensorX.Master.Application.Events.DomainEvents.Quote.PublishQuote;
 
 public sealed class RFQResponsedHandler(
-    IRepository<RFQ> _rfqRepository
+    IRepository<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate.RFQ> _rfqRepository
 ) : INotificationHandler<DomainEventNotification<PublishQuoteEvent>>
 {
     public async Task Handle(

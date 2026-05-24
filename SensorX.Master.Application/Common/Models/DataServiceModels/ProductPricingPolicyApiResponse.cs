@@ -13,6 +13,7 @@ public class ProductPricingPolicyApiResponse
 public class ProductPricingPolicyData
 {
     public Guid ProductId { get; set; }
+    public Guid CategoryId { get; set; }
     public string ProductCode { get; set; } = string.Empty;
     public string ProductName { get; set; } = string.Empty;
     public string Manufacture { get; set; } = string.Empty;

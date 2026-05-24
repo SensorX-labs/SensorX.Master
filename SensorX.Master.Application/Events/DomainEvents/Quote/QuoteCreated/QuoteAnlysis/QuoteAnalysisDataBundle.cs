@@ -1,6 +1,6 @@
 using MassTransit;
 
-namespace SensorX.Master.Application.Events.DomainEvents.QuoteCreated.QuoteAnlysis;
+namespace SensorX.Master.Application.Events.DomainEvents.Quote.QuoteCreated.QuoteAnlysis;
 
 [EntityName("quote-analysis-bundle")]
 public sealed record QuoteAnalysisDataBundle(
