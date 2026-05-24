@@ -1,13 +1,12 @@
+using System.Text.Json;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using SensorX.Master.Application.Common.DomainEvent;
 using SensorX.Master.Application.Common.Interfaces;
+using SensorX.Master.Application.Services.AIAssignment;
 using SensorX.Master.Domain.Common.Exceptions;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 using SensorX.Master.Domain.SeedWork;
-
-using SensorX.Master.Application.Services.AIAssignment;
-using System.Text.Json;
 
 namespace SensorX.Master.Application.Events.DomainEvents.RFQ.RFQRejected;
 
@@ -38,6 +37,8 @@ public class RunAIAssignmentEventHandler(
             throw new SensorX.Master.Application.Common.Exceptions.ApplicationException("Thiếu StaffId trong sự kiện từ chối.");
         }
 
+        // Release workload nhân viên từ chối — được xử lý bởi handler lắng nghe RFQRejectedEvent riêng
+        // (Hiện đang được giữ lại ở đây vì RFQRejectedEvent cũng có nhiệm vụ Release)
         var staff = await _staffRepository.GetByIdAsync(domainEvent.StaffId!, cancellationToken);
         if (staff == null)
         {
@@ -51,8 +52,6 @@ public class RunAIAssignmentEventHandler(
         {
             string logJson = JsonSerializer.Serialize(allocationResult.CandidatesSnapshot);
             rfq.Assign(allocationResult.WinnerStaffId, logJson);
-            var dbStaff = await _staffRepository.GetByIdAsync(allocationResult.WinnerStaffId, cancellationToken) ?? throw new Exception("Nhân viên không tồn tại");
-            dbStaff.AssignRfq();
         }
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("Phân bổ lại AI thành công cho RFQ {Id}", domainEvent.RfqId.Value);

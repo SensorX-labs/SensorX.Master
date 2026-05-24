@@ -127,13 +127,12 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
             if (Status != RFQStatus.Rejected && Status != RFQStatus.Pending)
                 throw new DomainException("Trạng thái RFQ không hợp lệ. Không thể chỉ định phân bổ.");
 
-            if (StaffId != null)
-                throw new DomainException("RFQ này đã có nhân viên phụ trách, không thể gán lại.");
+            var previousStaffId = StaffId; // capture nhân viên cũ (có thể null nếu chưa ai được gán)
 
             StaffId = staffId;
             Status = RFQStatus.Accepted;
             UpdatedAt = DateTimeOffset.UtcNow;
-            AddDomainEvent(new RFQForceAssignedEvent(Id, Code, StaffId));
+            AddDomainEvent(new RFQForceAssignedEvent(Id, Code, staffId, previousStaffId));
         }
 
         // Đã báo giá lại khách hàng

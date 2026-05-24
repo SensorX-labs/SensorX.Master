@@ -8,5 +8,5 @@ public sealed record RFQAllRejectedEvent(RFQId RfqId, Code Code) : IDomainEvent;
 public sealed record RFQSendedEvent(RFQId RfqId, Code Code) : IDomainEvent;
 public sealed record RFQAssignedEvent(RFQId RfqId, Code Code, StaffId StaffId) : IDomainEvent;
 public sealed record RFQRejectedEvent(RFQId RfqId, Code Code, StaffId StaffId) : IDomainEvent;
-public sealed record RFQForceAssignedEvent(RFQId RfqId, Code Code, StaffId StaffId) : IDomainEvent;
+public sealed record RFQForceAssignedEvent(RFQId RfqId, Code Code, StaffId NewStaffId, StaffId? PreviousStaffId) : IDomainEvent;
 public sealed record RFQMarkAsRespondedEvent(RFQId RfqId, Code Code) : IDomainEvent;
