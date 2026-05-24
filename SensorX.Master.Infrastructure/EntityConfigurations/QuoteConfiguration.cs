@@ -36,7 +36,7 @@ public class QuoteConfiguration : IEntityTypeConfiguration<Quote>
                 .IsRequired();
             c.Property(p => p.Name).HasColumnName("SenderName");
             c.Property(p => p.Phone)
-                .HasConversion(p => p.Value, v => Phone.From(v))
+                .HasConversion(p => p != null ? p.Value : null, v => v != null ? Phone.From(v) : null)
                 .HasColumnName("SenderPhone");
             c.Property(p => p.Email)
                 .HasConversion(e => e.Value, v => Email.From(v))
