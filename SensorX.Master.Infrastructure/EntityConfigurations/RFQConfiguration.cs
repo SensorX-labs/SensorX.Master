@@ -74,5 +74,10 @@ public class RFQConfiguration : IEntityTypeConfiguration<RFQ>
                     c => c != null ? c.ToList() : new List<StaffId>()
                 )
             );
+
+        builder.OwnsMany(r => r.AllocationLogs, a =>
+        {
+            a.ToJson();
+        });
     }
 }

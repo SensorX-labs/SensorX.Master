@@ -7,6 +7,7 @@ using Quartz;
 using SensorX.Master.Application.Common.Interfaces;
 using SensorX.Master.Application.Events.IntegrationEvents.WarehouseInventory;
 using SensorX.Master.Application.Services;
+using SensorX.Master.Application.Services.AIAssignment;
 using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Infrastructure.Jobs;

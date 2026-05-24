@@ -6,6 +6,9 @@ using SensorX.Master.Domain.Common.Exceptions;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 using SensorX.Master.Domain.SeedWork;
 
+using SensorX.Master.Application.Services.AIAssignment;
+using System.Text.Json;
+
 namespace SensorX.Master.Application.Events.DomainEvents.RFQ.RFQRejected;
 
 public class RunAIAssignmentEventHandler(
@@ -43,11 +46,12 @@ public class RunAIAssignmentEventHandler(
         }
         staff.ReleaseWorkload();
 
-        var bestStaffId = await _aiAssignmentService.FindBestStaffForRFQAsync(rfq, cancellationToken);
-        if (bestStaffId != null)
+        var allocationResult = await _aiAssignmentService.FindBestStaffForRFQAsync(rfq, cancellationToken);
+        if (allocationResult.WinnerStaffId != null)
         {
-            rfq.Assign(bestStaffId);
-            var dbStaff = await _staffRepository.GetByIdAsync(bestStaffId, cancellationToken) ?? throw new Exception("Nhân viên không tồn tại");
+            string logJson = JsonSerializer.Serialize(allocationResult.CandidatesSnapshot);
+            rfq.Assign(allocationResult.WinnerStaffId, logJson);
+            var dbStaff = await _staffRepository.GetByIdAsync(allocationResult.WinnerStaffId, cancellationToken) ?? throw new Exception("Nhân viên không tồn tại");
             dbStaff.AssignRfq();
         }
         await _unitOfWork.SaveChangesAsync(cancellationToken);

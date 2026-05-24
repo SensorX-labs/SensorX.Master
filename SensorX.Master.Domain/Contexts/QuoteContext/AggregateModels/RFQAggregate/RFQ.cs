@@ -38,6 +38,9 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
         private readonly List<StaffId> _rejectedByStaffIds = [];
         public IReadOnlyList<StaffId> RejectedByStaffIds => _rejectedByStaffIds.AsReadOnly();
 
+        private readonly List<AllocationLogEntry> _allocationLogs = [];
+        public IReadOnlyCollection<AllocationLogEntry> AllocationLogs => _allocationLogs.AsReadOnly();
+
         public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
         public DateTimeOffset? UpdatedAt { get; set; }
 
@@ -54,13 +57,21 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
         }
 
         // gán nhân viên để xử lý RFQ
-        public void Assign(StaffId staffId)
+        public void Assign(StaffId staffId, string snapshotJson)
         {
             if (Status != RFQStatus.Pending)
                 throw new DomainException("Chỉ có thể phân bổ RFQ ở trạng thái chờ phân bổ");
 
             StaffId = staffId;
             UpdatedAt = DateTimeOffset.UtcNow;
+
+            int currentRound = _allocationLogs.Count + 1;
+            _allocationLogs.Add(new AllocationLogEntry(
+                round: currentRound,
+                assignedAt: DateTimeOffset.UtcNow,
+                snapshotJson: snapshotJson
+            ));
+
             AddDomainEvent(new RFQAssignedEvent(Id, Code, StaffId));
         }
 

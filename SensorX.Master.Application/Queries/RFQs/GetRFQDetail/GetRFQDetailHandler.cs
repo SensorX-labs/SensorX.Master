@@ -39,6 +39,12 @@ public class GetRFQDetailHandler(
                         q.CustomerInfo == null ? string.Empty : q.CustomerInfo.Email,
                         q.CustomerInfo == null ? string.Empty : q.CustomerInfo.Address,
                         q.CustomerInfo == null ? string.Empty : q.CustomerInfo.TaxCode,
+                        // Allocation Logs
+                        q.AllocationLogs.Select(a => new AllocationLogEntryResponse(
+                            a.Round,
+                            a.AssignedAt,
+                            a.SnapshotJson
+                        )).ToList(),
                         // Map Items
                         q.Items.Select(i => new RFQItemResponse
                         (

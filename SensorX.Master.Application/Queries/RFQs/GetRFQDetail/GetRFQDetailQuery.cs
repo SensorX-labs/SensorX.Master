@@ -22,8 +22,16 @@ public record GetRFQDetailResponse
     string Email,
     string Address,
     string TaxCode,
+    List<AllocationLogEntryResponse> AllocationLogs,
 
     List<RFQItemResponse> Items
+);
+
+public record AllocationLogEntryResponse
+(
+    int Round,
+    DateTimeOffset AssignedAt,
+    string SnapshotJson
 );
 
 public record RFQItemResponse
