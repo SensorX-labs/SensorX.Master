@@ -8,7 +8,7 @@ namespace SensorX.Master.Application.Services.AIAssignment.Models
         public string StaffName { get; set; } = string.Empty;
         public double AggregatedSkillScore { get; set; }
         public double CurrentWorkload { get; set; }
-        public double IdleScore { get; set; }
+        public double IdleHours { get; set; }
         public double FinalScore { get; set; }
     }
 }

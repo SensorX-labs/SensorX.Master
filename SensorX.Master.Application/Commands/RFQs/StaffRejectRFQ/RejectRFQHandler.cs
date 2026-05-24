@@ -16,7 +16,7 @@ namespace SensorX.Master.Application.Commands.RFQs.StaffRejectRFQ
             if (rfq is null)
                 return Result.Failure("Không tìm thấy RFQ!");
 
-            rfq.Reject();
+            rfq.Reject(request.Reason);
             await _rfqRepository.SaveChangesAsync(cancellationToken);
             return Result.Success("Từ chối RFQ thành công!");
         }

@@ -35,8 +35,8 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
         private readonly List<RFQItem> _items = [];
         public IReadOnlyList<RFQItem> Items => _items.AsReadOnly();
 
-        private readonly List<StaffId> _rejectedByStaffIds = [];
-        public IReadOnlyList<StaffId> RejectedByStaffIds => _rejectedByStaffIds.AsReadOnly();
+        private readonly List<RejectedLogEntry> _rejectedLogs = [];
+        public IReadOnlyList<RejectedLogEntry> RejectedLogs => _rejectedLogs.AsReadOnly();
 
         private readonly List<AllocationLogEntry> _allocationLogs = [];
         public IReadOnlyCollection<AllocationLogEntry> AllocationLogs => _allocationLogs.AsReadOnly();
@@ -86,15 +86,15 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
         }
 
         // nhân viên từ chối xử lý
-        public void Reject()
+        public void Reject(string reason)
         {
             if (Status != RFQStatus.Pending || StaffId == null)
                 throw new DomainException("Chỉ có thể từ chối RFQ ở trạng thái chờ phân bổ");
 
-            // LƯU VẾT: Nhớ mặt ông nhân viên vừa từ chối
-            if (!_rejectedByStaffIds.Contains(StaffId))
+            // LƯU VẾT: Nhớ mặt ông nhân viên vừa từ chối kèm lý do
+            if (!_rejectedLogs.Any(x => x.StaffId == StaffId))
             {
-                _rejectedByStaffIds.Add(StaffId);
+                _rejectedLogs.Add(new RejectedLogEntry(StaffId, reason, DateTimeOffset.UtcNow));
             }
 
             AddDomainEvent(new RFQRejectedEvent(Id, Code, StaffId));
@@ -105,7 +105,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
         // reset trạng thái từ chối nếu quản lý muốn thực hiện lại tính toán điểm phân bổ
         public void ResetStaffRejected()
         {
-            _rejectedByStaffIds.Clear();
+            _rejectedLogs.Clear();
             UpdatedAt = DateTimeOffset.UtcNow;
         }
 

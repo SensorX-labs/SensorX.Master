@@ -105,7 +105,7 @@ public class AIAssignmentService(
         var activeStaffsQuery = _staffBuilder.QueryAsNoTracking.Where(s => s.Status == StaffStatus.Active);
         var activeStaffs = await _queryExecutor.ToListAsync(activeStaffsQuery, cancellationToken);
 
-        var rejectedStaffIds = rfq.RejectedByStaffIds.Select(r => r.Value).ToList();
+        var rejectedStaffIds = rfq.RejectedLogs.Select(r => r.StaffId.Value).ToList();
         return activeStaffs.Where(s => !rejectedStaffIds.Contains(s.Id.Value)).ToList();
     }
 
@@ -174,7 +174,7 @@ public class AIAssignmentService(
                 StaffName = staff.Name,
                 AggregatedSkillScore = Math.Round(aggregatedSkillScore, 4),
                 CurrentWorkload = staff.CurrentWorkload,
-                IdleScore = Math.Round(idleHours * idleWeight, 4),
+                IdleHours = Math.Round(idleHours, 4),
                 FinalScore = Math.Round(finalScore, 4)
             });
 

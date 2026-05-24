@@ -45,6 +45,12 @@ public class GetRFQDetailHandler(
                             a.AssignedAt,
                             a.SnapshotJson
                         )).ToList(),
+                        // Rejected Logs
+                        q.RejectedLogs.Select(r => new RejectedLogEntryResponse(
+                            r.StaffId.Value,
+                            r.Reason,
+                            r.RejectedAt
+                        )).ToList(),
                         // Map Items
                         q.Items.Select(i => new RFQItemResponse
                         (
