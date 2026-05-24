@@ -92,13 +92,14 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
             string unit,
             Quantity quantity,
             Money unitPrice,
+            Money floorPrice,
             Percent taxRate
         )
         {
             var existingItem = _lineItems.FirstOrDefault(x => x.ProductId == productId);
             if (existingItem is not null)
             {
-                existingItem.Update(quantity, unitPrice, taxRate);
+                existingItem.Update(quantity, unitPrice, floorPrice, taxRate);
                 return;
             }
 
@@ -110,6 +111,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
                 unit,
                 quantity,
                 unitPrice,
+                floorPrice,
                 taxRate
             );
             _lineItems.Add(quoteItem);

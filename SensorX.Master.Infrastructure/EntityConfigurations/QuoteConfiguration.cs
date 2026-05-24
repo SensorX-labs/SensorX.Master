@@ -88,6 +88,9 @@ public class QuoteConfiguration : IEntityTypeConfiguration<Quote>
             item.Property(i => i.UnitPrice)
                 .HasConversion(m => m.Amount, v => Money.FromVnd(v));
 
+            item.Property(i => i.FloorPrice)
+                .HasConversion(m => m.Amount, v => Money.FromVnd(v));
+
             item.Property(i => i.TaxRate)
                 .HasConversion(p => p.Value, v => Percent.From(v));
         });

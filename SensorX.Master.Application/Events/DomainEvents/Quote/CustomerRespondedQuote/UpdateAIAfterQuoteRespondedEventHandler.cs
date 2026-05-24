@@ -6,7 +6,7 @@ using SensorX.Master.Application.Common.ReadModel;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 using SensorX.Master.Domain.SeedWork;
 
-namespace SensorX.Master.Application.Events.DomainEvents.CustomerRespondedQuote;
+namespace SensorX.Master.Application.Events.DomainEvents.Quote.CustomerRespondedQuote;
 
 public class UpdateAIAfterQuoteRespondedEventHandler(
     IRepository<StaffContextPerformance> _performanceRepository,
@@ -27,13 +27,14 @@ public class UpdateAIAfterQuoteRespondedEventHandler(
     private async Task ProcessQuoteResponse(QuoteId quoteId, bool isSuccess, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Đang cập nhật ký ức AI sau khi Quote {Id} phản hồi ({Status}).", quoteId.Value, isSuccess ? "Accepted" : "Rejected");
-        
+
         var quote = await _quoteRepository.GetByIdAsync(quoteId, cancellationToken);
-        if (quote == null) return;
+        if (quote is null) return;
 
         var staffId = quote.SenderInfo.Id; // Lấy ID của SaleStaff tạo Quote
         var productIds = quote.LineItems.Select(x => x.ProductId.Value).Distinct().ToArray();
-        
+
+
         var productPolicies = await _dataServiceClient.GetProductPricingAsync(productIds);
         if (productPolicies == null || productPolicies.Length == 0) return;
 
@@ -48,9 +49,11 @@ public class UpdateAIAfterQuoteRespondedEventHandler(
             bool isNew = false;
             if (perf == null)
             {
-                perf = new StaffContextPerformance 
-                { 
-                    StaffId = staffId, 
+                perf = new StaffContextPerformance
+                {
+
+                    StaffId = staffId,
+
                     CategoryId = categoryId,
                     SuccessCount = 0,
                     FailureCount = 0,
@@ -64,10 +67,9 @@ public class UpdateAIAfterQuoteRespondedEventHandler(
                 perf.SuccessCount++;
                 // Tính margin cho các item thuộc category này (Tổng (Giá Quote - Giá Sàn) * Số lượng)
                 var catProducts = productPolicies.Where(p => p.CategoryId == categoryId).Select(p => p.ProductId).ToList();
-                foreach(var item in quote.LineItems.Where(i => catProducts.Contains(i.ProductId.Value)))
+                foreach (var item in quote.LineItems.Where(i => catProducts.Contains(i.ProductId.Value)))
                 {
-                    var policy = productPolicies.First(p => p.ProductId == item.ProductId.Value);
-                    var margin = (item.UnitPrice.Amount - policy.FloorPrice) * item.Quantity.Value;
+                    var margin = (item.UnitPrice.Amount - item.FloorPrice.Amount) * item.Quantity.Value;
                     perf.TotalMarginAccumulated += (double)margin;
                 }
             }
@@ -78,11 +80,11 @@ public class UpdateAIAfterQuoteRespondedEventHandler(
 
             if (isNew)
             {
-                await _performanceRepository.AddAsync(perf, cancellationToken);
+                await _performanceRepository.Add(perf, cancellationToken);
             }
             else
             {
-                _performanceRepository.Update(perf, cancellationToken);
+                await _performanceRepository.Update(perf, cancellationToken);
             }
         }
         await _performanceRepository.SaveChangesAsync(cancellationToken);

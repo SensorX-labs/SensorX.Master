@@ -1,6 +1,8 @@
 using MediatR;
 using SensorX.Master.Application.Common.ReadModel;
 using SensorX.Master.Application.Common.ResponseClient;
+using SensorX.Master.Application.Common.Interfaces;
+using SensorX.Master.Application.Common.Models.DataServiceModels;
 using SensorX.Master.Domain.Common.Exceptions;
 using SensorX.Master.Domain.Contexts.QuoteContext;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
@@ -15,7 +17,8 @@ public class CreateDraftQuoteCommandHandler(
     IRepository<Quote> _quoteRepository,
     IRepository<RFQ> _rfqRepository,
     IRepository<SaleStaff> _saleStaffRepository,
-    IRepository<Customer> _customerRepository
+    IRepository<Customer> _customerRepository,
+    IDataServiceClient _dataClient
 ) : IRequestHandler<CreateDraftQuoteCommand, Result<Guid>>
 {
     public async Task<Result<Guid>> Handle(CreateDraftQuoteCommand request, CancellationToken cancellationToken)
@@ -50,7 +53,9 @@ public class CreateDraftQuoteCommandHandler(
             // Add quote items
             if (request.Items != null && request.Items.Count > 0)
             {
-                AddQuoteItems(quote, rfq, request.Items);
+                var productIds = request.Items.Select(x => x.ProductId).Distinct().ToArray();
+                var pricingPolicies = await _dataClient.GetProductPricingAsync(productIds);
+                AddQuoteItems(quote, rfq, request.Items, pricingPolicies);
             }
             else
             {
@@ -67,7 +72,7 @@ public class CreateDraftQuoteCommandHandler(
         }
     }
 
-    private static void AddQuoteItems(Quote quote, RFQ rfq, List<QuoteItemDto> items)
+    private static void AddQuoteItems(Quote quote, RFQ rfq, List<QuoteItemDto> items, ProductPricingPolicyData[] pricingPolicies)
     {
         var mapItems = items.ToDictionary(
             x => x.ProductId,
@@ -76,6 +81,9 @@ public class CreateDraftQuoteCommandHandler(
         foreach (var item in rfq.Items)
         {
             var mapItem = mapItems[item.ProductId];
+            var policy = pricingPolicies?.FirstOrDefault(p => p.ProductId == item.ProductId);
+            var floorPrice = policy != null ? Money.FromVnd(policy.FloorPrice) : Money.Zero();
+
             quote.AddItem(
                 new ProductId(item.ProductId),
                 item.ProductCode,
@@ -83,6 +91,7 @@ public class CreateDraftQuoteCommandHandler(
                 item.Unit,
                 new Quantity((int)item.Quantity),
                 mapItem.UnitPrice,
+                floorPrice,
                 mapItem.TaxRate
             );
         }
