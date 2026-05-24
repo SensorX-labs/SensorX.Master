@@ -20,7 +20,10 @@ public class OrderCreatedEventHandler(
     IRepository<Invoice> invoiceRepository,
     IRepository<Payment> paymentRepository,
     OrderService orderService,
-    IWarehouseQueryService warehouseQueryService
+    IWarehouseQueryService warehouseQueryService,
+    SensorX.Master.Application.Common.Interfaces.IQueryBuilder<Invoice> _invoiceBuilder,
+    SensorX.Master.Application.Common.Interfaces.IQueryBuilder<Payment> _paymentBuilder,
+    SensorX.Master.Application.Common.Interfaces.IQueryExecutor _queryExecutor
 ) : INotificationHandler<DomainEventNotification<OrderCreatedDomainEvent>>
 {
     public async Task Handle(
@@ -28,6 +31,20 @@ public class OrderCreatedEventHandler(
         CancellationToken cancellationToken)
     {
         var domainEvent = notification.DomainEvent;
+
+        // Idempotency: if invoice already exists for this order, skip processing
+        var orderId = new SensorX.Master.Domain.StrongIDs.OrderId(domainEvent.OrderId);
+
+        var invoiceQuery = from i in _invoiceBuilder.QueryAsNoTracking
+                   where i.OrderId == orderId
+                   select i;
+
+        var alreadyExists = await _queryExecutor.AnyAsync(invoiceQuery, cancellationToken);
+        if (alreadyExists)
+        {
+            logger.LogInformation("Invoice already exists for Order {OrderId}, skipping creation.", domainEvent.OrderId);
+            return;
+        }
 
         var invoice = orderService.CreateInvoiceFromOrder(domainEvent.Order);
 
@@ -49,10 +66,24 @@ public class OrderCreatedEventHandler(
             })
             .ToList();
 
+        var paymentQuery = from p in _paymentBuilder.QueryAsNoTracking
+                   where p.OrderId == orderId
+                   select p;
+
+        var paymentExists = await _queryExecutor.AnyAsync(paymentQuery, cancellationToken);
+
         var payment = orderService.CreatePaymentForInvoice(invoice, inventoryRows);
 
         await invoiceRepository.Add(invoice, cancellationToken);
-        await paymentRepository.Add(payment, cancellationToken);
+
+        if (!paymentExists)
+        {
+            await paymentRepository.Add(payment, cancellationToken);
+        }
+        else
+        {
+            logger.LogInformation("Payment already exists for Order {OrderId}, skipping creation.", domainEvent.OrderId);
+        }
 
         logger.LogInformation(
             "Invoice created from order: {OrderId} -> {InvoiceId}",
