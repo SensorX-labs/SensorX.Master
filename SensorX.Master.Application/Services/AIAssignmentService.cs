@@ -58,8 +58,9 @@ public class AIAssignmentService(
     private static (Dictionary<Guid, (Guid CategoryId, double Weight)> Weights, double TotalWeight) CalculateItemWeights(RFQ rfq, ProductPricingPolicyData[] productPolicies)
     {
         var itemWeights = new Dictionary<Guid, (Guid CategoryId, double Weight)>();
-        
+
         // Bước 1: Tính trọng số mặc định dựa trên Giá Sàn (FloorPrice * Quantity)
+
         foreach (var item in rfq.Items)
         {
             var policy = productPolicies.FirstOrDefault(p => p.ProductId == item.ProductId.Value);

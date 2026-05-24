@@ -1,3 +1,5 @@
+using MassTransit;
+
 namespace SensorX.Warehouse.Application.Events;
 
 public record InventoryItemSnapshot(
@@ -12,12 +14,14 @@ public record InventoryItemSnapshot(
     string? RackCode
 );
 
+[EntityName("Inventory-Snapshot-Event")]
 public record InventorySnapshotEvent(
     string WarehouseId,
     DateTimeOffset Ts,
     IReadOnlyList<InventoryItemSnapshot> Items
 );
 
+[EntityName("Warehouse-Connected-Event")]
 public record WarehouseConnectedEvent(
     string WarehouseId,
     string WarehouseName,

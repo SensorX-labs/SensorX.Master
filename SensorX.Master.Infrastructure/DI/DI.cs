@@ -92,9 +92,6 @@ namespace SensorX.Master.Infrastructure.DI
                     });
 
                     cfg.ConfigureEndpoints(context);
-
-                    cfg.Message<InventorySnapshotEvent>(e => e.SetEntityName("Inventory-Snapshot-Event"));
-                    cfg.Message<WarehouseConnectedEvent>(e => e.SetEntityName("Warehouse-Connected-Event"));
                 });
 
 

@@ -91,6 +91,13 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
             UpdatedAt = DateTimeOffset.UtcNow;
         }
 
+        // reset trạng thái từ chối nếu quản lý muốn thực hiện lại tính toán điểm phân bổ
+        public void ResetStaffRejected()
+        {
+            _rejectedByStaffIds.Clear();
+            UpdatedAt = DateTimeOffset.UtcNow;
+        }
+
         // tất cả nhân viên từ chối
         public void MaskAsAllRejected()
         {
