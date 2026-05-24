@@ -13,10 +13,12 @@ public class DomainEventOutbox
     // Lưu toàn bộ data của event dưới dạng JSON
     public required string Content { get; set; }
 
-    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    [System.ComponentModel.DataAnnotations.Schema.Column(TypeName = "timestamp without time zone")]
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 
     // Đánh dấu thời điểm xử lý xong. Nếu Null nghĩa là chưa xử lý.
-    public DateTimeOffset? ProcessedAt { get; set; }
+    [System.ComponentModel.DataAnnotations.Schema.Column(TypeName = "timestamp without time zone")]
+    public DateTime? ProcessedAt { get; set; }
 
     // Lưu lại lỗi nếu lúc bắn qua MediatR bị crash
     public string? Error { get; set; }

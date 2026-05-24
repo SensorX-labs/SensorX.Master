@@ -48,6 +48,10 @@ public class CustomerCreateRFQCommandHandler(
         var productIds = itemQuantities.Keys.ToArray();
         var productList = await _dataServiceClient.GetProductPricingAsync(productIds);
 
+        if (productList == null || productList.Length == 0)
+        {
+            return Result<Guid>.Failure("Không tìm thấy sản phẩm nào.");
+        }
         foreach (var product in productList)
         {
             rfq.AddItem(

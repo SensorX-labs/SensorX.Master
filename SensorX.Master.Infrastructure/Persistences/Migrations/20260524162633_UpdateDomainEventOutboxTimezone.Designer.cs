@@ -12,8 +12,8 @@ using SensorX.Master.Infrastructure.Persistences;
 namespace SensorX.Master.Infrastructure.Persistences.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260524142946_UseCategoryIdStrongType")]
-    partial class UseCategoryIdStrongType
+    [Migration("20260524162633_UpdateDomainEventOutboxTimezone")]
+    partial class UpdateDomainEventOutboxTimezone
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -671,8 +671,8 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Error")
                         .HasColumnType("text");
@@ -681,8 +681,8 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset?>("ProcessedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("timestamp without time zone");
 
                     b.HasKey("Id");
 

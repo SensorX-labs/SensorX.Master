@@ -12,6 +12,7 @@ public class RunAIAssignmentEventHandler(
     IAIAssignmentService _aiAssignmentService,
     IRepository<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate.RFQ> _rfqRepository,
     IRepository<SensorX.Master.Application.Common.ReadModel.SaleStaff> _staffRepository,
+    IUnitOfWork _unitOfWork,
     ILogger<RunAIAssignmentEventHandler> _logger
 ) : INotificationHandler<DomainEventNotification<RFQRejectedEvent>>
 {
@@ -22,19 +23,28 @@ public class RunAIAssignmentEventHandler(
 
         var rfq = await _rfqRepository.GetByIdAsync(domainEvent.RfqId, cancellationToken)
         ?? throw new SensorX.Master.Application.Common.Exceptions.ApplicationException("RFQ không tồn tại.");
+        if (rfq.Items.Count == 0 || rfq.Items == null)
+        {
+            _logger.LogError("RFQ {Id} không có sản phẩm", domainEvent.RfqId.Value);
+            throw new SensorX.Master.Application.Common.Exceptions.ApplicationException("RFQ không có sản phẩm");
+        }
+
+        var staff = await _staffRepository.GetByIdAsync(domainEvent.StaffId, cancellationToken);
+        if (staff == null)
+        {
+            _logger.LogError("Nhân viên {Id} không tồn tại", domainEvent.StaffId?.Value);
+            throw new SensorX.Master.Application.Common.Exceptions.ApplicationException("Nhân viên không tồn tại.");
+        }
+        staff.ReleaseWorkload();
 
         var bestStaffId = await _aiAssignmentService.FindBestStaffForRFQAsync(rfq, cancellationToken);
         if (bestStaffId != null)
         {
             rfq.Assign(bestStaffId);
-            await _rfqRepository.SaveChangesAsync(cancellationToken);
-
-            var dbStaff = await _staffRepository.GetByIdAsync(bestStaffId, cancellationToken);
-            if (dbStaff != null)
-            {
-                dbStaff.AssignRfq();
-                await _staffRepository.SaveChangesAsync(cancellationToken);
-            }
+            var dbStaff = await _staffRepository.GetByIdAsync(bestStaffId, cancellationToken) ?? throw new Exception("Nhân viên không tồn tại");
+            dbStaff.AssignRfq();
         }
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("Phân bổ lại AI thành công cho RFQ {Id}", domainEvent.RfqId.Value);
     }
 }
