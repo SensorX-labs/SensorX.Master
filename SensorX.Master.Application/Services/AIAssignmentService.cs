@@ -28,7 +28,6 @@ public class AIAssignmentService(
         var productIds = rfq.Items.Select(x => x.ProductId.Value).Distinct().ToArray();
         var productPolicies = await _dataServiceClient.GetProductPricingAsync(productIds);
 
-
         if (productPolicies == null || productPolicies.Length == 0)
         {
             _logger.LogWarning("Không lấy được dữ liệu chính sách giá cho RFQ {Id}", rfq.Id.Value);
@@ -122,24 +121,8 @@ public class AIAssignmentService(
             }
             aggregatedSkillScore /= totalWeight;
 
-            // Tính Penalty Workload
-            double penaltyWorkload = 1.0 / Math.Pow(staff.CurrentWorkload + 1, k);
-
-            // Tính Boost Idle
-            double boostIdle = 0;
-            if (staff.LastAssignedAt.HasValue)
-            {
-                var idleHours = (DateTimeOffset.UtcNow - staff.LastAssignedAt.Value).TotalHours;
-                if (idleHours > 48) idleHours = 48; // Giới hạn tối đa 48h
-                boostIdle = idleHours * idleWeight;
-            }
-            else
-            {
-                boostIdle = 48 * idleWeight; // Nhân viên mới tinh
-            }
-
             // Điểm chốt hạ
-            double finalScore = (aggregatedSkillScore * penaltyWorkload) + boostIdle;
+            double finalScore = staff.CalculateFinalAllocationScore(aggregatedSkillScore, k, idleWeight);
 
             if (finalScore > highestFinalScore)
             {
