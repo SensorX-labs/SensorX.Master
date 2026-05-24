@@ -16,37 +16,84 @@ namespace SensorX.Master.Application.Commands.Sepays
         private readonly IRepository<Payment> _paymentRepository;
         private readonly IQueryExecutor _queryExecutor;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IPaymentNotificationService _paymentNotificationService;
 
         public HandlerSepayPaymentHandler(
             IRepository<PaymentHistory> paymentHistoryRepository,
             IRepository<Order> orderRepository,
             IRepository<Payment> paymentRepository,
             IQueryExecutor queryExecutor,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            IPaymentNotificationService paymentNotificationService)
         {
             _paymentHistoryRepository = paymentHistoryRepository;
             _orderRepository = orderRepository;
             _paymentRepository = paymentRepository;
             _queryExecutor = queryExecutor;
             _unitOfWork = unitOfWork;
+            _paymentNotificationService = paymentNotificationService;
         }
 
         public async Task<bool> Handle(HandlerPaymentSepayCommand request, CancellationToken cancellationToken)
         {
             try
             {
-                var orderCodePattern = @"[A-Z]+-\d{6}-\d{9}";
+                var orderCodePattern = @"[A-Z]+-\d{6}-\d{9}(?:-[A-Z0-9]+)?";
+                var compactPattern = @"([A-Z]+)(\d{6})(\d{9})([A-Z0-9]+)?"; // e.g. ORD260524073547666P1
+                Console.WriteLine($"Processing Sepay payment with content: {request.Content}, description: {request.Description}");
                 var content = request.Content ?? request.Description ?? string.Empty;
-                var match = Regex.Match(content, orderCodePattern);
 
+                // try hyphenated first, then compact
+                var match = Regex.Match(content, orderCodePattern);
+                string? orderCode = null;
                 if (match.Success)
                 {
-                    var orderCode = match.Value;
-                    var order = await _queryExecutor.FirstOrDefaultAsync(
-                        _orderRepository.AsQueryable()
-                            .Where(o => o.Code == orderCode),
-                        cancellationToken
-                    );
+                    orderCode = match.Value;
+                }
+                else
+                {
+                    var compactMatch = Regex.Match(content, compactPattern);
+                    if (compactMatch.Success)
+                    {
+                        var prefix = compactMatch.Groups[1].Value;
+                        var d6 = compactMatch.Groups[2].Value;
+                        var d9 = compactMatch.Groups[3].Value;
+                        var suffix = compactMatch.Groups[4].Value;
+                        orderCode = string.IsNullOrEmpty(suffix) ? $"{prefix}-{d6}-{d9}" : $"{prefix}-{d6}-{d9}-{suffix}";
+                    }
+                }
+
+                if (orderCode is not null)
+                {
+                    // normalize by removing hyphens for comparison to handle both hyphenated and compact forms
+                    var normalizedCandidate = orderCode.Replace("-", string.Empty);
+
+                    // extract parts to narrow DB query: prefix, yyMMdd (6 digits), ts (9 digits)
+                    var partsPattern = @"^([A-Z]+)-?(\d{6})-?(\d{9})(?:-([A-Z0-9]+))?$";
+                    var partsMatch = Regex.Match(orderCode, partsPattern);
+                    Order? order = null;
+
+                    if (partsMatch.Success)
+                    {
+                        var prefix = partsMatch.Groups[1].Value;
+                        var d6 = partsMatch.Groups[2].Value;
+                        var d9 = partsMatch.Groups[3].Value;
+
+                        var candidatesQuery = _orderRepository.AsQueryable()
+                            .Where(o => o.Code.Value.StartsWith(prefix) && o.Code.Value.Contains(d6) && o.Code.Value.Contains(d9));
+
+                        var candidates = await _queryExecutor.ToListAsync(candidatesQuery, cancellationToken);
+                        order = candidates.FirstOrDefault(o => o.Code.Value == orderCode || o.Code.Value.Replace("-", string.Empty) == normalizedCandidate);
+                    }
+                    else
+                    {
+                        // fallback to exact match only (no client-side normalization)
+                        order = await _queryExecutor.FirstOrDefaultAsync(
+                            _orderRepository.AsQueryable()
+                                .Where(o => o.Code.Value == orderCode),
+                            cancellationToken
+                        );
+                    }
 
                     if (order is not null)
                     {
@@ -103,6 +150,13 @@ namespace SensorX.Master.Application.Commands.Sepays
                         await _paymentHistoryRepository.AddAsync(paymentHistory, cancellationToken);
                         await _paymentRepository.Update(payment, cancellationToken);
                         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                        await _paymentNotificationService.NotifyPaymentStatusChangedAsync(
+                            order.Id.Value.ToString(),
+                            payment.Status.ToString(),
+                            totalReceived,
+                            cancellationToken);
+
                         return true;
                     }
                 }
