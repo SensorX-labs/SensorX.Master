@@ -20,6 +20,12 @@ namespace SensorX.Master.Application.Common.ReadModel
             SuccessCount += 1; // Chỉ đếm số lượng để nuôi Beta
             TotalMarginAccumulated += marginOfThisQuote; // Lưu dồn tiền lãi
         }
+
+        public void RecordFailure()
+        {
+            FailureCount += 1;
+        }
+
         // Tính xác suất thành công dựa trên Beta Distribution với smoothing alpha = 1, beta = 1
         public double SampleBetaProbability()
         {

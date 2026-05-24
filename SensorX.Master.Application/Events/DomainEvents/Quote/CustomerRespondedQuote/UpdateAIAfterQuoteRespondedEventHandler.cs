@@ -12,7 +12,6 @@ public class UpdateAIAfterQuoteRespondedEventHandler(
     IRepository<StaffContextPerformance> _performanceRepository,
     IQueryBuilder<StaffContextPerformance> _performanceBuilder,
     IQueryExecutor _queryExecutor,
-    IDataServiceClient _dataServiceClient,
     IRepository<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate.Quote> _quoteRepository,
     ILogger<UpdateAIAfterQuoteRespondedEventHandler> _logger
 ) : INotificationHandler<DomainEventNotification<CustomerRespondedQuoteEvent>>
@@ -58,17 +57,19 @@ public class UpdateAIAfterQuoteRespondedEventHandler(
 
             if (isSuccess)
             {
-                perf.SuccessCount++;
-                // Tính margin cho các item thuộc category này (Tổng (Giá Quote - Giá Sàn) * Số lượng)
+                double totalFloorAmount = 0;
+                double totalProfit = 0;
                 foreach (var item in quote.LineItems.Where(i => i.CategoryId.Value == categoryId))
                 {
-                    var margin = (item.UnitPrice.Amount - item.FloorPrice.Amount) * item.Quantity.Value;
-                    perf.TotalMarginAccumulated += (double)margin;
+                    totalProfit += (double)((item.UnitPrice.Amount - item.FloorPrice.Amount) * item.Quantity.Value);
+                    totalFloorAmount += (double)(item.FloorPrice.Amount * item.Quantity.Value);
                 }
+                double margin = totalFloorAmount > 0 ? totalProfit / totalFloorAmount : 0;
+                perf.RecordSuccess(margin);
             }
             else
             {
-                perf.FailureCount++;
+                perf.RecordFailure();
             }
 
             if (isNew)
