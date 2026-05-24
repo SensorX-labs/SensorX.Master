@@ -5,6 +5,7 @@ using SensorX.Master.Domain.Common;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
+using SensorX.Master.Application.Common.Models.DataServiceModels;
 
 namespace SensorX.Master.Application.Services;
 
@@ -24,6 +25,7 @@ public class AIAssignmentService(
             return null;
         }
 
+        // 1. Get Product Policies
         var productIds = rfq.Items.Select(x => x.ProductId.Value).Distinct().ToArray();
         var productPolicies = await _dataServiceClient.GetProductPricingAsync(productIds);
 
@@ -33,8 +35,28 @@ public class AIAssignmentService(
             return null;
         }
 
-        // Tính trọng số của từng sản phẩm trong RFQ (W_j = Quantity_j * BasePrice_j)
-        // Lưu ý: BasePrice có thể là FloorPrice
+        // 2. Calculate Item Weights
+        var (itemWeights, totalWeight) = CalculateItemWeights(rfq, productPolicies);
+
+        // 3. Get Available Staffs
+        var availableStaffs = await GetAvailableStaffsAsync(rfq, cancellationToken);
+        if (availableStaffs.Count == 0)
+        {
+            _logger.LogWarning("Không còn SaleStaff nào hợp lệ cho RFQ {Id}, đánh dấu AllRejected.", rfq.Id.Value);
+            rfq.MaskAsAllRejected();
+            return null;
+        }
+
+        // 4. Get Staff Performances
+        var categoryIds = itemWeights.Values.Select(x => x.CategoryId).Distinct().ToList();
+        var performances = await GetStaffPerformancesAsync(availableStaffs, categoryIds, cancellationToken);
+
+        // 5. Find Best Staff
+        return FindBestStaff(rfq, availableStaffs, performances, itemWeights, totalWeight);
+    }
+
+    private (Dictionary<Guid, (Guid CategoryId, double Weight)> Weights, double TotalWeight) CalculateItemWeights(RFQ rfq, ProductPricingPolicyData[] productPolicies)
+    {
         var itemWeights = new Dictionary<Guid, (Guid CategoryId, double Weight)>();
         foreach (var item in rfq.Items)
         {
@@ -62,32 +84,33 @@ public class AIAssignmentService(
             totalWeight = itemWeights.Count;
         }
 
-        // Lấy danh sách nhân viên Sale đang Active
+        return (itemWeights, totalWeight);
+    }
+
+    private async Task<List<SaleStaff>> GetAvailableStaffsAsync(RFQ rfq, CancellationToken cancellationToken)
+    {
         var activeStaffsQuery = _staffBuilder.QueryAsNoTracking.Where(s => s.Status == StaffStatus.Active);
         var activeStaffs = await _queryExecutor.ToListAsync(activeStaffsQuery, cancellationToken);
 
-        // Loại bỏ những nhân viên đã từ chối
-
         var rejectedStaffIds = rfq.RejectedByStaffIds.Select(r => r.Value).ToList();
-        var availableStaffs = activeStaffs.Where(s => !rejectedStaffIds.Contains(s.Id.Value)).ToList();
+        return activeStaffs.Where(s => !rejectedStaffIds.Contains(s.Id.Value)).ToList();
+    }
 
-        if (availableStaffs.Count == 0)
-        {
-            _logger.LogWarning("Không còn SaleStaff nào hợp lệ cho RFQ {Id}, đánh dấu AllRejected.", rfq.Id.Value);
-            rfq.MaskAsAllRejected();
-            return null;
-        }
-
-        // Lấy Performance của các nhân viên này
-        var categoryIds = itemWeights.Values.Select(x => x.CategoryId).Distinct().ToList();
+    private async Task<List<StaffContextPerformance>> GetStaffPerformancesAsync(List<SaleStaff> availableStaffs, List<Guid> categoryIds, CancellationToken cancellationToken)
+    {
         var staffIds = availableStaffs.Select(s => s.Id.Value).ToList();
-
         var performanceQuery = _performanceBuilder.QueryAsNoTracking
             .Where(p => staffIds.Contains(p.StaffId) && categoryIds.Contains(p.CategoryId));
+        return await _queryExecutor.ToListAsync(performanceQuery, cancellationToken);
+    }
 
-
-        var performances = await _queryExecutor.ToListAsync(performanceQuery, cancellationToken);
-
+    private StaffId? FindBestStaff(
+        RFQ rfq, 
+        List<SaleStaff> availableStaffs, 
+        List<StaffContextPerformance> performances, 
+        Dictionary<Guid, (Guid CategoryId, double Weight)> itemWeights, 
+        double totalWeight)
+    {
         SaleStaff? bestStaff = null;
         double highestFinalScore = -double.MaxValue;
 
