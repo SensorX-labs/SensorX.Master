@@ -11,6 +11,7 @@ namespace SensorX.Master.Application.Events.DomainEvents.RFQ.RFQSended;
 public class RunAIAssignmentEventHandler(
     IAIAssignmentService _aiAssignmentService,
     IRepository<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate.RFQ> _rfqRepository,
+    IRepository<SensorX.Master.Application.Common.ReadModel.SaleStaff> _staffRepository,
     ILogger<RunAIAssignmentEventHandler> _logger
 ) : INotificationHandler<DomainEventNotification<RFQSendedEvent>>
 {
@@ -22,7 +23,18 @@ public class RunAIAssignmentEventHandler(
         var rfq = await _rfqRepository.GetByIdAsync(domainEvent.RfqId, cancellationToken);
         if (rfq is null) throw new DomainException("RFQ không tồn tại.");
 
-        await _aiAssignmentService.AssignStaffToRFQAsync(rfq, cancellationToken);
-        await _rfqRepository.SaveChangesAsync(cancellationToken);
+        var bestStaffId = await _aiAssignmentService.FindBestStaffForRFQAsync(rfq, cancellationToken);
+        if (bestStaffId != null)
+        {
+            rfq.Assign(bestStaffId);
+            await _rfqRepository.SaveChangesAsync(cancellationToken);
+
+            var dbStaff = await _staffRepository.GetByIdAsync(bestStaffId, cancellationToken);
+            if (dbStaff != null)
+            {
+                dbStaff.AssignRfq();
+                await _staffRepository.SaveChangesAsync(cancellationToken);
+            }
+        }
     }
 }

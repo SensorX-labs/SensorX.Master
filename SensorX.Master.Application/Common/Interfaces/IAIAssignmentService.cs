@@ -4,5 +4,5 @@ namespace SensorX.Master.Application.Common.Interfaces;
 
 public interface IAIAssignmentService
 {
-    Task AssignStaffToRFQAsync(RFQ rfq, CancellationToken cancellationToken = default);
+    Task<SensorX.Master.Domain.StrongIDs.StaffId?> FindBestStaffForRFQAsync(RFQ rfq, CancellationToken cancellationToken = default);
 }

@@ -12,17 +12,16 @@ public class AIAssignmentService(
     IDataServiceClient _dataServiceClient,
     IQueryBuilder<SaleStaff> _staffBuilder,
     IQueryBuilder<StaffContextPerformance> _performanceBuilder,
-    IRepository<SaleStaff> _staffRepository,
     IQueryExecutor _queryExecutor,
     ILogger<AIAssignmentService> _logger
 ) : IAIAssignmentService
 {
-    public async Task AssignStaffToRFQAsync(RFQ rfq, CancellationToken cancellationToken = default)
+    public async Task<StaffId?> FindBestStaffForRFQAsync(RFQ rfq, CancellationToken cancellationToken = default)
     {
         if (rfq.Items == null || rfq.Items.Count == 0)
         {
             _logger.LogWarning("RFQ {Id} không có sản phẩm nào để phân bổ", rfq.Id.Value);
-            return;
+            return null;
         }
 
         var productIds = rfq.Items.Select(x => x.ProductId.Value).Distinct().ToArray();
@@ -31,7 +30,7 @@ public class AIAssignmentService(
         if (productPolicies == null || productPolicies.Length == 0)
         {
             _logger.LogWarning("Không lấy được dữ liệu chính sách giá cho RFQ {Id}", rfq.Id.Value);
-            return;
+            return null;
         }
 
         // Tính trọng số của từng sản phẩm trong RFQ (W_j = Quantity_j * BasePrice_j)
@@ -76,7 +75,7 @@ public class AIAssignmentService(
         {
             _logger.LogWarning("Không còn SaleStaff nào hợp lệ cho RFQ {Id}, đánh dấu AllRejected.", rfq.Id.Value);
             rfq.MaskAsAllRejected();
-            return;
+            return null;
         }
 
         // Lấy Performance của các nhân viên này
@@ -133,17 +132,11 @@ public class AIAssignmentService(
 
         if (bestStaff != null)
         {
-            _logger.LogInformation("Phân bổ RFQ {RfqId} cho Staff {StaffId} với FinalScore={Score}", rfq.Id.Value, bestStaff.Id.Value, highestFinalScore);
-            rfq.Assign(new StaffId(bestStaff.Id.Value));
-
-            // Cập nhật SaleStaff state
-
-            var dbStaff = await _staffRepository.GetByIdAsync(new StaffId(bestStaff.Id.Value), cancellationToken);
-            if (dbStaff != null)
-            {
-                dbStaff.AssignRfq();
-                await _staffRepository.SaveChangesAsync(cancellationToken);
-            }
+            _logger.LogInformation("Tìm thấy Best Staff {StaffId} cho RFQ {RfqId} với FinalScore={Score}", bestStaff.Id.Value, rfq.Id.Value, highestFinalScore);
+            return new StaffId(bestStaff.Id.Value);
         }
+
+        _logger.LogWarning("Không tìm thấy Staff phù hợp nào cho RFQ {RfqId}", rfq.Id.Value);
+        return null;
     }
 }
