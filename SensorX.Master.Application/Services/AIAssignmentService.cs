@@ -36,7 +36,8 @@ public class AIAssignmentService(
         }
 
         // 2. Calculate Item Weights
-        var (itemWeights, totalWeight) = CalculateItemWeights(rfq, productPolicies);
+        var itemWeights = CalculateItemWeights(rfq, productPolicies);
+        var totalWeight = CalculateTotalWeight(itemWeights);
 
         // 3. Get Available Staffs
         var availableStaffs = await GetAvailableStaffsAsync(rfq, cancellationToken);
@@ -55,20 +56,7 @@ public class AIAssignmentService(
         return FindBestStaff(rfq, availableStaffs, performances, itemWeights, totalWeight);
     }
 
-    private static (Dictionary<Guid, (Guid CategoryId, double Weight)> Weights, double TotalWeight) CalculateItemWeights(RFQ rfq, ProductPricingPolicyData[] productPolicies)
-    {
-        var itemWeights = ExtractBaseItemWeights(rfq, productPolicies);
-        var totalWeight = itemWeights.Values.Sum(x => x.Weight);
-
-        if (totalWeight <= 0)
-        {
-            return ApplyFallbackWeights(rfq, productPolicies, itemWeights);
-        }
-
-        return (itemWeights, totalWeight);
-    }
-
-    private static Dictionary<Guid, (Guid CategoryId, double Weight)> ExtractBaseItemWeights(RFQ rfq, ProductPricingPolicyData[] productPolicies)
+    private static Dictionary<Guid, (Guid CategoryId, double Weight)> CalculateItemWeights(RFQ rfq, ProductPricingPolicyData[] productPolicies)
     {
         var itemWeights = new Dictionary<Guid, (Guid CategoryId, double Weight)>();
         foreach (var item in rfq.Items)
@@ -80,20 +68,27 @@ public class AIAssignmentService(
                 itemWeights.Add(item.ProductId.Value, (policy.CategoryId, weight));
             }
         }
+
+        var totalWeight = itemWeights.Values.Sum(x => x.Weight);
+        if (totalWeight <= 0)
+        {
+            foreach (var item in rfq.Items)
+            {
+                var policy = productPolicies.FirstOrDefault(p => p.ProductId == item.ProductId.Value);
+                if (policy != null)
+                {
+                    itemWeights[item.ProductId.Value] = (policy.CategoryId, 1.0);
+                }
+            }
+        }
+
         return itemWeights;
     }
 
-    private static (Dictionary<Guid, (Guid CategoryId, double Weight)>, double) ApplyFallbackWeights(RFQ rfq, ProductPricingPolicyData[] productPolicies, Dictionary<Guid, (Guid CategoryId, double Weight)> itemWeights)
+    private static double CalculateTotalWeight(Dictionary<Guid, (Guid CategoryId, double Weight)> itemWeights)
     {
-        foreach (var item in rfq.Items)
-        {
-            var policy = productPolicies.FirstOrDefault(p => p.ProductId == item.ProductId.Value);
-            if (policy != null)
-            {
-                itemWeights[item.ProductId.Value] = (policy.CategoryId, 1.0);
-            }
-        }
-        return (itemWeights, itemWeights.Count);
+        var totalWeight = itemWeights.Values.Sum(x => x.Weight);
+        return totalWeight > 0 ? totalWeight : 1.0;
     }
 
     private async Task<List<SaleStaff>> GetAvailableStaffsAsync(RFQ rfq, CancellationToken cancellationToken)
