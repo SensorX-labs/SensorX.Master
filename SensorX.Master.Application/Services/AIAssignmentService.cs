@@ -36,8 +36,7 @@ public class AIAssignmentService(
         }
 
         // 2. Calculate Item Weights
-        var itemWeights = CalculateItemWeights(rfq, productPolicies);
-        var totalWeight = CalculateTotalWeight(itemWeights);
+        var (itemWeights, totalWeight) = CalculateItemWeights(rfq, productPolicies);
 
         // 3. Get Available Staffs
         var availableStaffs = await GetAvailableStaffsAsync(rfq, cancellationToken);
@@ -56,9 +55,11 @@ public class AIAssignmentService(
         return FindBestStaff(rfq, availableStaffs, performances, itemWeights, totalWeight);
     }
 
-    private static Dictionary<Guid, (Guid CategoryId, double Weight)> CalculateItemWeights(RFQ rfq, ProductPricingPolicyData[] productPolicies)
+    private static (Dictionary<Guid, (Guid CategoryId, double Weight)> Weights, double TotalWeight) CalculateItemWeights(RFQ rfq, ProductPricingPolicyData[] productPolicies)
     {
         var itemWeights = new Dictionary<Guid, (Guid CategoryId, double Weight)>();
+        
+        // Bước 1: Tính trọng số mặc định dựa trên Giá Sàn (FloorPrice * Quantity)
         foreach (var item in rfq.Items)
         {
             var policy = productPolicies.FirstOrDefault(p => p.ProductId == item.ProductId.Value);
@@ -69,26 +70,29 @@ public class AIAssignmentService(
             }
         }
 
+        // Bước 2: Tính tổng trọng số của giỏ hàng
         var totalWeight = itemWeights.Values.Sum(x => x.Weight);
+
+        // Bước 3: Fallback an toàn. Nếu các mặt hàng bị mất giá sàn (dẫn đến tổng trọng số = 0), 
+        // ta sẽ cào bằng trọng số (chia đều mỗi item = 1.0) để chia đều sự quan tâm của hệ thống cho các danh mục.
         if (totalWeight <= 0)
         {
+            totalWeight = 0; // reset
             foreach (var item in rfq.Items)
             {
                 var policy = productPolicies.FirstOrDefault(p => p.ProductId == item.ProductId.Value);
                 if (policy != null)
                 {
                     itemWeights[item.ProductId.Value] = (policy.CategoryId, 1.0);
+                    totalWeight += 1.0;
                 }
             }
         }
 
-        return itemWeights;
-    }
+        // Bước 4: Chặn DivideByZeroException. Nếu thật sự không có sản phẩm nào hợp lệ, ép tổng về 1.0
+        if (totalWeight <= 0) totalWeight = 1.0;
 
-    private static double CalculateTotalWeight(Dictionary<Guid, (Guid CategoryId, double Weight)> itemWeights)
-    {
-        var totalWeight = itemWeights.Values.Sum(x => x.Weight);
-        return totalWeight > 0 ? totalWeight : 1.0;
+        return (itemWeights, totalWeight);
     }
 
     private async Task<List<SaleStaff>> GetAvailableStaffsAsync(RFQ rfq, CancellationToken cancellationToken)
