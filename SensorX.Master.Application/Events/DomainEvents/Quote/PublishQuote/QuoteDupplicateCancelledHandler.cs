@@ -5,10 +5,10 @@ using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate
 using SensorX.Master.Domain.Events;
 using SensorX.Master.Domain.SeedWork;
 
-namespace SensorX.Master.Application.Events.DomainEvents.PublishQuote;
+namespace SensorX.Master.Application.Events.DomainEvents.Quote.PublishQuote;
 
 public sealed class QuoteDupplicateCancelledHandler(
-    IRepository<Quote> _quoteRepository
+    IRepository<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate.Quote> _quoteRepository
 ) : INotificationHandler<DomainEventNotification<PublishQuoteEvent>>
 {
     public async Task Handle(

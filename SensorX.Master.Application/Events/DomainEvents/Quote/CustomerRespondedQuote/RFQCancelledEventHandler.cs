@@ -1,8 +1,6 @@
 using MediatR;
 using SensorX.Master.Application.Common.DomainEvent;
-using SensorX.Master.Application.UseCases.Orders.Commands.CreateOrder;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
-using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 using SensorX.Master.Domain.Events;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
@@ -11,7 +9,7 @@ using SensorX.Master.Domain.ValueObjects;
 namespace SensorX.Master.Application.Events.DomainEvents.CustomerRespondedQuote;
 
 public class RFQCancelledEventHandler(
-    IRepository<RFQ> _quoteRepository
+    IRepository<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate.RFQ> _rfqRepository
 ) : INotificationHandler<DomainEventNotification<CustomerRespondedQuoteEvent>>
 {
     public async Task Handle(
@@ -22,10 +20,10 @@ public class RFQCancelledEventHandler(
 
         if (domainEvent.QuoteResponse.ResponseType != QuoteResponseStatus.Declined) return;
 
-        var rfq = await _quoteRepository.GetByIdAsync(domainEvent.QuoteId, cancellationToken);
+        var rfq = await _rfqRepository.GetByIdAsync(domainEvent.QuoteId, cancellationToken);
         if (rfq is null) return;
 
         rfq.Cancel();
-        await _quoteRepository.SaveChangesAsync(cancellationToken);
+        await _rfqRepository.SaveChangesAsync(cancellationToken);
     }
 }

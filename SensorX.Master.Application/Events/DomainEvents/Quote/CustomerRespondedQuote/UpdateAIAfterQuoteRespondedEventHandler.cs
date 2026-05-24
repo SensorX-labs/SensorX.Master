@@ -1,0 +1,90 @@
+using MediatR;
+using Microsoft.Extensions.Logging;
+using SensorX.Master.Application.Common.DomainEvent;
+using SensorX.Master.Application.Common.Interfaces;
+using SensorX.Master.Application.Common.ReadModel;
+using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
+using SensorX.Master.Domain.SeedWork;
+
+namespace SensorX.Master.Application.Events.DomainEvents.CustomerRespondedQuote;
+
+public class UpdateAIAfterQuoteRespondedEventHandler(
+    IRepository<StaffContextPerformance> _performanceRepository,
+    IQueryBuilder<StaffContextPerformance> _performanceBuilder,
+    IQueryExecutor _queryExecutor,
+    IDataServiceClient _dataServiceClient,
+    IRepository<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate.Quote> _quoteRepository,
+    ILogger<UpdateAIAfterQuoteRespondedEventHandler> _logger
+) : INotificationHandler<DomainEventNotification<CustomerRespondedQuoteEvent>>
+{
+    public async Task Handle(DomainEventNotification<CustomerRespondedQuoteEvent> notification, CancellationToken cancellationToken)
+    {
+        var domainEvent = notification.DomainEvent;
+        bool isSuccess = domainEvent.QuoteResponse.ResponseType == QuoteResponseStatus.Accepted;
+        await ProcessQuoteResponse(domainEvent.QuoteId, isSuccess, cancellationToken);
+    }
+
+    private async Task ProcessQuoteResponse(QuoteId quoteId, bool isSuccess, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Đang cập nhật ký ức AI sau khi Quote {Id} phản hồi ({Status}).", quoteId.Value, isSuccess ? "Accepted" : "Rejected");
+        
+        var quote = await _quoteRepository.GetByIdAsync(quoteId, cancellationToken);
+        if (quote == null) return;
+
+        var staffId = quote.SenderInfo.Id; // Lấy ID của SaleStaff tạo Quote
+        var productIds = quote.LineItems.Select(x => x.ProductId.Value).Distinct().ToArray();
+        
+        var productPolicies = await _dataServiceClient.GetProductPricingAsync(productIds);
+        if (productPolicies == null || productPolicies.Length == 0) return;
+
+        var categoryIds = productPolicies.Select(p => p.CategoryId).Distinct().ToList();
+
+        var query = _performanceBuilder.QueryAsNoTracking.Where(p => p.StaffId == staffId && categoryIds.Contains(p.CategoryId));
+        var existingPerformances = await _queryExecutor.ToListAsync(query, cancellationToken);
+
+        foreach (var categoryId in categoryIds)
+        {
+            var perf = existingPerformances.FirstOrDefault(p => p.CategoryId == categoryId);
+            bool isNew = false;
+            if (perf == null)
+            {
+                perf = new StaffContextPerformance 
+                { 
+                    StaffId = staffId, 
+                    CategoryId = categoryId,
+                    SuccessCount = 0,
+                    FailureCount = 0,
+                    TotalMarginAccumulated = 0
+                };
+                isNew = true;
+            }
+
+            if (isSuccess)
+            {
+                perf.SuccessCount++;
+                // Tính margin cho các item thuộc category này (Tổng (Giá Quote - Giá Sàn) * Số lượng)
+                var catProducts = productPolicies.Where(p => p.CategoryId == categoryId).Select(p => p.ProductId).ToList();
+                foreach(var item in quote.LineItems.Where(i => catProducts.Contains(i.ProductId.Value)))
+                {
+                    var policy = productPolicies.First(p => p.ProductId == item.ProductId.Value);
+                    var margin = (item.UnitPrice.Amount - policy.FloorPrice) * item.Quantity.Value;
+                    perf.TotalMarginAccumulated += (double)margin;
+                }
+            }
+            else
+            {
+                perf.FailureCount++;
+            }
+
+            if (isNew)
+            {
+                await _performanceRepository.AddAsync(perf, cancellationToken);
+            }
+            else
+            {
+                _performanceRepository.Update(perf, cancellationToken);
+            }
+        }
+        await _performanceRepository.SaveChangesAsync(cancellationToken);
+    }
+}
