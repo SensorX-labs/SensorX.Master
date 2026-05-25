@@ -13,7 +13,7 @@ namespace SensorX.Master.Application.Commands.RFQs.CustomerCreateRFQ;
 public class CustomerCreateRFQCommandHandler(
     IRepository<RFQ> _rfqRepository,
     IQueryBuilder<Customer> _customerBuilder,
-    IQueryBuilder<Product> _productBuilder,
+    IDataServiceClient _dataServiceClient,
     IQueryExecutor _queryExecutor,
     ICurrentUser _currentUser
 ) : IRequestHandler<CustomerCreateRFQCommand, Result<Guid>>
@@ -45,18 +45,21 @@ public class CustomerCreateRFQCommandHandler(
             null
         );
 
-        var productIds = itemQuantities.Keys.ToList(); // convert to list for query in EF
-        var productQuery = _productBuilder.QueryAsNoTracking.Where(c => productIds.Contains(c.Id));
-        var productList = await _queryExecutor.ToListAsync(productQuery, cancellationToken);
+        var productIds = itemQuantities.Keys.ToArray();
+        var productList = await _dataServiceClient.GetProductPricingAsync(productIds);
 
+        if (productList == null || productList.Length == 0)
+        {
+            return Result<Guid>.Failure("Không tìm thấy sản phẩm nào.");
+        }
         foreach (var product in productList)
         {
             rfq.AddItem(
-                new ProductId(product.Id),
-                product.Name,
-                new Quantity(itemQuantities[product.Id]),
-                Code.From(product.Code),
-                product.Manufacturer,
+                new ProductId(product.ProductId),
+                product.ProductName,
+                new Quantity(itemQuantities[product.ProductId]),
+                Code.From(product.ProductCode),
+                product.Manufacture,
                 product.Unit
             );
         }

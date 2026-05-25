@@ -60,5 +60,17 @@ public class RFQConfiguration : IEntityTypeConfiguration<RFQ>
             item.Property(i => i.Quantity)
                 .HasConversion(qty => qty.Value, v => new Quantity(v));
         });
+
+        builder.OwnsMany(r => r.RejectedLogs, a =>
+        {
+            a.ToJson();
+            a.Property(l => l.StaffId)
+                .HasConversion(id => id.Value, v => new StaffId(v));
+        });
+
+        builder.OwnsMany(r => r.AllocationLogs, a =>
+        {
+            a.ToJson();
+        });
     }
 }

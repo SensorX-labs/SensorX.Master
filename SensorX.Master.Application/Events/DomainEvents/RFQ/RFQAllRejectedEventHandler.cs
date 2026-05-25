@@ -1,1 +1,0 @@
-// TODO: Thông báo khẩn cho quản lý để chỉ định nhân viên chăm sóc qua mail và qua web

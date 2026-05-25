@@ -66,7 +66,7 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
 
                     b.HasIndex("Delivered");
 
-                    b.ToTable("InboxState", (string)null);
+                    b.ToTable("InboxState");
                 });
 
             modelBuilder.Entity("MassTransit.EntityFrameworkCoreIntegration.OutboxMessage", b =>
@@ -157,7 +157,7 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                     b.HasIndex("InboxMessageId", "InboxConsumerId", "SequenceNumber")
                         .IsUnique();
 
-                    b.ToTable("OutboxMessage", (string)null);
+                    b.ToTable("OutboxMessage");
                 });
 
             modelBuilder.Entity("MassTransit.EntityFrameworkCoreIntegration.OutboxState", b =>
@@ -187,7 +187,7 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
 
                     b.HasIndex("Created");
 
-                    b.ToTable("OutboxState", (string)null);
+                    b.ToTable("OutboxState");
                 });
 
             modelBuilder.Entity("SensorX.Master.Application.Common.ReadModel.Customer", b =>
@@ -236,41 +236,6 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                     b.ToTable("CustomerSnapshots", (string)null);
                 });
 
-            modelBuilder.Entity("SensorX.Master.Application.Common.ReadModel.Product", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Manufacturer")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Unit")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ProductSnapshots", (string)null);
-                });
-
             modelBuilder.Entity("SensorX.Master.Application.Common.ReadModel.SaleStaff", b =>
                 {
                     b.Property<Guid>("Id")
@@ -286,9 +251,18 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("CurrentWorkload")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("LastAssignedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("MaxCapacity")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -303,6 +277,34 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("SaleStaffSnapshots", (string)null);
+                });
+
+            modelBuilder.Entity("SensorX.Master.Application.Common.ReadModel.StaffContextPerformance", b =>
+                {
+                    b.Property<Guid>("StaffId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("FailureCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("SuccessCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<double>("TotalMarginAccumulated")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("double precision")
+                        .HasDefaultValue(0.0);
+
+                    b.HasKey("StaffId", "CategoryId");
+
+                    b.ToTable("StaffContextPerformances", "read");
                 });
 
             modelBuilder.Entity("SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAggregate.Invoice", b =>
@@ -662,8 +664,8 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Error")
                         .HasColumnType("text");
@@ -672,12 +674,12 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset?>("ProcessedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("timestamp without time zone");
 
                     b.HasKey("Id");
 
-                    b.ToTable("DomainEventOutboxes", (string)null);
+                    b.ToTable("DomainEventOutboxes");
                 });
 
             modelBuilder.Entity("MassTransit.EntityFrameworkCoreIntegration.OutboxMessage", b =>
@@ -721,7 +723,7 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
 
                             b1.HasKey("InvoiceId");
 
-                            b1.ToTable("Invoices", (string)null);
+                            b1.ToTable("Invoices");
 
                             b1.WithOwner()
                                 .HasForeignKey("InvoiceId");
@@ -794,49 +796,6 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.OwnsOne("SensorX.Master.Domain.ValueObjects.DeliveryInfo", "DeliveryInfo", b1 =>
-                        {
-                            b1.Property<Guid>("OrderId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<string>("CompanyName")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("CustomerCompanyName");
-
-                            b1.Property<string>("Email")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("CustomerEmail");
-
-                            b1.Property<string>("RecipientName")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("CustomerRecipientName");
-
-                            b1.Property<string>("RecipientPhone")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("CustomerRecipientPhone");
-
-                            b1.Property<string>("ShippingAddress")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("CustomerShippingAddress");
-
-                            b1.Property<string>("TaxCode")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("CustomerTaxCode");
-
-                            b1.HasKey("OrderId");
-
-                            b1.ToTable("Orders", (string)null);
-
-                            b1.WithOwner()
-                                .HasForeignKey("OrderId");
-                        });
-
                     b.OwnsMany("SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate.OrderItem", "Items", b1 =>
                         {
                             b1.Property<Guid>("Id")
@@ -903,7 +862,50 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
 
                             b1.HasKey("OrderId");
 
-                            b1.ToTable("Orders", (string)null);
+                            b1.ToTable("Orders");
+
+                            b1.WithOwner()
+                                .HasForeignKey("OrderId");
+                        });
+
+                    b.OwnsOne("SensorX.Master.Domain.ValueObjects.DeliveryInfo", "DeliveryInfo", b1 =>
+                        {
+                            b1.Property<Guid>("OrderId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("CompanyName")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CustomerCompanyName");
+
+                            b1.Property<string>("Email")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CustomerEmail");
+
+                            b1.Property<string>("RecipientName")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CustomerRecipientName");
+
+                            b1.Property<string>("RecipientPhone")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CustomerRecipientPhone");
+
+                            b1.Property<string>("ShippingAddress")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CustomerShippingAddress");
+
+                            b1.Property<string>("TaxCode")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("CustomerTaxCode");
+
+                            b1.HasKey("OrderId");
+
+                            b1.ToTable("Orders");
 
                             b1.WithOwner()
                                 .HasForeignKey("OrderId");
@@ -973,7 +975,7 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
 
                             b1.HasKey("QuoteId");
 
-                            b1.ToTable("Quotes", (string)null);
+                            b1.ToTable("Quotes");
 
                             b1.WithOwner()
                                 .HasForeignKey("QuoteId");
@@ -983,6 +985,13 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                         {
                             b1.Property<Guid>("Id")
                                 .HasColumnType("uuid");
+
+                            b1.Property<Guid>("CategoryId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("CategoryId");
+
+                            b1.Property<decimal>("FloorPrice")
+                                .HasColumnType("numeric");
 
                             b1.Property<string>("Manufacturer")
                                 .IsRequired()
@@ -1030,17 +1039,15 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("Feedback");
 
-                            b1.Property<int>("PaymentTerm")
+                            b1.Property<int?>("PaymentTerm")
                                 .HasColumnType("integer")
                                 .HasColumnName("PaymentTerm");
 
                             b1.Property<string>("RecipientName")
-                                .IsRequired()
                                 .HasColumnType("text")
                                 .HasColumnName("RecipientName");
 
                             b1.Property<string>("RecipientPhone")
-                                .IsRequired()
                                 .HasColumnType("text")
                                 .HasColumnName("RecipientPhone");
 
@@ -1049,13 +1056,12 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                                 .HasColumnName("ResponseType");
 
                             b1.Property<string>("ShippingAddress")
-                                .IsRequired()
                                 .HasColumnType("text")
                                 .HasColumnName("ShippingAddress");
 
                             b1.HasKey("QuoteId");
 
-                            b1.ToTable("Quotes", (string)null);
+                            b1.ToTable("Quotes");
 
                             b1.WithOwner()
                                 .HasForeignKey("QuoteId");
@@ -1086,7 +1092,7 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
 
                             b1.HasKey("QuoteId");
 
-                            b1.ToTable("Quotes", (string)null);
+                            b1.ToTable("Quotes");
 
                             b1.WithOwner()
                                 .HasForeignKey("QuoteId");
@@ -1105,6 +1111,35 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
 
             modelBuilder.Entity("SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate.RFQ", b =>
                 {
+                    b.OwnsMany("SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate.AllocationLogEntry", "AllocationLogs", b1 =>
+                        {
+                            b1.Property<Guid>("RFQId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer");
+
+                            b1.Property<DateTimeOffset>("AssignedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<int>("Round")
+                                .HasColumnType("integer");
+
+                            b1.Property<string>("SnapshotJson")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.HasKey("RFQId", "__synthesizedOrdinal");
+
+                            b1.ToTable("RFQs");
+
+                            b1.ToJson("AllocationLogs");
+
+                            b1.WithOwner()
+                                .HasForeignKey("RFQId");
+                        });
+
                     b.OwnsOne("SensorX.Master.Domain.ValueObjects.CustomerInfo", "CustomerInfo", b1 =>
                         {
                             b1.Property<Guid>("RFQId")
@@ -1137,7 +1172,7 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
 
                             b1.HasKey("RFQId");
 
-                            b1.ToTable("RFQs", (string)null);
+                            b1.ToTable("RFQs");
 
                             b1.WithOwner()
                                 .HasForeignKey("RFQId");
@@ -1182,9 +1217,42 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                                 .HasForeignKey("RFQId");
                         });
 
+                    b.OwnsMany("SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate.RejectedLogEntry", "RejectedLogs", b1 =>
+                        {
+                            b1.Property<Guid>("RFQId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer");
+
+                            b1.Property<string>("Reason")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.Property<DateTimeOffset>("RejectedAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<Guid>("StaffId")
+                                .HasColumnType("uuid");
+
+                            b1.HasKey("RFQId", "__synthesizedOrdinal");
+
+                            b1.ToTable("RFQs");
+
+                            b1.ToJson("RejectedLogs");
+
+                            b1.WithOwner()
+                                .HasForeignKey("RFQId");
+                        });
+
+                    b.Navigation("AllocationLogs");
+
                     b.Navigation("CustomerInfo");
 
                     b.Navigation("Items");
+
+                    b.Navigation("RejectedLogs");
                 });
 
             modelBuilder.Entity("SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.SupplyRequestAggregate.SupplyRequest", b =>
@@ -1194,30 +1262,6 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                         .HasForeignKey("WarehouseId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.OwnsMany("SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.SupplyRequestAggregate.SupplyRequestItem", "Items", b1 =>
-                        {
-                            b1.Property<Guid>("Id")
-                                .HasColumnType("uuid");
-
-                            b1.Property<Guid>("ProductId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<int>("RequestedQuantity")
-                                .HasColumnType("integer");
-
-                            b1.Property<Guid>("SupplyRequestId")
-                                .HasColumnType("uuid");
-
-                            b1.HasKey("Id");
-
-                            b1.HasIndex("SupplyRequestId");
-
-                            b1.ToTable("SupplyRequestItems", (string)null);
-
-                            b1.WithOwner()
-                                .HasForeignKey("SupplyRequestId");
-                        });
 
                     b.OwnsMany("SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.SupplyRequestAggregate.PurchaseOption", "PurchaseOptions", b1 =>
                         {
@@ -1242,6 +1286,30 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                             b1.HasIndex("SupplyRequestId");
 
                             b1.ToTable("PurchaseOptions", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("SupplyRequestId");
+                        });
+
+                    b.OwnsMany("SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.SupplyRequestAggregate.SupplyRequestItem", "Items", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("ProductId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("RequestedQuantity")
+                                .HasColumnType("integer");
+
+                            b1.Property<Guid>("SupplyRequestId")
+                                .HasColumnType("uuid");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("SupplyRequestId");
+
+                            b1.ToTable("SupplyRequestItems", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("SupplyRequestId");
@@ -1327,7 +1395,7 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
 
                             b1.HasKey("WarehouseId");
 
-                            b1.ToTable("Warehouses", (string)null);
+                            b1.ToTable("Warehouses");
 
                             b1.WithOwner()
                                 .HasForeignKey("WarehouseId");

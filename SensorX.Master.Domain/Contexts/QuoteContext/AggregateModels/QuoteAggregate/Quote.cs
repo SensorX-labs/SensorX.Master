@@ -87,29 +87,33 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         /// </summary>
         public void AddItem(
             ProductId productId,
+            CategoryId categoryId,
             Code productCode,
             string manufacturer,
             string unit,
             Quantity quantity,
             Money unitPrice,
+            Money floorPrice,
             Percent taxRate
         )
         {
             var existingItem = _lineItems.FirstOrDefault(x => x.ProductId == productId);
             if (existingItem is not null)
             {
-                existingItem.Update(quantity, unitPrice, taxRate);
+                existingItem.Update(categoryId, quantity, unitPrice, floorPrice, taxRate);
                 return;
             }
 
             var quoteItem = new QuoteItem(
                 QuoteItemId.New(),
                 productId,
+                categoryId,
                 productCode,
                 manufacturer,
                 unit,
                 quantity,
                 unitPrice,
+                floorPrice,
                 taxRate
             );
             _lineItems.Add(quoteItem);
@@ -252,7 +256,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
                 Status = QuoteStatus.Sent;
                 QuoteDate = DateTimeOffset.UtcNow;
                 UpdatedAt = DateTimeOffset.UtcNow;
-                AddDomainEvent(new PublishQuoteEvent(Id, RFQId));
+                AddDomainEvent(new PublishQuoteEvent(Id, RFQId, SenderInfo.Id));
             }
             else
             {

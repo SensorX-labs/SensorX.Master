@@ -1,5 +1,7 @@
 using MediatR;
 using SensorX.Master.Application.Common.ResponseClient;
+using SensorX.Master.Application.Common.Interfaces;
+using SensorX.Master.Application.Common.Models.DataServiceModels;
 using SensorX.Master.Domain.Common.Exceptions;
 using SensorX.Master.Domain.Contexts.QuoteContext;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
@@ -10,7 +12,8 @@ using SensorX.Master.Domain.ValueObjects;
 namespace SensorX.Master.Application.Commands.Quotes.UpdateDraftQuote;
 
 public class UpdateDraftQuoteCommandHandler(
-    IRepository<Quote> _quoteRepository
+    IRepository<Quote> _quoteRepository,
+    IDataServiceClient _dataClient
 ) : IRequestHandler<UpdateDraftQuoteCommand, Result>
 {
     /// <summary>
@@ -29,7 +32,9 @@ public class UpdateDraftQuoteCommandHandler(
             // Add quote items
             if (request.Items != null && request.Items.Count > 0)
             {
-                UpdateQuoteItems(quote, request.Items);
+                var productIds = request.Items.Select(x => x.ProductId).Distinct().ToArray();
+                var pricingPolicies = await _dataClient.GetProductPricingAsync(productIds);
+                UpdateQuoteItems(quote, request.Items, pricingPolicies);
             }
             else
             {
@@ -46,7 +51,7 @@ public class UpdateDraftQuoteCommandHandler(
         }
     }
 
-    private static void UpdateQuoteItems(Quote quote, List<QuoteItemDto> items)
+    private static void UpdateQuoteItems(Quote quote, List<QuoteItemDto> items, ProductPricingPolicyData[] pricingPolicies)
     {
         var mapItems = items.ToDictionary(
             x => x.ProductId,
@@ -57,13 +62,19 @@ public class UpdateDraftQuoteCommandHandler(
             var mapItem = mapItems.GetValueOrDefault(item.ProductId);
             if (mapItem.UnitPrice is not null)
             {
+                var policy = pricingPolicies?.FirstOrDefault(p => p.ProductId == item.ProductId);
+                var floorPrice = policy != null ? Money.FromVnd(policy.FloorPrice) : Money.Zero();
+                var categoryId = policy != null ? new CategoryId(policy.CategoryId) : new CategoryId(Guid.Empty);
+
                 quote.AddItem(
                     new ProductId(item.ProductId),
+                    categoryId,
                     item.ProductCode,
                     item.Manufacturer ?? "Default",
                     item.Unit,
                     new Quantity((int)item.Quantity),
                     mapItem.UnitPrice,
+                    floorPrice,
                     mapItem.TaxRate
                 );
             }
