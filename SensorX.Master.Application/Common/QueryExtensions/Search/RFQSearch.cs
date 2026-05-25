@@ -14,10 +14,10 @@ public static class RFQSearch
 
         var term = searchTerm.Trim().ToLower();
 
-        // CustomerInfo là owned type với cột string thuần túy -> EF Core dịch được
-        // Không dùng Code.Value vì Code là Value Object qua HasConversion -> không dịch được
         return query.Where(p =>
-            p.CustomerInfo.CompanyName.ToLower().Contains(term)
+            ((string)p.Code).ToLower().Contains(term) ||
+            p.CustomerInfo.CompanyName.ToLower().Contains(term) ||
+            ((string)p.CustomerInfo.Phone).ToLower().Contains(term)
         );
     }
 }
