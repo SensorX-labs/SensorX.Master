@@ -1,5 +1,6 @@
 using MediatR;
 using SensorX.Master.Application.Common.ResponseClient;
+using SensorX.Master.Application.Services;
 using SensorX.Master.Domain.Common.Exceptions;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 using SensorX.Master.Domain.SeedWork;
@@ -8,7 +9,8 @@ using SensorX.Master.Domain.StrongIDs;
 namespace SensorX.Master.Application.Commands.Quotes.CustomerRespondToQuote;
 
 public class CustomerRespondToQuoteHandler(
-    IRepository<Quote> _quoteRepository
+    IRepository<Quote> _quoteRepository,
+    IInventoryAvailabilityService _inventoryAvailabilityService
 ) : IRequestHandler<CustomerRespondToQuoteCommand, Result>
 {
     public async Task<Result> Handle(CustomerRespondToQuoteCommand request, CancellationToken cancellationToken)
@@ -25,6 +27,15 @@ public class CustomerRespondToQuoteHandler(
             if (quote.Response != null)
             {
                 return Result.Warning("Báo giá đã được phản hồi. Vui lòng chờ phản hồi từ nhân viên kinh doanh.");
+            }
+
+            if (request.ResponseType == QuoteResponseStatus.Accepted && request.PaymentTerm == PaymentTerm.Deposit)
+            {
+                var isStockSufficient = await _inventoryAvailabilityService.IsStockSufficientAsync(quote.LineItems, cancellationToken);
+                if (isStockSufficient)
+                {
+                    return Result.Failure("Tồn kho đã đủ, không thể chọn đặt cọc 30%.");
+                }
             }
 
             var response = new QuoteResponse(

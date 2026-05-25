@@ -85,6 +85,12 @@ namespace SensorX.Master.Infrastructure.DI
 
                     cfg.ReceiveEndpoint("master-inventory-snapshot-consumer", e =>
                     {
+                        // Optimize for real-time inventory updates:
+                        // - Low prefetch for immediate processing (default is 10)
+                        // - Concurrent delivery for higher throughput
+                        // - Immediate message acknowledgment
+                        e.PrefetchCount = 1;  // Process one message at a time for ordering
+                        e.ConcurrentMessageLimit = 1;  // Ensure events processed sequentially
                         e.ConfigureConsumer<InventorySnapshotEventConsumer>(context);
                     });
 

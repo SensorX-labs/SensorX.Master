@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SensorX.Master.Application.Services;
 using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
+using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 using SensorX.Master.Domain.Contexts.PaymentContext.AggregateModels;
 using SensorX.Master.Infrastructure.Persistences;
 
@@ -38,5 +39,37 @@ public class InventoryAvailabilityService(AppDbContext dbContext) : IInventoryAv
         }
 
         return PaymentType.All;
+    }
+
+    public async Task<bool> IsStockSufficientAsync(IReadOnlyCollection<QuoteItem> items, CancellationToken cancellationToken = default)
+    {
+        if (items.Count == 0)
+        {
+            return false;
+        }
+
+        var productIds = items.Select(item => item.ProductId.Value).Distinct().ToList();
+
+        var inventoryRows = await dbContext.WarehouseInventoryProjections
+            .AsNoTracking()
+            .Where(row => productIds.Contains(row.ProductId))
+            .ToListAsync(cancellationToken);
+
+        var availableByProduct = inventoryRows
+            .GroupBy(row => row.ProductId)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Sum(row => row.PhysicalQuantity));
+
+        foreach (var item in items)
+        {
+            availableByProduct.TryGetValue(item.ProductId.Value, out var available);
+            if (available < item.Quantity.Value)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
