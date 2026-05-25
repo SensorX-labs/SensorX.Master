@@ -9,7 +9,18 @@ public record GetPageListQuoteQuery(
     string? SearchTerm,
     QuoteStatus? Status,
     QuoteResponseStatus? ResponseType,
-    bool? IsExpired
+    bool? IsExpired,
+    string? Code,
+    string? CompanyName,
+    string? CustomerEmail,
+    string? CustomerPhone,
+    string? SenderName,
+    decimal? TotalFrom,
+    decimal? TotalTo,
+    DateTimeOffset? QuoteDateFrom,
+    DateTimeOffset? QuoteDateTo,
+    DateTimeOffset? CreatedFrom,
+    DateTimeOffset? CreatedTo
 ) : OffsetPagedQuery, IRequest<Result<OffsetPagedResult<GetPageListQuoteResponse>>>;
 
 public record GetPageListQuoteResponse(
