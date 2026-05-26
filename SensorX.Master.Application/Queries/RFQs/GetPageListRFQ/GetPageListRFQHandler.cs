@@ -38,6 +38,52 @@ public sealed class GetPageListRFQHandler(
 
             sourceQuery = sourceQuery.ApplySearch(request.SearchTerm);
 
+            if (!string.IsNullOrWhiteSpace(request.Code))
+            {
+                var code = request.Code.Trim();
+                sourceQuery = sourceQuery.Where(r => ((string)r.Code).Contains(code));
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.CompanyName))
+            {
+                var companyName = request.CompanyName.Trim();
+                sourceQuery = sourceQuery.Where(r => r.CustomerInfo.CompanyName.Contains(companyName));
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.RecipientName))
+            {
+                var recipientName = request.RecipientName.Trim();
+                sourceQuery = sourceQuery.Where(r => r.CustomerInfo.CompanyName.Contains(recipientName));
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.RecipientPhone))
+            {
+                var recipientPhone = request.RecipientPhone.Trim();
+                sourceQuery = sourceQuery.Where(r => ((string)r.CustomerInfo.Phone).Contains(recipientPhone));
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.StaffName))
+            {
+                var staffName = request.StaffName.Trim();
+                var matchedStaffIds = _staffQueryBuilder.QueryAsNoTracking
+                    .Where(s => s.Name.Contains(staffName))
+                    .Select(s => s.Id);
+
+                sourceQuery = sourceQuery.Where(r => r.StaffId != null && matchedStaffIds.Contains(r.StaffId));
+            }
+
+            if (request.CreatedFrom.HasValue)
+            {
+                var createdFrom = request.CreatedFrom.Value.Date;
+                sourceQuery = sourceQuery.Where(r => r.CreatedAt >= createdFrom);
+            }
+
+            if (request.CreatedTo.HasValue)
+            {
+                var createdToExclusive = request.CreatedTo.Value.Date.AddDays(1);
+                sourceQuery = sourceQuery.Where(r => r.CreatedAt < createdToExclusive);
+            }
+
             var totalCount = await _queryExecutor.CountAsync(sourceQuery, cancellationToken);
 
             var pagedQuery = sourceQuery
