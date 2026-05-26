@@ -1,12 +1,9 @@
-
 using SensorX.Master.Domain.SeedWork;
 
 namespace SensorX.Master.Domain.Events;
 
-public record TransferOrderCreatedDomainEvent(
+public record TransferOrderFinishedDomainEvent(
     Guid TransferOrderId,
-    string TransferOrderCode,
-    Guid FromWarehouseId,
     Guid PickingNoteId,
     Guid ToWarehouseId
 ) : IDomainEvent;

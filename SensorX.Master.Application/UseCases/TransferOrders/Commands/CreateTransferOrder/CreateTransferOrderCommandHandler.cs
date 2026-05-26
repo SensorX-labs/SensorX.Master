@@ -64,12 +64,7 @@ public class CreateTransferOrderCommandHandler(
 
         await transferOrderRepository.AddAsync(transferOrder, cancellationToken);
 
-        // Publish domain event
-        await mediator.Publish(new TransferOrderCreatedDomainEvent(
-            transferOrder.Id.Value,
-            code.Value,
-            sourceWarehouseId.Value
-        ), cancellationToken);
+        // Domain events are automatically published by the Unit of Work when saving changes
 
         return Result<Guid>.Success(transferOrder.Id.Value);
     }

@@ -13,6 +13,7 @@ public class TransferOrder : Entity<TransferOrderId>, IAggregateRoot, ICreationT
     public TransferOrderStatus Status { get; private set; }
     public string Note { get; private set; } = null!;
     public SupplyRequestId? SupplyRequestId { get; private set; }
+    public Guid? PickingNoteId { get; private set; }
 
     private readonly List<TransferOrderItem> _items = new();
     public IReadOnlyList<TransferOrderItem> Items => _items.AsReadOnly();
@@ -21,7 +22,7 @@ public class TransferOrder : Entity<TransferOrderId>, IAggregateRoot, ICreationT
 
     private TransferOrder() : base() { }
 
-    public TransferOrder(TransferOrderId id, Code code, WarehouseId sourceWarehouseId, WarehouseId destinationWarehouseId, TransferOrderStatus status, string note, SupplyRequestId? supplyRequestId = null) : base(id)
+    public TransferOrder(TransferOrderId id, Code code, WarehouseId sourceWarehouseId, WarehouseId destinationWarehouseId, TransferOrderStatus status, string note, SupplyRequestId? supplyRequestId = null, Guid? pickingNoteId = null) : base(id)
     {
         Code = code;
         SourceWarehouseId = sourceWarehouseId;
@@ -29,13 +30,25 @@ public class TransferOrder : Entity<TransferOrderId>, IAggregateRoot, ICreationT
         Status = status;
         Note = note;
         SupplyRequestId = supplyRequestId;
+        PickingNoteId = pickingNoteId;
 
-        AddDomainEvent(new TransferOrderCreatedDomainEvent(Id.Value, code.Value, sourceWarehouseId.Value));
+        if (pickingNoteId.HasValue)
+        {
+            AddDomainEvent(new TransferOrderCreatedDomainEvent(Id.Value, code.Value, sourceWarehouseId.Value, pickingNoteId.Value, destinationWarehouseId.Value));
+        }
+        else 
+        {
+            AddDomainEvent(new TransferOrderCreatedDomainEvent(Id.Value, code.Value, sourceWarehouseId.Value, Guid.Empty, destinationWarehouseId.Value));
+        }
     }
 
     public void Complete()
     {
         Status = TransferOrderStatus.Completed;
+        if (PickingNoteId.HasValue)
+        {
+            AddDomainEvent(new TransferOrderFinishedDomainEvent(Id.Value, PickingNoteId.Value, DestinationWarehouseId.Value));
+        }
     }
 
     public void AddItem(ProductId productId, Code productCode, string productName, string unit, Quantity quantity, string manufactureName, string note)

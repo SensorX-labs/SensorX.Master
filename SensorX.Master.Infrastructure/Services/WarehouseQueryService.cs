@@ -25,7 +25,9 @@ public class WarehouseQueryService : IWarehouseQueryService
                 w.Address,
                 w.IsActive,
                 w.CreatedAt,
-                w.UpdatedAt))
+                w.UpdatedAt,
+                w.Location != null ? w.Location.Latitude : null,
+                w.Location != null ? w.Location.Longitude : null))
             .ToListAsync(cancellationToken);
     }
 
@@ -40,7 +42,9 @@ public class WarehouseQueryService : IWarehouseQueryService
                 w.Address,
                 w.IsActive,
                 w.CreatedAt,
-                w.UpdatedAt))
+                w.UpdatedAt,
+                w.Location != null ? w.Location.Latitude : null,
+                w.Location != null ? w.Location.Longitude : null))
             .FirstOrDefaultAsync(cancellationToken);
     }
 
@@ -62,5 +66,67 @@ public class WarehouseQueryService : IWarehouseQueryService
                 p.RackCode,
                 p.LastSyncAt))
             .ToListAsync(cancellationToken);
+    }
+
+    private static readonly HttpClient _httpClient = new HttpClient();
+
+    public async Task<WarehouseDto?> FindNearestWarehouseAsync(double lat, double lon, CancellationToken ct = default)
+    {
+        var warehouses = await GetAllAsync(ct);
+        
+        WarehouseDto? nearest = null;
+        double minDistance = double.MaxValue;
+
+        foreach (var w in warehouses.Where(w => w.IsActive && w.Latitude.HasValue && w.Longitude.HasValue))
+        {
+            var distance = await GetOsrmDistanceAsync(lat, lon, w.Latitude!.Value, w.Longitude!.Value, ct);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                nearest = w;
+            }
+        }
+
+        return nearest ?? warehouses.FirstOrDefault(w => w.IsActive); // Fallback to first active if no coords
+    }
+
+    private async Task<double> GetOsrmDistanceAsync(double lat1, double lon1, double lat2, double lon2, CancellationToken ct)
+    {
+        var lon1Str = lon1.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var lat1Str = lat1.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var lon2Str = lon2.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var lat2Str = lat2.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+        string url = $"https://router.project-osrm.org/route/v1/driving/{lon1Str},{lat1Str};{lon2Str},{lat2Str}?overview=false";
+        
+        try
+        {
+            var response = await _httpClient.GetAsync(url, ct);
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync(ct);
+                using var document = System.Text.Json.JsonDocument.Parse(content);
+                var root = document.RootElement;
+                if (root.TryGetProperty("code", out var codeProp) && codeProp.GetString() == "Ok")
+                {
+                    if (root.TryGetProperty("routes", out var routesProp) && routesProp.GetArrayLength() > 0)
+                    {
+                        var route = routesProp[0];
+                        if (route.TryGetProperty("distance", out var distanceProp))
+                        {
+                            return distanceProp.GetDouble(); // Distance in meters
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log exception here if logger was injected, for now just skip
+            Console.WriteLine($"OSRM API Error: {ex.Message}");
+        }
+        
+        // Return a very large distance if API fails so it's not selected
+        return double.MaxValue;
     }
 }

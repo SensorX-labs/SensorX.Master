@@ -6,10 +6,12 @@ public record WarehouseDto(
     string? Address,
     bool IsActive,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? UpdatedAt
+    DateTimeOffset? UpdatedAt,
+    double? Latitude = null,
+    double? Longitude = null
 )
 {
-    public WarehouseDto() : this(Guid.Empty, string.Empty, null,  false, default, null) {}
+    public WarehouseDto() : this(Guid.Empty, string.Empty, null,  false, default, null, null, null) {}
 }
 
 public record CreateWarehouseDto(

@@ -72,5 +72,10 @@ public class Order : Entity<OrderId>, IAggregateRoot, ICreationTrackable, IUpdat
     {
         Status = OrderStatus.Cancelled;
     }
+
+    public void Dispatch()
+    {
+        Status = OrderStatus.Dispatched;
+    }
 }
 
