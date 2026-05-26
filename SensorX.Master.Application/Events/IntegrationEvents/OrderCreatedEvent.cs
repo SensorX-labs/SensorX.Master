@@ -14,4 +14,6 @@ public record OrderCreatedEvent
     public string DeliveryAddress { get; init; } = string.Empty;
     public string CompanyName { get; init; } = string.Empty;
     public string TaxCode { get; init; } = string.Empty;
+    // Optional: nearest warehouse assigned for fulfillment
+    public Guid? AssignedWarehouseId { get; init; }
 }

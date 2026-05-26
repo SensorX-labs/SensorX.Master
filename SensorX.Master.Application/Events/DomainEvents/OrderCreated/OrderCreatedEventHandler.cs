@@ -1,6 +1,7 @@
 using MassTransit;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using System.Linq;
 using SensorX.Master.Application.Common.DomainEvent;
 using SensorX.Master.Application.DTOs;
 using SensorX.Master.Application.Events.IntegrationEvents;
@@ -21,6 +22,7 @@ public class OrderCreatedEventHandler(
     IRepository<Payment> paymentRepository,
     OrderService orderService,
     IWarehouseQueryService warehouseQueryService,
+    IGeolocationQueryService geolocationQueryService,
     SensorX.Master.Application.Common.Interfaces.IQueryBuilder<Invoice> _invoiceBuilder,
     SensorX.Master.Application.Common.Interfaces.IQueryBuilder<Payment> _paymentBuilder,
     SensorX.Master.Application.Common.Interfaces.IQueryExecutor _queryExecutor
@@ -90,6 +92,26 @@ public class OrderCreatedEventHandler(
             domainEvent.OrderId,
             invoice.Id.Value);
 
+        // Determine nearest warehouse by geocoding the delivery address
+        Guid? assignedWarehouseId = null;
+        try
+        {
+            var geos = await geolocationQueryService.GetGeolocationByAddress(domainEvent.Address, cancellationToken);
+            var geo = geos?.FirstOrDefault();
+            if (geo != null)
+            {
+                var nearest = await warehouseQueryService.FindNearestWarehouseAsync(geo.Latitude, geo.Longitude, cancellationToken);
+                if (nearest != null)
+                {
+                    assignedWarehouseId = nearest.Id;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to determine nearest warehouse for Order {OrderId}", domainEvent.OrderId);
+        }
+
         await publishEndpoint.Publish(new OrderCreatedEvent
         {
             OrderId = domainEvent.OrderId,
@@ -99,7 +121,8 @@ public class OrderCreatedEventHandler(
             ReceiverPhone = domainEvent.RecipientPhone,
             DeliveryAddress = domainEvent.Address,
             CompanyName = domainEvent.CompanyName,
-            TaxCode = domainEvent.TaxCode
+            TaxCode = domainEvent.TaxCode,
+            AssignedWarehouseId = assignedWarehouseId
         }, cancellationToken);
     }
 }
