@@ -20,11 +20,21 @@ public class GetPagedListInvoiceHandler(
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
             var searchTerm = request.SearchTerm.Trim().ToLower();
-            sourceQuery = sourceQuery.Where(x =>
-                x.Code.Value.ToLower().Contains(searchTerm) ||
-                x.OrderId.Value.ToString().ToLower().Contains(searchTerm) ||
-                x.BillingInfo.CompanyName.ToLower().Contains(searchTerm) ||
-                x.BillingInfo.TaxCode.ToLower().Contains(searchTerm));
+            if (Guid.TryParse(request.SearchTerm.Trim(), out var orderId))
+            {
+                sourceQuery = sourceQuery.Where(x =>
+                    ((string)x.Code).ToLower().Contains(searchTerm) ||
+                    x.OrderId.Value == orderId ||
+                    x.BillingInfo.CompanyName.ToLower().Contains(searchTerm) ||
+                    x.BillingInfo.TaxCode.ToLower().Contains(searchTerm));
+            }
+            else
+            {
+                sourceQuery = sourceQuery.Where(x =>
+                    ((string)x.Code).ToLower().Contains(searchTerm) ||
+                    x.BillingInfo.CompanyName.ToLower().Contains(searchTerm) ||
+                    x.BillingInfo.TaxCode.ToLower().Contains(searchTerm));
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(request.Status)
@@ -36,13 +46,15 @@ public class GetPagedListInvoiceHandler(
         if (!string.IsNullOrWhiteSpace(request.Code))
         {
             var code = request.Code.Trim().ToLower();
-            sourceQuery = sourceQuery.Where(x => x.Code.Value.ToLower().Contains(code));
+            sourceQuery = sourceQuery.Where(x => ((string)x.Code).ToLower().Contains(code));
         }
 
         if (!string.IsNullOrWhiteSpace(request.OrderCode))
         {
-            var orderCode = request.OrderCode.Trim().ToLower();
-            sourceQuery = sourceQuery.Where(x => x.OrderId.Value.ToString().ToLower().Contains(orderCode));
+            if (Guid.TryParse(request.OrderCode.Trim(), out var orderId))
+            {
+                sourceQuery = sourceQuery.Where(x => x.OrderId.Value == orderId);
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(request.CompanyName))
