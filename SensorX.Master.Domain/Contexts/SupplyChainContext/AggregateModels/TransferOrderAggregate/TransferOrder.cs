@@ -1,3 +1,5 @@
+using System.Linq;
+using System.Collections.Generic;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
@@ -30,7 +32,6 @@ public class TransferOrder : Entity<TransferOrderId>, IAggregateRoot, ICreationT
         Note = note;
         SupplyRequestId = supplyRequestId;
 
-        AddDomainEvent(new TransferOrderCreatedDomainEvent(Id.Value, code.Value, sourceWarehouseId.Value));
     }
 
     public void Complete()
@@ -38,8 +39,38 @@ public class TransferOrder : Entity<TransferOrderId>, IAggregateRoot, ICreationT
         Status = TransferOrderStatus.Completed;
     }
 
+    public void MarkDelivering()
+    {
+        if (Status == TransferOrderStatus.Processing)
+        {
+            Status = TransferOrderStatus.Delivering;
+        }
+    }
+
     public void AddItem(ProductId productId, Code productCode, string productName, string unit, Quantity quantity, string manufactureName, string note)
     {
         _items.Add(new TransferOrderItem(TransferOrderItemId.New(), productId, productCode, productName, unit, quantity, manufactureName, note));
+    }
+
+    public void RaiseCreatedDomainEvent(Guid? pickingNoteId = null)
+    {
+        var domainItems = _items.Select(x => new TransferOrderCreatedDomainItem(
+            x.ProductId.Value,
+            x.ProductCode.Value,
+            x.ProductName,
+            x.Unit,
+            x.Quantity.Value,
+            x.ManufactureName,
+            x.Note
+        )).ToList();
+
+        AddDomainEvent(new TransferOrderCreatedDomainEvent(
+            Id.Value,
+            Code.Value,
+            SourceWarehouseId.Value,
+            DestinationWarehouseId.Value,
+            pickingNoteId ?? Guid.Empty,
+            domainItems
+        ));
     }
 }

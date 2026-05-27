@@ -1,4 +1,5 @@
 
+using System.Linq;
 using MassTransit;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -20,12 +21,25 @@ public class TransferOrderCreatedEventHandler(
         var domainEvent = notification.DomainEvent;
         logger.LogInformation("Master project publishing TransferOrderCreatedEvent: {TransferOrderId}", domainEvent.TransferOrderId);
 
+        var items = domainEvent.Items.Select(x => new TransferOrderItemDto(
+            x.ProductId,
+            x.ProductCode,
+            x.ProductName,
+            x.Unit,
+            x.Quantity,
+            x.ManufactureName,
+            x.Note
+        )).ToList();
+
         await publishEndpoint.Publish(new TransferOrderCreatedEvent
         {
             TransferOrderId = domainEvent.TransferOrderId,
+            PickingNoteId = domainEvent.PickingNoteId,
             FromWarehouseId = domainEvent.FromWarehouseId,
+            ToWarehouseId = domainEvent.ToWarehouseId,
             TransferOrderCode = domainEvent.TransferOrderCode,
-            CreatedAt = DateTimeOffset.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            Items = items
         }, cancellationToken);
     }
 }

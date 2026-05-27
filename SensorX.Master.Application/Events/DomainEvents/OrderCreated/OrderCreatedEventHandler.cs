@@ -112,17 +112,35 @@ public class OrderCreatedEventHandler(
             logger.LogWarning(ex, "Failed to determine nearest warehouse for Order {OrderId}", domainEvent.OrderId);
         }
 
+        if (assignedWarehouseId == null)
+        {
+            var warehouses = await warehouseQueryService.GetAllAsync(cancellationToken);
+            assignedWarehouseId = warehouses.FirstOrDefault()?.Id;
+        }
+
+        var pickingNoteId = Guid.NewGuid();
+        var lineItems = domainEvent.Order.Items.Select(x => new OrderLineItemDto(
+            x.ProductId.Value,
+            x.ProductCode.Value,
+            x.ProductName,
+            x.Unit,
+            x.Quantity.Value,
+            x.Manufacturer
+        )).ToList();
+
         await publishEndpoint.Publish(new OrderCreatedEvent
         {
             OrderId = domainEvent.OrderId,
             OrderCode = domainEvent.OrderCode,
+            PickingNoteId = pickingNoteId,
             CreatedAt = DateTimeOffset.UtcNow,
             ReceiverName = domainEvent.RecipientName,
             ReceiverPhone = domainEvent.RecipientPhone,
             DeliveryAddress = domainEvent.Address,
             CompanyName = domainEvent.CompanyName,
             TaxCode = domainEvent.TaxCode,
-            AssignedWarehouseId = assignedWarehouseId
+            NearestWarehouseId = assignedWarehouseId ?? Guid.Empty,
+            LineItems = lineItems
         }, cancellationToken);
     }
 }

@@ -62,6 +62,8 @@ namespace SensorX.Master.Infrastructure.DI
                 x.AddConsumer<SensorX.Master.Application.Events.Consumers.CustomerSnapshot.CustomerSnapshotConsumer>();
                 x.AddConsumer<InventorySnapshotEventConsumer>();
                 x.AddConsumer<WarehouseConnectedEventConsumer>();
+                x.AddConsumer<SensorX.Master.Application.Events.Consumers.StockOutCompletedConsumer>();
+                x.AddConsumer<SensorX.Master.Application.Events.Consumers.StockInCompletedConsumer>();
 
                 // Đăng ký Entity Framework Outbox
                 x.AddEntityFrameworkOutbox<AppDbContext>(o =>
