@@ -1,6 +1,7 @@
 using MassTransit;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using System.Linq;
 using SensorX.Master.Application.Common.DomainEvent;
 using SensorX.Master.Application.DTOs;
 using SensorX.Master.Application.Events.IntegrationEvents;
@@ -22,8 +23,6 @@ public class OrderCreatedEventHandler(
     OrderService orderService,
     IWarehouseQueryService warehouseQueryService,
     IGeolocationQueryService geolocationQueryService,
-    IRepository<SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.TransferOrderAggregate.TransferOrder> transferOrderRepository,
-    IRepository<SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.SupplyRequestAggregate.SupplyRequest> supplyRequestRepository,
     SensorX.Master.Application.Common.Interfaces.IQueryBuilder<Invoice> _invoiceBuilder,
     SensorX.Master.Application.Common.Interfaces.IQueryBuilder<Payment> _paymentBuilder,
     SensorX.Master.Application.Common.Interfaces.IQueryExecutor _queryExecutor
@@ -214,6 +213,42 @@ public class OrderCreatedEventHandler(
             }
         }
 
+        // Determine nearest warehouse by geocoding the delivery address
+        Guid? assignedWarehouseId = null;
+        try
+        {
+            var geos = await geolocationQueryService.GetGeolocationByAddress(domainEvent.Address, cancellationToken);
+            var geo = geos?.FirstOrDefault();
+            if (geo != null)
+            {
+                var nearest = await warehouseQueryService.FindNearestWarehouseAsync(geo.Latitude, geo.Longitude, cancellationToken);
+                if (nearest != null)
+                {
+                    assignedWarehouseId = nearest.Id;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to determine nearest warehouse for Order {OrderId}", domainEvent.OrderId);
+        }
+
+        if (assignedWarehouseId == null)
+        {
+            var warehouses = await warehouseQueryService.GetAllAsync(cancellationToken);
+            assignedWarehouseId = warehouses.FirstOrDefault()?.Id;
+        }
+
+        var pickingNoteId = Guid.NewGuid();
+        var lineItems = domainEvent.Order.Items.Select(x => new OrderLineItemDto(
+            x.ProductId.Value,
+            x.ProductCode.Value,
+            x.ProductName,
+            x.Unit,
+            x.Quantity.Value,
+            x.Manufacturer
+        )).ToList();
+
         await publishEndpoint.Publish(new OrderCreatedEvent
         {
             OrderId = domainEvent.OrderId,
@@ -221,20 +256,15 @@ public class OrderCreatedEventHandler(
             PickingNoteId = pickingNoteId,
             ActionType = actionType,
             OrderCode = domainEvent.OrderCode,
+            PickingNoteId = pickingNoteId,
             CreatedAt = DateTimeOffset.UtcNow,
             ReceiverName = domainEvent.RecipientName,
             ReceiverPhone = domainEvent.RecipientPhone,
             DeliveryAddress = domainEvent.Address,
             CompanyName = domainEvent.CompanyName,
             TaxCode = domainEvent.TaxCode,
-            LineItems = domainEvent.Order.Items.Select(i => new OrderLineItemDto(
-                i.ProductId.Value,
-                i.ProductCode.Value,
-                i.ProductName,
-                i.Unit,
-                i.Quantity.Value,
-                i.Manufacturer
-            )).ToList()
+            NearestWarehouseId = assignedWarehouseId ?? Guid.Empty,
+            LineItems = lineItems
         }, cancellationToken);
     }
 }

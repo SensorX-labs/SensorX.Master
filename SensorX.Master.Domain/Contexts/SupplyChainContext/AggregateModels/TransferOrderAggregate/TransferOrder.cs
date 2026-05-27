@@ -1,3 +1,5 @@
+using System.Linq;
+using System.Collections.Generic;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
@@ -30,29 +32,46 @@ public class TransferOrder : Entity<TransferOrderId>, IAggregateRoot, ICreationT
         Status = status;
         Note = note;
         SupplyRequestId = supplyRequestId;
-        PickingNoteId = pickingNoteId;
 
-        if (pickingNoteId.HasValue)
-        {
-            AddDomainEvent(new TransferOrderCreatedDomainEvent(Id.Value, code.Value, sourceWarehouseId.Value, pickingNoteId.Value, destinationWarehouseId.Value));
-        }
-        else 
-        {
-            AddDomainEvent(new TransferOrderCreatedDomainEvent(Id.Value, code.Value, sourceWarehouseId.Value, Guid.Empty, destinationWarehouseId.Value));
-        }
     }
 
     public void Complete()
     {
         Status = TransferOrderStatus.Completed;
-        if (PickingNoteId.HasValue)
+    }
+
+    public void MarkDelivering()
+    {
+        if (Status == TransferOrderStatus.Processing)
         {
-            AddDomainEvent(new TransferOrderFinishedDomainEvent(Id.Value, PickingNoteId.Value, DestinationWarehouseId.Value));
+            Status = TransferOrderStatus.Delivering;
         }
     }
 
     public void AddItem(ProductId productId, Code productCode, string productName, string unit, Quantity quantity, string manufactureName, string note)
     {
         _items.Add(new TransferOrderItem(TransferOrderItemId.New(), productId, productCode, productName, unit, quantity, manufactureName, note));
+    }
+
+    public void RaiseCreatedDomainEvent(Guid? pickingNoteId = null)
+    {
+        var domainItems = _items.Select(x => new TransferOrderCreatedDomainItem(
+            x.ProductId.Value,
+            x.ProductCode.Value,
+            x.ProductName,
+            x.Unit,
+            x.Quantity.Value,
+            x.ManufactureName,
+            x.Note
+        )).ToList();
+
+        AddDomainEvent(new TransferOrderCreatedDomainEvent(
+            Id.Value,
+            Code.Value,
+            SourceWarehouseId.Value,
+            DestinationWarehouseId.Value,
+            pickingNoteId ?? Guid.Empty,
+            domainItems
+        ));
     }
 }

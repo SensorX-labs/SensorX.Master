@@ -1,3 +1,7 @@
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using SensorX.Master.Application.DTOs;
 using SensorX.Master.Application.Services;
@@ -24,6 +28,8 @@ public class WarehouseQueryService : IWarehouseQueryService
                 w.Name,
                 w.Address,
                 w.IsActive,
+                w.Location.Latitude,
+                w.Location.Longitude,
                 w.CreatedAt,
                 w.UpdatedAt,
                 w.Location != null ? w.Location.Latitude : null,
@@ -41,6 +47,8 @@ public class WarehouseQueryService : IWarehouseQueryService
                 w.Name,
                 w.Address,
                 w.IsActive,
+                w.Location.Latitude,
+                w.Location.Longitude,
                 w.CreatedAt,
                 w.UpdatedAt,
                 w.Location != null ? w.Location.Latitude : null,
@@ -68,18 +76,24 @@ public class WarehouseQueryService : IWarehouseQueryService
             .ToListAsync(cancellationToken);
     }
 
-    private static readonly HttpClient _httpClient = new HttpClient();
+
+      private static readonly HttpClient _httpClient = new HttpClient();
 
     public async Task<WarehouseDto?> FindNearestWarehouseAsync(double lat, double lon, CancellationToken ct = default)
     {
         var warehouses = await GetAllAsync(ct);
-        
+
         WarehouseDto? nearest = null;
         double minDistance = double.MaxValue;
 
         foreach (var w in warehouses.Where(w => w.IsActive && w.Latitude.HasValue && w.Longitude.HasValue))
         {
-            var distance = await GetOsrmDistanceAsync(lat, lon, w.Latitude!.Value, w.Longitude!.Value, ct);
+            var wLat = w.Latitude!.Value;
+            var wLon = w.Longitude!.Value;
+
+            // Try OSRM first; fallback to Haversine if OSRM fails or times out
+            var distance = await GetOsrmDistanceAsync(lat, lon, wLat, wLon, ct);
+
             if (distance < minDistance)
             {
                 minDistance = distance;
@@ -98,13 +112,16 @@ public class WarehouseQueryService : IWarehouseQueryService
         var lat2Str = lat2.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
         string url = $"https://router.project-osrm.org/route/v1/driving/{lon1Str},{lat1Str};{lon2Str},{lat2Str}?overview=false";
-        
+
         try
         {
-            var response = await _httpClient.GetAsync(url, ct);
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            cts.CancelAfter(TimeSpan.FromSeconds(5));
+
+            var response = await _httpClient.GetAsync(url, cts.Token);
             if (response.IsSuccessStatusCode)
             {
-                var content = await response.Content.ReadAsStringAsync(ct);
+                var content = await response.Content.ReadAsStringAsync(cts.Token);
                 using var document = System.Text.Json.JsonDocument.Parse(content);
                 var root = document.RootElement;
                 if (root.TryGetProperty("code", out var codeProp) && codeProp.GetString() == "Ok")
@@ -125,8 +142,20 @@ public class WarehouseQueryService : IWarehouseQueryService
             // Log exception here if logger was injected, for now just skip
             Console.WriteLine($"OSRM API Error: {ex.Message}");
         }
-        
-        // Return a very large distance if API fails so it's not selected
-        return double.MaxValue;
+
+        // Fallback: return straight-line (Haversine) distance in meters
+        return HaversineDistanceMeters(lat1, lon1, lat2, lon2);
     }
+
+    private static double HaversineDistanceMeters(double lat1, double lon1, double lat2, double lon2)
+    {
+        const double R = 6371000; // Earth radius in meters
+        var dLat = ToRadians(lat2 - lat1);
+        var dLon = ToRadians(lon2 - lon1);
+        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) + Math.Cos(ToRadians(lat1)) * Math.Cos(ToRadians(lat2)) * Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+        var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+        return R * c;
+    }
+
+    private static double ToRadians(double deg) => deg * (Math.PI / 180.0);
 }

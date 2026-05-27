@@ -1,4 +1,5 @@
 
+using System.Linq;
 using MassTransit;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -26,24 +27,22 @@ public class TransferOrderCreatedEventHandler(
         var domainEvent = notification.DomainEvent;
         logger.LogInformation("Master project publishing TransferOrderCreatedEvent: {TransferOrderId}", domainEvent.TransferOrderId);
 
-        var transferOrder = await transferOrderRepository.GetByIdAsync(new TransferOrderId(domainEvent.TransferOrderId), cancellationToken);
-
-        var items = transferOrder?.Items.Select(i => new TransferOrderItemDto(
-            i.ProductId.Value,
-            i.ProductCode.Value,
-            i.ProductName,
-            i.Unit,
-            i.Quantity.Value,
-            i.ManufactureName,
-            i.Note
-        )).ToList() ?? new List<TransferOrderItemDto>();
+        var items = domainEvent.Items.Select(x => new TransferOrderItemDto(
+            x.ProductId,
+            x.ProductCode,
+            x.ProductName,
+            x.Unit,
+            x.Quantity,
+            x.ManufactureName,
+            x.Note
+        )).ToList();
 
         await publishEndpoint.Publish(new TransferOrderCreatedEvent
         {
             TransferOrderId = domainEvent.TransferOrderId,
+            PickingNoteId = domainEvent.PickingNoteId,
             FromWarehouseId = domainEvent.FromWarehouseId,
             ToWarehouseId = domainEvent.ToWarehouseId,
-            PickingNoteId = domainEvent.PickingNoteId,
             TransferOrderCode = domainEvent.TransferOrderCode,
             CreatedAt = DateTimeOffset.UtcNow,
             Items = items

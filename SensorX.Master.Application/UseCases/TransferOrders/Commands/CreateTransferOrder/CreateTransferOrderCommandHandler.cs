@@ -64,7 +64,28 @@ public class CreateTransferOrderCommandHandler(
 
         await transferOrderRepository.AddAsync(transferOrder, cancellationToken);
 
-        // Domain events are automatically published by the Unit of Work when saving changes
+        // Raise domain event on the aggregate
+        transferOrder.RaiseCreatedDomainEvent(request.PickingNoteId);
+
+        // Publish domain event directly
+        var domainItems = request.Items.Select(x => new TransferOrderCreatedDomainItem(
+            x.ProductId,
+            x.ProductCode,
+            x.ProductName,
+            x.Unit,
+            x.Quantity,
+            x.ManufactureName,
+            x.Note ?? ""
+        )).ToList();
+
+        await mediator.Publish(new TransferOrderCreatedDomainEvent(
+            transferOrder.Id.Value,
+            code.Value,
+            sourceWarehouseId.Value,
+            destinationWarehouseId.Value,
+            request.PickingNoteId ?? Guid.Empty,
+            domainItems
+        ), cancellationToken);
 
         return Result<Guid>.Success(transferOrder.Id.Value);
     }
