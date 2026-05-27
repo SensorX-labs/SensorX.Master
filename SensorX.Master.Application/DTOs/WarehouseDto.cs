@@ -8,9 +8,7 @@ public record WarehouseDto(
     double? Latitude,
     double? Longitude,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? UpdatedAt,
-    double? Latitude = null,
-    double? Longitude = null
+    DateTimeOffset? UpdatedAt
 )
 {
     public WarehouseDto() : this(Guid.Empty, string.Empty, null,  false, null, null, default, null) {}

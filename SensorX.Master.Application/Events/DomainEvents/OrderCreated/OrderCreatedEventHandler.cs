@@ -94,15 +94,22 @@ public class OrderCreatedEventHandler(
             
         // Calculate NearestWarehouseId
         Guid nearestWarehouseId = Guid.Empty;
-        var geolocations = await geolocationQueryService.GetGeolocationByAddress(domainEvent.Address, cancellationToken);
-        if (geolocations != null && geolocations.Count > 0 && geolocations.First() != null)
+        try
         {
-            var geo = geolocations.First()!;
-            var nearestWarehouse = await warehouseQueryService.FindNearestWarehouseAsync(geo.Latitude, geo.Longitude, cancellationToken);
-            if (nearestWarehouse != null)
+            var geolocations = await geolocationQueryService.GetGeolocationByAddress(domainEvent.Address, cancellationToken);
+            if (geolocations != null && geolocations.Count > 0 && geolocations.First() != null)
             {
-                nearestWarehouseId = nearestWarehouse.Id;
+                var geo = geolocations.First()!;
+                var nearestWarehouse = await warehouseQueryService.FindNearestWarehouseAsync(geo.Latitude, geo.Longitude, cancellationToken);
+                if (nearestWarehouse != null)
+                {
+                    nearestWarehouseId = nearestWarehouse.Id;
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to determine nearest warehouse for Order {OrderId}", domainEvent.OrderId);
         }
         
         if (nearestWarehouseId == Guid.Empty)
@@ -114,129 +121,6 @@ public class OrderCreatedEventHandler(
             {
                 nearestWarehouseId = firstActive.Id;
             }
-        }
-
-        // Master-Centric Smart Picking Logic
-        var pickingNoteId = Guid.NewGuid();
-        PickingAction actionType;
-        Guid? linkedTransferOrderId = null;
-        Guid? linkedSupplyRequestId = null;
-
-        bool nearestSufficient = domainEvent.Order.Items.All(item => 
-        {
-            var inv = inventoryRows.FirstOrDefault(x => x.WarehouseId == nearestWarehouseId && x.ProductId == item.ProductId.Value);
-            return inv != null && (inv.PhysicalQuantity - inv.AllocatedQuantity) >= item.Quantity.Value;
-        });
-
-        if (nearestSufficient)
-        {
-            actionType = PickingAction.DirectPick;
-            logger.LogInformation("Order {OrderId} will be Direct Picked from nearest warehouse {WarehouseId}", domainEvent.OrderId, nearestWarehouseId);
-        }
-        else
-        {
-            // Find a single other warehouse that can fulfill the ENTIRE order
-            var validSourceWarehouses = inventoryRows
-                .Where(x => x.WarehouseId != nearestWarehouseId)
-                .GroupBy(x => x.WarehouseId)
-                .Where(g => domainEvent.Order.Items.All(item => 
-                {
-                    var inv = g.FirstOrDefault(x => x.ProductId == item.ProductId.Value);
-                    return inv != null && (inv.PhysicalQuantity - inv.AllocatedQuantity) >= item.Quantity.Value;
-                }))
-                .Select(g => g.Key)
-                .ToList();
-
-            if (validSourceWarehouses.Any())
-            {
-                actionType = PickingAction.WaitingTransfer;
-                // Pick the first valid one (could be optimized by distance later)
-                var sourceWarehouseId = validSourceWarehouses.First();
-
-                var transferOrder = new SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.TransferOrderAggregate.TransferOrder(
-                    new SensorX.Master.Domain.StrongIDs.TransferOrderId(Guid.NewGuid()),
-                    SensorX.Master.Domain.ValueObjects.Code.Create($"TO-{domainEvent.OrderCode}"),
-                    new SensorX.Master.Domain.StrongIDs.WarehouseId(sourceWarehouseId),
-                    new SensorX.Master.Domain.StrongIDs.WarehouseId(nearestWarehouseId),
-                    SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.TransferOrderAggregate.TransferOrderStatus.Processing,
-                    $"Auto generated for Order {domainEvent.OrderCode}",
-                    null,
-                    pickingNoteId
-                );
-
-                foreach (var itemDto in domainEvent.Order.Items)
-                {
-                    transferOrder.AddItem(
-                        new SensorX.Master.Domain.StrongIDs.ProductId(itemDto.ProductId.Value),
-                        SensorX.Master.Domain.ValueObjects.Code.From(itemDto.ProductCode.Value),
-                        itemDto.ProductName,
-                        itemDto.Unit,
-                        new SensorX.Master.Domain.ValueObjects.Quantity(itemDto.Quantity.Value),
-                        itemDto.Manufacturer,
-                        ""
-                    );
-                }
-
-                await transferOrderRepository.Add(transferOrder, cancellationToken);
-                linkedTransferOrderId = transferOrder.Id.Value;
-                logger.LogInformation("Order {OrderId} triggers TransferOrder {TransferOrderId} from {Source} to {Dest}", domainEvent.OrderId, transferOrder.Id.Value, sourceWarehouseId, nearestWarehouseId);
-            }
-            else
-            {
-                actionType = PickingAction.WaitingSupply;
-                var supplyRequest = new SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.SupplyRequestAggregate.SupplyRequest(
-                    new SensorX.Master.Domain.StrongIDs.SupplyRequestId(Guid.NewGuid()),
-                    SensorX.Master.Domain.ValueObjects.Code.Create($"SR-{domainEvent.OrderCode}"),
-                    new SensorX.Master.Domain.StrongIDs.WarehouseId(nearestWarehouseId),
-                    SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.SupplyRequestAggregate.SupplyRequestStatus.Pending,
-                    $"Auto generated for Order {domainEvent.OrderCode}",
-                    pickingNoteId
-                );
-
-                foreach (var itemDto in domainEvent.Order.Items)
-                {
-                    var nearestInv = inventoryRows.FirstOrDefault(x => x.WarehouseId == nearestWarehouseId && x.ProductId == itemDto.ProductId.Value);
-                    var nearestAvailable = nearestInv != null ? (nearestInv.PhysicalQuantity - nearestInv.AllocatedQuantity) : 0;
-                    
-                    if (nearestAvailable < itemDto.Quantity.Value)
-                    {
-                        supplyRequest.AddItem(
-                            new SensorX.Master.Domain.StrongIDs.ProductId(itemDto.ProductId.Value),
-                            new SensorX.Master.Domain.ValueObjects.Quantity(itemDto.Quantity.Value - (int)nearestAvailable)
-                        );
-                    }
-                }
-
-                await supplyRequestRepository.Add(supplyRequest, cancellationToken);
-                linkedSupplyRequestId = supplyRequest.Id.Value;
-                logger.LogInformation("Order {OrderId} triggers SupplyRequest {SupplyRequestId} for nearest warehouse {Dest}", domainEvent.OrderId, supplyRequest.Id.Value, nearestWarehouseId);
-            }
-        }
-
-        // Determine nearest warehouse by geocoding the delivery address
-        Guid? assignedWarehouseId = null;
-        try
-        {
-            var geos = await geolocationQueryService.GetGeolocationByAddress(domainEvent.Address, cancellationToken);
-            var geo = geos?.FirstOrDefault();
-            if (geo != null)
-            {
-                var nearest = await warehouseQueryService.FindNearestWarehouseAsync(geo.Latitude, geo.Longitude, cancellationToken);
-                if (nearest != null)
-                {
-                    assignedWarehouseId = nearest.Id;
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Failed to determine nearest warehouse for Order {OrderId}", domainEvent.OrderId);
-        }
-
-        if (assignedWarehouseId == null)
-        {
-            var warehouses = await warehouseQueryService.GetAllAsync(cancellationToken);
-            assignedWarehouseId = warehouses.FirstOrDefault()?.Id;
         }
 
         var pickingNoteId = Guid.NewGuid();
@@ -254,16 +138,14 @@ public class OrderCreatedEventHandler(
             OrderId = domainEvent.OrderId,
             NearestWarehouseId = nearestWarehouseId,
             PickingNoteId = pickingNoteId,
-            ActionType = actionType,
+            ActionType = PickingAction.DirectPick, // Picking note processing at warehouse will request supply if needed
             OrderCode = domainEvent.OrderCode,
-            PickingNoteId = pickingNoteId,
             CreatedAt = DateTimeOffset.UtcNow,
             ReceiverName = domainEvent.RecipientName,
             ReceiverPhone = domainEvent.RecipientPhone,
             DeliveryAddress = domainEvent.Address,
             CompanyName = domainEvent.CompanyName,
             TaxCode = domainEvent.TaxCode,
-            NearestWarehouseId = assignedWarehouseId ?? Guid.Empty,
             LineItems = lineItems
         }, cancellationToken);
     }

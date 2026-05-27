@@ -28,12 +28,10 @@ public class WarehouseQueryService : IWarehouseQueryService
                 w.Name,
                 w.Address,
                 w.IsActive,
-                w.Location.Latitude,
-                w.Location.Longitude,
-                w.CreatedAt,
-                w.UpdatedAt,
                 w.Location != null ? w.Location.Latitude : null,
-                w.Location != null ? w.Location.Longitude : null))
+                w.Location != null ? w.Location.Longitude : null,
+                w.CreatedAt,
+                w.UpdatedAt))
             .ToListAsync(cancellationToken);
     }
 
@@ -47,12 +45,10 @@ public class WarehouseQueryService : IWarehouseQueryService
                 w.Name,
                 w.Address,
                 w.IsActive,
-                w.Location.Latitude,
-                w.Location.Longitude,
-                w.CreatedAt,
-                w.UpdatedAt,
                 w.Location != null ? w.Location.Latitude : null,
-                w.Location != null ? w.Location.Longitude : null))
+                w.Location != null ? w.Location.Longitude : null,
+                w.CreatedAt,
+                w.UpdatedAt))
             .FirstOrDefaultAsync(cancellationToken);
     }
 

@@ -14,7 +14,6 @@ public record OrderCreatedEvent
     public Guid PickingNoteId { get; init; }
     public PickingAction ActionType { get; init; }
     public string OrderCode { get; init; } = string.Empty;
-    public Guid PickingNoteId { get; init; }
     public DateTimeOffset CreatedAt { get; init; }
     // DeliveryInfo fields
     public string ReceiverName { get; init; } = string.Empty;
@@ -22,8 +21,6 @@ public record OrderCreatedEvent
     public string DeliveryAddress { get; init; } = string.Empty;
     public string CompanyName { get; init; } = string.Empty;
     public string TaxCode { get; init; } = string.Empty;
-    // nearest warehouse assigned for fulfillment
-    public Guid NearestWarehouseId { get; init; }
     public List<OrderLineItemDto> LineItems { get; init; } = [];
 }
 
