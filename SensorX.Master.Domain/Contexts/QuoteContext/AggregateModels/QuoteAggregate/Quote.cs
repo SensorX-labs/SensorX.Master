@@ -31,7 +31,6 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
             CustomerInfo = customerInfo;
             Status = status;
             ReasonReject = reasonReject;
-            AddDomainEvent(new QuoteCreatedEvent(Id, rFQId));
         }
 
         public static Quote CreateDraft(
@@ -190,6 +189,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
             {
                 Status = QuoteStatus.Pending;
                 UpdatedAt = DateTimeOffset.UtcNow;
+                AddDomainEvent(new QuoteSubmittedForApprovalEvent(Id, RFQId));
             }
             else
             {
