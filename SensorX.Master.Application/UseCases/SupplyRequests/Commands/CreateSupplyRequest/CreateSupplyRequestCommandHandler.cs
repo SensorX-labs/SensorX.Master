@@ -29,7 +29,8 @@ public class CreateSupplyRequestCommandHandler(
             code,
             warehouseId,
             SupplyRequestStatus.Pending,
-            request.Note ?? ""
+            request.Note ?? "",
+            request.PickingNoteId
         );
 
         if (request.Items != null)

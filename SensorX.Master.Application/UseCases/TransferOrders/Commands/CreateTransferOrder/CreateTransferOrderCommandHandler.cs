@@ -46,7 +46,8 @@ public class CreateTransferOrderCommandHandler(
             destinationWarehouseId,
             TransferOrderStatus.Processing,
             request.Note,
-            null
+            request.SupplyRequestId.HasValue ? new SupplyRequestId(request.SupplyRequestId.Value) : null,
+            request.PickingNoteId
         );
 
         foreach (var itemDto in request.Items)

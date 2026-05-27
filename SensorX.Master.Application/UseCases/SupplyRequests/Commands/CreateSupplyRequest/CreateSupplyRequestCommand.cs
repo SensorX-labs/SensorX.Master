@@ -12,5 +12,6 @@ public record CreateSupplyRequestCommand(
     string Code,
     Guid WarehouseId,
     string Note,
-    List<SupplyRequestItemDto> Items
+    List<SupplyRequestItemDto> Items,
+    Guid? PickingNoteId = null
 ) : IRequest<Result<Guid>>;

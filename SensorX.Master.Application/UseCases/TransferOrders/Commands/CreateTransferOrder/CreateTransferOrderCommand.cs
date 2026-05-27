@@ -19,5 +19,6 @@ public record CreateTransferOrderCommand(
     Guid DestinationWarehouseId,
     string Note,
     List<TransferOrderItemDto> Items,
-    Guid? PickingNoteId = null
+    Guid? PickingNoteId = null,
+    Guid? SupplyRequestId = null
 ) : IRequest<Result<Guid>>;
