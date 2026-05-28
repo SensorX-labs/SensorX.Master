@@ -5,6 +5,7 @@ using SensorX.Master.Application.Common.QueryExtensions.OffsetPagination;
 using SensorX.Master.Application.Common.QueryExtensions.Search;
 using SensorX.Master.Application.Common.ReadModel;
 using SensorX.Master.Application.Common.ResponseClient;
+using System.Text.Json;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 
 namespace SensorX.Master.Application.Queries.RFQs.GetPageListRFQ;
@@ -37,6 +38,52 @@ public sealed class GetPageListRFQHandler(
 
             sourceQuery = sourceQuery.ApplySearch(request.SearchTerm);
 
+            if (!string.IsNullOrWhiteSpace(request.Code))
+            {
+                var code = request.Code.Trim();
+                sourceQuery = sourceQuery.Where(r => ((string)r.Code).Contains(code));
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.CompanyName))
+            {
+                var companyName = request.CompanyName.Trim();
+                sourceQuery = sourceQuery.Where(r => r.CustomerInfo.CompanyName.Contains(companyName));
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.RecipientName))
+            {
+                var recipientName = request.RecipientName.Trim();
+                sourceQuery = sourceQuery.Where(r => r.CustomerInfo.CompanyName.Contains(recipientName));
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.RecipientPhone))
+            {
+                var recipientPhone = request.RecipientPhone.Trim();
+                sourceQuery = sourceQuery.Where(r => ((string)r.CustomerInfo.Phone).Contains(recipientPhone));
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.StaffName))
+            {
+                var staffName = request.StaffName.Trim();
+                var matchedStaffIds = _staffQueryBuilder.QueryAsNoTracking
+                    .Where(s => s.Name.Contains(staffName))
+                    .Select(s => s.Id);
+
+                sourceQuery = sourceQuery.Where(r => r.StaffId != null && matchedStaffIds.Contains(r.StaffId));
+            }
+
+            if (request.CreatedFrom.HasValue)
+            {
+                var createdFrom = request.CreatedFrom.Value.Date;
+                sourceQuery = sourceQuery.Where(r => r.CreatedAt >= createdFrom);
+            }
+
+            if (request.CreatedTo.HasValue)
+            {
+                var createdToExclusive = request.CreatedTo.Value.Date.AddDays(1);
+                sourceQuery = sourceQuery.Where(r => r.CreatedAt < createdToExclusive);
+            }
+
             var totalCount = await _queryExecutor.CountAsync(sourceQuery, cancellationToken);
 
             var pagedQuery = sourceQuery
@@ -49,20 +96,55 @@ public sealed class GetPageListRFQHandler(
             var dtoQuery = from rfq in pagedQuery
                            join staff in staffQuery on rfq.StaffId equals staff.Id into staffGroup
                            from s in staffGroup.DefaultIfEmpty()
-                           select new GetPageListRFQResponse(
-                               rfq.Id.Value,
-                               rfq.Code.Value,
-                               rfq.Status.ToString(),
-                               rfq.CustomerInfo == null ? string.Empty : rfq.CustomerInfo.CompanyName,
-                               rfq.CustomerInfo == null ? string.Empty : rfq.CustomerInfo.Phone,
-                               rfq.CreatedAt,
-                               rfq.UpdatedAt,
-                               rfq.StaffId != null ? rfq.StaffId.Value : null,
-                               s != null ? s.Name : null,
-                               rfq.Items.Count
-                           );
+                           select new
+                           {
+                               Id = rfq.Id.Value,
+                               Code = rfq.Code.Value,
+                               Status = rfq.Status.ToString(),
+                               CompanyName = rfq.CustomerInfo == null ? string.Empty : rfq.CustomerInfo.CompanyName,
+                               Phone = rfq.CustomerInfo == null ? string.Empty : rfq.CustomerInfo.Phone,
+                               CreatedAt = rfq.CreatedAt,
+                               UpdatedAt = rfq.UpdatedAt,
+                               StaffId = rfq.StaffId != null ? rfq.StaffId.Value : (Guid?)null,
+                               StaffName = s != null ? s.Name : null,
+                               ItemCount = rfq.Items.Count,
+                               LatestLogJson = rfq.AllocationLogs.OrderByDescending(a => a.Round).Select(a => a.SnapshotJson).FirstOrDefault()
+                           };
 
-            var items = await _queryExecutor.ToListAsync(dtoQuery, cancellationToken);
+            var rawItems = await _queryExecutor.ToListAsync(dtoQuery, cancellationToken);
+
+            var items = new List<GetPageListRFQResponse>();
+            foreach (var item in rawItems)
+            {
+                double? finalScore = null;
+                if (!string.IsNullOrEmpty(item.LatestLogJson) && item.StaffId.HasValue)
+                {
+                    try
+                    {
+                        var snapshots = JsonSerializer.Deserialize<List<SensorX.Master.Application.Services.AIAssignment.Models.AllocationSnapshot>>(item.LatestLogJson);
+                        var winnerSnapshot = snapshots?.FirstOrDefault(s => s.StaffId == item.StaffId.Value);
+                        if (winnerSnapshot != null)
+                        {
+                            finalScore = winnerSnapshot.FinalScore;
+                        }
+                    }
+                    catch { /* ignore json parse errors */ }
+                }
+
+                items.Add(new GetPageListRFQResponse(
+                    item.Id,
+                    item.Code,
+                    item.Status,
+                    item.CompanyName,
+                    item.Phone,
+                    item.CreatedAt,
+                    item.UpdatedAt,
+                    item.StaffId,
+                    item.StaffName,
+                    item.ItemCount,
+                    finalScore
+                ));
+            }
 
             var result = new GetPageListRFQResult
             {

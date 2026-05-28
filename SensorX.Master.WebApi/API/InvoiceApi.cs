@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SensorX.Master.Application.Queries.Invoices.GetInvoiceById;
 using SensorX.Master.Application.Queries.Invoices.GetInvoiceByOrderId;
 using SensorX.Master.Application.Queries.Invoices.GetPagedListInvoice;
+using SensorX.Master.Application.Queries.Invoices.GetInvoiceStats;
 using SensorX.Master.WebApi.Extensions;
 
 namespace SensorX.Master.WebApi.API;
@@ -19,6 +20,10 @@ public static class InvoiceApi
             .WithName("GetPagedListInvoices")
             .WithDescription("Get paged list of invoices");
 
+        group.MapGet("/stats", GetInvoiceStats)
+            .WithName("GetInvoiceStats")
+            .WithDescription("Get invoice statistics");
+
         group.MapGet("/{invoiceId:guid}", GetInvoiceById)
             .WithName("GetInvoiceById")
             .WithDescription("Get invoice detail by ID");
@@ -32,6 +37,14 @@ public static class InvoiceApi
 
     private static async Task<IResult> GetPagedListInvoice(
         [AsParameters] GetPagedListInvoiceQuery query,
+        [FromServices] IMediator mediator)
+    {
+        var result = await mediator.Send(query);
+        return result.ToResult();
+    }
+
+    private static async Task<IResult> GetInvoiceStats(
+        [AsParameters] GetInvoiceStatsQuery query,
         [FromServices] IMediator mediator)
     {
         var result = await mediator.Send(query);

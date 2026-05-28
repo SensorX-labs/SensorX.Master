@@ -1,7 +1,7 @@
+using SensorX.Master.Domain.Common;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
-using SensorX.Master.Domain.Common;
 
 namespace SensorX.Master.Application.Common.ReadModel
 {
@@ -27,6 +27,11 @@ namespace SensorX.Master.Application.Common.ReadModel
         public string? AvatarUrl { get; set; }
         public StaffStatus Status { get; private set; }
 
+        // Các trường phục vụ hệ thống phân bổ AI
+        public int CurrentWorkload { get; set; } = 0;
+        public int MaxCapacity { get; set; } = 5;
+        public DateTimeOffset? LastAssignedAt { get; set; }
+
         public void Update(
             string name,
             Email email,
@@ -48,6 +53,51 @@ namespace SensorX.Master.Application.Common.ReadModel
         public void UpdateAvatarUrl(string avatarUrl)
         {
             AvatarUrl = avatarUrl;
+        }
+
+        // Hàm thay đổi trạng thái khi nhận đơn
+        public void AssignRfq()
+        {
+            if (CurrentWorkload >= MaxCapacity)
+                throw new SensorX.Master.Application.Common.Exceptions.ApplicationException("Nhân viên đã quá tải.");
+
+            CurrentWorkload++;
+            LastAssignedAt = DateTimeOffset.UtcNow;
+        }
+
+        // Hàm thay đổi trạng thái khi xong/chê đơn
+        public void ReleaseWorkload()
+        {
+            if (CurrentWorkload > 0) CurrentWorkload--;
+        }
+
+        /// <summary>
+        /// Hàm tính điểm Phân bổ cuối cùng (Final Score) để chốt người
+        /// </summary>
+        /// <param name="aggregatedSkillScore">Điểm tổng hợp từ rổ hàng (Tính từ CalculateExpectedCategoryScoren)</param>
+        /// <param name="k">Hệ số siết Workload (thường để 1.5 hoặc 2.0)</param>
+        /// <param name="idleWeight">Trọng số thưởng thời gian rảnh</param>
+        public double CalculateFinalAllocationScore(
+            double aggregatedSkillScore,
+            double k = 1.5,
+            double idleWeight = 0.5)
+        {
+            // 1. Phạt tải trọng (Workload Penalty)
+            // Công thức: 1 / (Workload + 1)^k
+            double workloadPenalty = 1.0 / Math.Pow(CurrentWorkload + 1, k);
+
+            // 2. Thưởng rảnh rỗi (Idle Bonus)
+            double idleHours = 0;
+            if (LastAssignedAt.HasValue)
+            {
+                idleHours = (DateTimeOffset.UtcNow - LastAssignedAt.Value).TotalHours;
+            }
+
+            // Tùy chọn: Chặn không cho điểm thưởng thời gian quá lố (Max 48h)
+            if (idleHours > 48) idleHours = 48;
+
+            // 3. Ra điểm số chốt hạ
+            return (aggregatedSkillScore * workloadPenalty) + (idleHours * idleWeight);
         }
     }
 }

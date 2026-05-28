@@ -3,6 +3,7 @@ using SensorX.Master.Application.Commands.Orders.CreateOrder;
 using SensorX.Master.Application.Queries.Orders.GetDetailOrderById;
 using SensorX.Master.Application.Queries.Orders.GetMyOrderById;
 using SensorX.Master.Application.Queries.Orders.GetMyOrders;
+using SensorX.Master.Application.Queries.Orders.GetOrderStats;
 using SensorX.Master.Application.Queries.Orders.GetPageListOrder;
 using SensorX.Master.WebApi.Extensions;
 using MediatR;
@@ -20,6 +21,10 @@ public static class OrderApi
         group.MapGet("/", GetPageListOrder)
             .WithName("GetPageListOrders")
             .WithDescription("Get paged list of orders");
+
+        group.MapGet("/stats", GetOrderStats)
+            .WithName("GetOrderStats")
+            .WithDescription("Get order statistics");
 
         group.MapGet("/my", GetMyOrders)
             .WithName("GetMyOrders")
@@ -48,6 +53,14 @@ public static class OrderApi
 
     private static async Task<IResult> GetPageListOrder(
         [AsParameters] GetPageListOrderQuery query,
+        [FromServices] IMediator mediator)
+    {
+        var result = await mediator.Send(query);
+        return result.ToResult();
+    }
+
+    private static async Task<IResult> GetOrderStats(
+        [AsParameters] GetOrderStatsQuery query,
         [FromServices] IMediator mediator)
     {
         var result = await mediator.Send(query);

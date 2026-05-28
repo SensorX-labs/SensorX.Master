@@ -2,20 +2,21 @@ using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Quartz;
 using SensorX.Master.Application.Common.Interfaces;
 using SensorX.Master.Application.Events.IntegrationEvents.WarehouseInventory;
 using SensorX.Master.Application.Services;
-using SensorX.Master.Domain.SeedWork;
-using SensorX.Master.Infrastructure.Services.Telegram;
-using Telegram.Bot;
-using Microsoft.Extensions.Options;
+using SensorX.Master.Application.Services.AIAssignment;
 using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate;
+using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Infrastructure.Jobs;
 using SensorX.Master.Infrastructure.Persistences;
 using SensorX.Master.Infrastructure.Repositories;
 using SensorX.Master.Infrastructure.Services;
+using SensorX.Master.Infrastructure.Services.Telegram;
 using SensorX.Warehouse.Application.Events;
+using Telegram.Bot;
 
 namespace SensorX.Master.Infrastructure.DI
 {
@@ -46,6 +47,7 @@ namespace SensorX.Master.Infrastructure.DI
             services.AddScoped<ISepayQRBuilder, SepayQRBuilder>();
             services.AddScoped<ICurrentUser, CurrentUser>();
             services.AddScoped<IGeolocationQueryService, GeolocationQueryService>();
+            services.AddScoped<IAIAssignmentService, AIAssignmentService>();
 
             // Đăng ký HttpClient cho Data Service
             services.AddHttpClient<IDataServiceClient, DataServiceClient>();
@@ -58,7 +60,6 @@ namespace SensorX.Master.Infrastructure.DI
             {
                 x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("master", false));
                 x.AddConsumer<SensorX.Master.Application.Events.Consumers.StaffSnapshot.StaffSnapshotConsumer>();
-                x.AddConsumer<SensorX.Master.Application.Events.Consumers.ProductSnapshot.ProductSnapshotConsumer>();
                 x.AddConsumer<SensorX.Master.Application.Events.Consumers.CustomerSnapshot.CustomerSnapshotConsumer>();
                 x.AddConsumer<InventorySnapshotEventConsumer>();
                 x.AddConsumer<WarehouseConnectedEventConsumer>();
