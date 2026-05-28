@@ -7,17 +7,17 @@ using SensorX.Master.Application.Common.Models.DataServiceModels;
 using SensorX.Master.Domain.Events;
 namespace SensorX.Master.Application.Events.DomainEvents.Quote.QuoteCreated.QuoteAnlysis;
 
-public sealed class QuoteCreatedEventHandler(
+public sealed class QuoteSubmittedForApprovalEventHandler(
     IQueryBuilder<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate.Quote> _quoteQueryBuilder,
     IQueryBuilder<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate.RFQ> _rfqQueryBuilder,
     IQueryExecutor _queryExecutor,
     IDataServiceClient _dataClient,
     IPublishEndpoint _publishEndpoint,
-    ILogger<QuoteCreatedEventHandler> _logger
-) : INotificationHandler<DomainEventNotification<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate.QuoteCreatedEvent>>
+    ILogger<QuoteSubmittedForApprovalEventHandler> _logger
+) : INotificationHandler<DomainEventNotification<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate.QuoteSubmittedForApprovalEvent>>
 {
     public async Task Handle(
-        DomainEventNotification<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate.QuoteCreatedEvent> notification,
+        DomainEventNotification<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate.QuoteSubmittedForApprovalEvent> notification,
         CancellationToken cancellationToken)
     {
         var domainEvent = notification.DomainEvent;
