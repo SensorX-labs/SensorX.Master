@@ -19,6 +19,7 @@ public static class Api
         api.MapTransferOrderApi();
         api.MapWarehouseApi(); // Add Warehouse API
         api.MapSupplyRequestApi();
+        api.MapAnalyticsQueriesApi();
         return api;
     }
 }
