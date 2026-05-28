@@ -12,8 +12,32 @@ public static class SepayApi
 
         group.WithOpenApi();
 
-        group.MapPost("/webhooks", async ([FromServices] IMediator mediator, [FromBody] HandlerPaymentSepayCommand command) =>
+        group.MapPost("/webhooks", async (
+            [FromServices] IMediator mediator, 
+            [FromServices] IConfiguration configuration,
+            HttpRequest httpRequest,
+            [FromBody] HandlerPaymentSepayCommand command) =>
         {
+            if (!httpRequest.Headers.TryGetValue("Authorization", out var authHeaderValues))
+            {
+                return Results.Unauthorized();
+            }
+
+            var authHeader = authHeaderValues.ToString();
+            var prefix = "Apikey ";
+            if (!authHeader.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return Results.Unauthorized();
+            }
+
+            var apiKey = authHeader.Substring(prefix.Length).Trim();
+            var configuredKey = configuration["Sepay:ApiKey"];
+
+            if (string.IsNullOrEmpty(configuredKey) || apiKey != configuredKey)
+            {
+                return Results.Unauthorized();
+            }
+
             var result = await mediator.Send(command);
             return result
                 ? Results.Ok(new { success = true })

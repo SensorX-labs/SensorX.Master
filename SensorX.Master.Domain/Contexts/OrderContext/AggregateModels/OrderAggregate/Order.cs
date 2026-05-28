@@ -3,6 +3,7 @@ using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
 using SensorX.Master.Domain.Events;
+using System.Text.Json.Serialization;
 
 namespace SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
 
@@ -15,6 +16,8 @@ public class Order : Entity<OrderId>, IAggregateRoot, ICreationTrackable, IUpdat
     public SenderInfo SenderInfo { get; private set; } = null!;
     public OrderStatus Status { get; private set; }
     public DateTimeOffset OrderDate { get; private set; }
+    
+    [JsonInclude]
     private readonly List<OrderItem> _items = new();
     public IReadOnlyList<OrderItem> Items => _items.AsReadOnly();
 
@@ -23,7 +26,8 @@ public class Order : Entity<OrderId>, IAggregateRoot, ICreationTrackable, IUpdat
 
     private Order() : base() { }
 
-    public Order(OrderId id, QuoteId quoteId, Code code, CustomerId customerId, DeliveryInfo deliveryInfo, SenderInfo senderInfo, OrderStatus status, DateTimeOffset orderDate) : base(id)
+    [JsonConstructor]
+    public Order(OrderId id, QuoteId quoteId, Code code, CustomerId customerId, DeliveryInfo deliveryInfo, SenderInfo senderInfo, OrderStatus status, DateTimeOffset orderDate, IReadOnlyList<OrderItem>? items = null) : base(id)
     {
         QuoteId = quoteId;
         Code = code;
@@ -32,6 +36,10 @@ public class Order : Entity<OrderId>, IAggregateRoot, ICreationTrackable, IUpdat
         SenderInfo = senderInfo;
         Status = status;
         OrderDate = orderDate;
+        if (items != null)
+        {
+            _items.AddRange(items);
+        }
     }
 
     public void AddItem(OrderItem item)
@@ -71,6 +79,15 @@ public class Order : Entity<OrderId>, IAggregateRoot, ICreationTrackable, IUpdat
     public void Cancel()
     {
         Status = OrderStatus.Cancelled;
+    }
+
+    public void StartProcessing()
+    {
+        if (Status == OrderStatus.PendingPayment)
+        {
+            Status = OrderStatus.Processing;
+            UpdatedAt = DateTimeOffset.UtcNow;
+        }
     }
 
     public void Dispatch()

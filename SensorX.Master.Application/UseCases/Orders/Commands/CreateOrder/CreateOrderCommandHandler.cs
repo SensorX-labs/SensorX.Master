@@ -49,7 +49,7 @@ public class CreateOrderCommandHandler(
             customerId,
             deliveryInfo,
             senderInfo,
-            OrderStatus.Processing,
+            OrderStatus.PendingPayment,
             request.OrderDate
         );
 

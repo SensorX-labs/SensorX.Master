@@ -147,6 +147,12 @@ namespace SensorX.Master.Application.Commands.Sepays
                         var totalReceived = existingAmounts.Sum() + paymentHistory.TransferAmount;
                         payment.Reconcile(totalReceived);
 
+                        if (payment.Status == PaymentStatus.Completed)
+                        {
+                            order.StartProcessing();
+                            await _orderRepository.Update(order, cancellationToken);
+                        }
+
                         await _paymentHistoryRepository.AddAsync(paymentHistory, cancellationToken);
                         await _paymentRepository.Update(payment, cancellationToken);
                         await _unitOfWork.SaveChangesAsync(cancellationToken);

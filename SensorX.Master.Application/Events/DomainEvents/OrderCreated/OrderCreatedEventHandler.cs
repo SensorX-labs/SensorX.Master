@@ -33,6 +33,7 @@ public class OrderCreatedEventHandler(
         CancellationToken cancellationToken)
     {
         var domainEvent = notification.DomainEvent;
+        logger.LogInformation("OrderCreatedEventHandler: [START] Processing OrderId={OrderId}, OrderCode={OrderCode}, Address={Address}", domainEvent.OrderId, domainEvent.OrderCode, domainEvent.Address);
 
         // Idempotency: if invoice already exists for this order, skip processing
         var orderId = new SensorX.Master.Domain.StrongIDs.OrderId(domainEvent.OrderId);
@@ -44,7 +45,7 @@ public class OrderCreatedEventHandler(
         var alreadyExists = await _queryExecutor.AnyAsync(invoiceQuery, cancellationToken);
         if (alreadyExists)
         {
-            logger.LogInformation("Invoice already exists for Order {OrderId}, skipping creation.", domainEvent.OrderId);
+            logger.LogInformation("OrderCreatedEventHandler: Invoice already exists for Order {OrderId}, skipping creation and return early.", domainEvent.OrderId);
             return;
         }
 
@@ -84,43 +85,57 @@ public class OrderCreatedEventHandler(
         }
         else
         {
-            logger.LogInformation("Payment already exists for Order {OrderId}, skipping creation.", domainEvent.OrderId);
+            logger.LogInformation("OrderCreatedEventHandler: Payment already exists for Order {OrderId}, skipping creation.", domainEvent.OrderId);
         }
 
         logger.LogInformation(
-            "Invoice created from order: {OrderId} -> {InvoiceId}",
+            "OrderCreatedEventHandler: Invoice created from order: {OrderId} -> {InvoiceId}",
             domainEvent.OrderId,
             invoice.Id.Value);
             
         // Calculate NearestWarehouseId
         Guid nearestWarehouseId = Guid.Empty;
+        logger.LogInformation("OrderCreatedEventHandler: Calculating NearestWarehouseId for Address='{Address}'", domainEvent.Address);
         try
         {
             var geolocations = await geolocationQueryService.GetGeolocationByAddress(domainEvent.Address, cancellationToken);
+            logger.LogInformation("OrderCreatedEventHandler: Geocoding retrieved geolocations count: {Count}", geolocations?.Count ?? 0);
             if (geolocations != null && geolocations.Count > 0 && geolocations.First() != null)
             {
                 var geo = geolocations.First()!;
+                logger.LogInformation("OrderCreatedEventHandler: Found coordinate Lat={Latitude}, Lon={Longitude} for address", geo.Latitude, geo.Longitude);
                 var nearestWarehouse = await warehouseQueryService.FindNearestWarehouseAsync(geo.Latitude, geo.Longitude, cancellationToken);
                 if (nearestWarehouse != null)
                 {
                     nearestWarehouseId = nearestWarehouse.Id;
+                    logger.LogInformation("OrderCreatedEventHandler: Found nearest warehouse geographically: Name='{Name}', Id={Id}", nearestWarehouse.Name, nearestWarehouse.Id);
                 }
             }
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to determine nearest warehouse for Order {OrderId}", domainEvent.OrderId);
+            logger.LogWarning(ex, "OrderCreatedEventHandler: Failed to determine nearest warehouse for Order {OrderId}", domainEvent.OrderId);
         }
         
         if (nearestWarehouseId == Guid.Empty)
         {
+            logger.LogInformation("OrderCreatedEventHandler: nearestWarehouseId is empty. Falling back to first active warehouse.");
             // Fallback
             var allWarehouses = await warehouseQueryService.GetAllAsync(cancellationToken);
             var firstActive = allWarehouses.FirstOrDefault(w => w.IsActive);
             if (firstActive != null)
             {
                 nearestWarehouseId = firstActive.Id;
+                logger.LogInformation("OrderCreatedEventHandler: Fallback selected active warehouse: Name='{Name}', Id={Id}", firstActive.Name, firstActive.Id);
             }
+            else
+            {
+                logger.LogWarning("OrderCreatedEventHandler: No active warehouse found in database for fallback.");
+            }
+        }
+        else
+        {
+            logger.LogInformation("OrderCreatedEventHandler: Selected nearestWarehouseId={WarehouseId}", nearestWarehouseId);
         }
 
         var pickingNoteId = Guid.NewGuid();
@@ -132,6 +147,9 @@ public class OrderCreatedEventHandler(
             x.Quantity.Value,
             x.Manufacturer
         )).ToList();
+
+        logger.LogInformation("OrderCreatedEventHandler: Publishing OrderCreatedEvent for OrderCode={OrderCode}, NearestWarehouseId={WarehouseId}, LineItemsCount={Count}", 
+            domainEvent.OrderCode, nearestWarehouseId, lineItems.Count);
 
         await publishEndpoint.Publish(new OrderCreatedEvent
         {
@@ -148,5 +166,7 @@ public class OrderCreatedEventHandler(
             TaxCode = domainEvent.TaxCode,
             LineItems = lineItems
         }, cancellationToken);
+
+        logger.LogInformation("OrderCreatedEventHandler: [END] OrderCreatedEvent successfully published.");
     }
 }

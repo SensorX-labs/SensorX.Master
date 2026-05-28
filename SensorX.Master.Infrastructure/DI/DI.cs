@@ -101,10 +101,15 @@ namespace SensorX.Master.Infrastructure.DI
                         e.ConfigureConsumer<WarehouseConnectedEventConsumer>(context);
                     });
 
-                    cfg.ConfigureEndpoints(context);
-
                     cfg.Message<InventorySnapshotEvent>(e => e.SetEntityName("Inventory-Snapshot-Event"));
                     cfg.Message<WarehouseConnectedEvent>(e => e.SetEntityName("Warehouse-Connected-Event"));
+                    cfg.Message<SensorX.Master.Application.Events.IntegrationEvents.OrderCreatedEvent>(e => e.SetEntityName("order-created"));
+                    cfg.Message<SensorX.Master.Application.Events.IntegrationEvents.TransferOrderCreatedEvent>(e => e.SetEntityName("transfer-order-created"));
+                    cfg.Message<SensorX.Master.Application.Events.IntegrationEvents.TransferOrderFinishedEvent>(e => e.SetEntityName("transfer-order-finished"));
+                    cfg.Message<SensorX.Master.Application.Events.IntegrationEvents.IStockInCreatedEvent>(e => e.SetEntityName("stock-in-created"));
+                    cfg.Message<SensorX.Master.Application.Events.IntegrationEvents.IStockOutCreatedEvent>(e => e.SetEntityName("stock-out-created"));
+
+                    cfg.ConfigureEndpoints(context);
                 });
 
 
