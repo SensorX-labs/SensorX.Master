@@ -3,5 +3,6 @@ namespace SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.Tran
 public enum TransferOrderStatus
 {
     Processing, // đang xử lý 
+    Delivering, // đang vận chuyển
     Completed // đã hoàn thành
 }

@@ -43,6 +43,8 @@ namespace SensorX.Master.Infrastructure.DI
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IWarehouseRepository, WarehouseRepository>();
             services.AddScoped<IWarehouseQueryService, WarehouseQueryService>(); // Add Query Service
+            services.AddScoped<IInventoryAvailabilityService, InventoryAvailabilityService>();
+            services.AddScoped<ISepayQRBuilder, SepayQRBuilder>();
             services.AddScoped<ICurrentUser, CurrentUser>();
             services.AddScoped<IGeolocationQueryService, GeolocationQueryService>();
             services.AddScoped<IAIAssignmentService, AIAssignmentService>();
@@ -61,6 +63,8 @@ namespace SensorX.Master.Infrastructure.DI
                 x.AddConsumer<SensorX.Master.Application.Events.Consumers.CustomerSnapshot.CustomerSnapshotConsumer>();
                 x.AddConsumer<InventorySnapshotEventConsumer>();
                 x.AddConsumer<WarehouseConnectedEventConsumer>();
+                x.AddConsumer<SensorX.Master.Application.Events.Consumers.StockOutCompletedConsumer>();
+                x.AddConsumer<SensorX.Master.Application.Events.Consumers.StockInCompletedConsumer>();
 
                 // Đăng ký Entity Framework Outbox
                 x.AddEntityFrameworkOutbox<AppDbContext>(o =>
@@ -84,6 +88,12 @@ namespace SensorX.Master.Infrastructure.DI
 
                     cfg.ReceiveEndpoint("master-inventory-snapshot-consumer", e =>
                     {
+                        // Optimize for real-time inventory updates:
+                        // - Low prefetch for immediate processing (default is 10)
+                        // - Concurrent delivery for higher throughput
+                        // - Immediate message acknowledgment
+                        e.PrefetchCount = 1;  // Process one message at a time for ordering
+                        e.ConcurrentMessageLimit = 1;  // Ensure events processed sequentially
                         e.ConfigureConsumer<InventorySnapshotEventConsumer>(context);
                     });
 
@@ -91,6 +101,14 @@ namespace SensorX.Master.Infrastructure.DI
                     {
                         e.ConfigureConsumer<WarehouseConnectedEventConsumer>(context);
                     });
+
+                    cfg.Message<InventorySnapshotEvent>(e => e.SetEntityName("Inventory-Snapshot-Event"));
+                    cfg.Message<WarehouseConnectedEvent>(e => e.SetEntityName("Warehouse-Connected-Event"));
+                    cfg.Message<SensorX.Master.Application.Events.IntegrationEvents.OrderCreatedEvent>(e => e.SetEntityName("order-created"));
+                    cfg.Message<SensorX.Master.Application.Events.IntegrationEvents.TransferOrderCreatedEvent>(e => e.SetEntityName("transfer-order-created"));
+                    cfg.Message<SensorX.Master.Application.Events.IntegrationEvents.TransferOrderFinishedEvent>(e => e.SetEntityName("transfer-order-finished"));
+                    cfg.Message<SensorX.Master.Application.Events.IntegrationEvents.IStockInCreatedEvent>(e => e.SetEntityName("stock-in-created"));
+                    cfg.Message<SensorX.Master.Application.Events.IntegrationEvents.IStockOutCreatedEvent>(e => e.SetEntityName("stock-out-created"));
 
                     cfg.ConfigureEndpoints(context);
                 });

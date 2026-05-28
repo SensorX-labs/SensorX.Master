@@ -7,6 +7,7 @@ using SensorX.Master.Infrastructure.Persistences;
 using SensorX.Master.WebApi.API;
 using SensorX.Master.WebApi.Configurations;
 using SensorX.Master.WebApi.Middleware;
+using SensorX.Master.WebApi.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 // Cấu hình Authentication & Authorization (Tin tưởng Gateway)
@@ -17,6 +18,14 @@ builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, Authorizati
 builder.Services.AddServices(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
+
+// Add SignalR for real-time payment updates
+builder.Services.AddSignalR(options =>
+{
+    options.MaximumReceiveMessageSize = 32 * 1024; // 32KB max message size
+    options.KeepAliveInterval = TimeSpan.FromSeconds(30);
+    options.HandshakeTimeout = TimeSpan.FromSeconds(10);
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.ConfigureHttpJsonOptions(options =>
@@ -38,7 +47,8 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins("http://localhost:3000")
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowCredentials(); // Required for SignalR WebSocket
     });
 });
 
@@ -59,6 +69,9 @@ app.UseMiddleware<UserContextMiddleware>();
 app.UseAuthorization();
 
 app.MapApi();
+
+// Map SignalR hubs
+app.MapHub<PaymentHub>("/hubs/payment").RequireAuthorization();
 
 var autoApplyMigration = builder.Configuration.GetValue("Migration:AutoApply", true);
 if (autoApplyMigration)

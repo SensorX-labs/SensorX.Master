@@ -1,5 +1,8 @@
 using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAggregate;
 using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
+using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.PaymentAggregate;
+using SensorX.Master.Domain.Contexts.PaymentContext.AggregateModels;
+using SensorX.Master.Domain.Contexts.SupplyChainContext.ReadModels;
 
 namespace SensorX.Master.Domain.Services;
 
@@ -23,10 +26,37 @@ public class OrderService
         }
         return invoice;
     }
+public Payment CreatePaymentForInvoice(
+    Invoice invoice,
+    IReadOnlyCollection<WarehouseInventoryProjection> inventoryRows)
+{
+    var availableByProduct = inventoryRows
+        .GroupBy(x => x.ProductId)
+        .ToDictionary(
+            g => g.Key,
+            g => g.Sum(x => x.PhysicalQuantity - x.AllocatedQuantity));
 
-    public void CancelOrderByCustomer(Order order, Invoice invoice)
+    var allItemsAvailable = invoice.Items.All(item =>
+        availableByProduct.TryGetValue(item.ProductId.Value, out var available) &&
+        available >= item.Quantity.Value);
+
+    var paymentType = allItemsAvailable
+        ? PaymentType.All
+        : PaymentType.Partial;
+
+    return new Payment(
+        PaymentId.New(),
+        invoice.OrderId,
+        invoice.GrandTotal,
+        PaymentMethod.BankTransfer,
+        PaymentStatus.Pending,
+        paymentType);
+}
+
+    public void CancelOrderByCustomer(Order order, Invoice invoice, Payment payment)
     {
         order.Cancel();
         invoice.Cancel();
+        payment.Cancel();
     }
 }

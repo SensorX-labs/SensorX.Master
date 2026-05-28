@@ -1,6 +1,8 @@
+using MassTransit;
 using MediatR;
 using SensorX.Master.Application.Common.Interfaces;
 using SensorX.Master.Application.Common.ResponseClient;
+using SensorX.Master.Application.Events.IntegrationEvents;
 using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.SupplyRequestAggregate;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
@@ -11,7 +13,8 @@ namespace SensorX.Master.Application.UseCases.SupplyRequests.Commands.CreateSupp
 public class CreateSupplyRequestCommandHandler(
     IRepository<SupplyRequest> supplyRequestRepository,
     IRepository<SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate.Warehouse> warehouseRepository,
-    IUnitOfWork unitOfWork
+    IUnitOfWork unitOfWork,
+    IPublishEndpoint publishEndpoint
 ) : IRequestHandler<CreateSupplyRequestCommand, Result<Guid>>
 {
     public async Task<Result<Guid>> Handle(CreateSupplyRequestCommand request, CancellationToken cancellationToken)
@@ -29,7 +32,8 @@ public class CreateSupplyRequestCommandHandler(
             code,
             warehouseId,
             SupplyRequestStatus.Pending,
-            request.Note ?? ""
+            request.Note ?? "",
+            request.PickingNoteId
         );
 
         if (request.Items != null)
@@ -45,6 +49,17 @@ public class CreateSupplyRequestCommandHandler(
 
         await supplyRequestRepository.Add(supplyRequest, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Publish event to update the source Picking Note (if it exists)
+        if (request.PickingNoteId.HasValue && request.PickingNoteId.Value != Guid.Empty)
+        {
+            await publishEndpoint.Publish(new SupplyRequestCreatedEvent
+            {
+                SupplyRequestId = supplyRequest.Id.Value,
+                PickingNoteId = request.PickingNoteId.Value,
+                WarehouseId = warehouseId.Value
+            }, cancellationToken);
+        }
 
         return Result<Guid>.Success(supplyRequest.Id.Value);
     }

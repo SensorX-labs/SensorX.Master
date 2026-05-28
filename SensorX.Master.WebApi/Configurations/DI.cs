@@ -1,5 +1,7 @@
 using System.Reflection;
+using SensorX.Master.Application.Common.Interfaces;
 using SensorX.Master.Domain.Services;
+using SensorX.Master.WebApi.Services;
 
 namespace SensorX.Master.WebApi.Configurations
 {
@@ -17,6 +19,7 @@ namespace SensorX.Master.WebApi.Configurations
             });
 
             services.AddScoped<OrderService>();
+            services.AddScoped<IPaymentNotificationService, PaymentNotificationService>();
             return services;
         }
     }

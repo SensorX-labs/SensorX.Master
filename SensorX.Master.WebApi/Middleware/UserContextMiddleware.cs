@@ -10,6 +10,13 @@ public class UserContextMiddleware(RequestDelegate next)
 
     public async Task InvokeAsync(HttpContext context, ILogger<UserContextMiddleware> logger)
     {
+        // Bỏ qua middleware cho các endpoint webhook không cần xác thực user
+        if (context.Request.Path.StartsWithSegments("/api/sepay/webhooks"))
+        {
+            await _next(context);
+            return;
+        }
+
         var userIdHeader = context.Request.Headers["X-User-Id"].FirstOrDefault();
         var userRolesHeader = context.Request.Headers["X-User-Roles"].FirstOrDefault();
 

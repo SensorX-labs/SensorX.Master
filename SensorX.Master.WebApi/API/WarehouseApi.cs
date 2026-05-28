@@ -41,13 +41,13 @@ public static class WarehouseApi
         var flatItems = await warehouseQueryService.GetTotalInventoryRowsAsync(cancellationToken);
 
         var consolidatedItems = flatItems
-            .GroupBy(x => new { x.ProductId, x.ProductCode, x.ProductName, x.Unit })
+            .GroupBy(x => x.ProductId)
             .Select(g => new
             {
-                productId = g.Key.ProductId,
-                productCode = g.Key.ProductCode,
-                productName = g.Key.ProductName,
-                unit = g.Key.Unit,
+                productId = g.Key,
+                productCode = g.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.ProductCode))?.ProductCode,
+                productName = g.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.ProductName))?.ProductName,
+                unit = g.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Unit))?.Unit,
                 totalPhysicalQuantity = g.Sum(x => x.PhysicalQuantity),
                 totalAllocatedQuantity = g.Sum(x => x.AllocatedQuantity),
                 totalSalableQuantity = g.Sum(x => x.PhysicalQuantity - x.AllocatedQuantity),
