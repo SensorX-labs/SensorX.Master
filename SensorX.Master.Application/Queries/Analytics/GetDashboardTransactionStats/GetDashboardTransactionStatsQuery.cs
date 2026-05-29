@@ -14,6 +14,8 @@ public class GetDashboardTransactionStatsResponse
     public decimal TotalRevenue { get; set; }
     public decimal AverageOrderValue { get; set; }
     public int TotalOrders { get; set; }
+    public int PreviousTotalOrders { get; set; }
+    public decimal PreviousAverageOrderValue { get; set; }
     public List<TopProductDto> TopSellingProducts { get; set; } = new();
     public List<WeeklySalesDto> WeeklySales { get; set; } = new();
 }
