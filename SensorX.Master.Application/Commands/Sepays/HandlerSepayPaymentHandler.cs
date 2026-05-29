@@ -149,37 +149,42 @@ namespace SensorX.Master.Application.Commands.Sepays
                             order.Id
                         );
 
-                        var totalReceived = existingAmounts.Sum() + paymentHistory.TransferAmount;
-                        payment.Reconcile(totalReceived);
+                        var isFullyPaid = paymentHistory.TransferAmount >= payment.Amount.Amount;
 
-                        if (payment.Status == PaymentStatus.Completed)
+                        if (isFullyPaid)
                         {
+                            payment.MarkAsCompleted();
                             order.StartProcessing();
                             await _orderRepository.Update(order, cancellationToken);
+
+                            var invoice = await _queryExecutor.FirstOrDefaultAsync(
+                                _invoiceRepository.AsQueryable()
+                                    .Where(i => i.OrderId == order.Id),
+                                cancellationToken
+                            );
+
+                            if (invoice is not null)
+                            {
+                                var paymentAmount = Money.FromVnd(paymentHistory.TransferAmount);
+                                invoice.RecordPayment(paymentAmount);
+                                await _invoiceRepository.Update(invoice, cancellationToken);
+                            }
+
+                            await _paymentRepository.Update(payment, cancellationToken);
+                            await _paymentHistoryRepository.AddAsync(paymentHistory, cancellationToken);
+                            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                            await _paymentNotificationService.NotifyPaymentStatusChangedAsync(
+                                order.Id.Value.ToString(),
+                                payment.Status.ToString(),
+                                paymentHistory.TransferAmount,
+                                cancellationToken);
                         }
-
-                        var invoice = await _queryExecutor.FirstOrDefaultAsync(
-                            _invoiceRepository.AsQueryable()
-                                .Where(i => i.OrderId == order.Id),
-                            cancellationToken
-                        );
-
-                        if (invoice is not null)
+                        else
                         {
-                            var paymentAmount = Money.FromVnd(paymentHistory.TransferAmount);
-                            invoice.RecordPayment(paymentAmount);
-                            await _invoiceRepository.Update(invoice, cancellationToken);
+                            await _paymentHistoryRepository.AddAsync(paymentHistory, cancellationToken);
+                            await _unitOfWork.SaveChangesAsync(cancellationToken);
                         }
-
-                        await _paymentHistoryRepository.AddAsync(paymentHistory, cancellationToken);
-                        await _paymentRepository.Update(payment, cancellationToken);
-                        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-                        await _paymentNotificationService.NotifyPaymentStatusChangedAsync(
-                            order.Id.Value.ToString(),
-                            payment.Status.ToString(),
-                            totalReceived,
-                            cancellationToken);
 
                         return true;
                     }
