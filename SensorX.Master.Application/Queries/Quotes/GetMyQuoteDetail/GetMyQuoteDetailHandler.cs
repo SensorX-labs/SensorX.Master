@@ -2,6 +2,7 @@ using MediatR;
 using SensorX.Master.Application.Common.Interfaces;
 using SensorX.Master.Application.Common.ReadModel;
 using SensorX.Master.Application.Common.ResponseClient;
+using SensorX.Master.Application.Services;
 using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 using SensorX.Master.Domain.SeedWork;
@@ -13,7 +14,8 @@ public class GetMyQuoteDetailHandler(
     IQueryBuilder<Quote> _quoteQueryBuilder,
     IQueryBuilder<Order> _orderBuilder,
     IQueryBuilder<SaleStaff> _staffBuilder,
-    IQueryExecutor _queryExecutor
+    IQueryExecutor _queryExecutor,
+    IInventoryAvailabilityService _inventoryAvailabilityService
 ) : IRequestHandler<GetMyQuoteDetailQuery, Result<GetMyQuoteDetailResponse>>
 {
     public async Task<Result<GetMyQuoteDetailResponse>> Handle(GetMyQuoteDetailQuery request, CancellationToken cancellationToken)
@@ -38,6 +40,7 @@ public class GetMyQuoteDetailHandler(
             var senderInfo = await GetSenderInfo(quote, cancellationToken);
             var (orderId, orderCode) = await GetOrderInfo(quote, cancellationToken);
             var status = GetResponseStatus(quote);
+            var isStockSufficient = await _inventoryAvailabilityService.IsStockSufficientAsync(quote.LineItems, cancellationToken);
 
             var quoteItemResponses = quote.LineItems.Select(i => new QuoteItemResponse
             (
@@ -64,6 +67,7 @@ public class GetMyQuoteDetailHandler(
                 quote.GetSubtotal().Amount,
                 quote.GetTotalTax().Amount,
                 quote.GetGrandTotal().Amount,
+                isStockSufficient,
                 quoteItemResponses,
                 senderInfo,
                 customerInfo

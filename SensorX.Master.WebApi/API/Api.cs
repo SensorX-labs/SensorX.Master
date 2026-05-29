@@ -19,7 +19,11 @@ public static class Api
         api.MapTransferOrderApi();
         api.MapWarehouseApi(); // Add Warehouse API
         api.MapSupplyRequestApi();
+<<<<<<< HEAD
         api.MapAnalyticsQueriesApi();
+=======
+        api.MapSepayApi();
+>>>>>>> 39629a4873ae7a7541763026a0684a133f154091
         return api;
     }
 }

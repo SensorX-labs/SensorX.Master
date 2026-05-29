@@ -22,6 +22,12 @@ public record GetDetailOrderByIdResponse(
     decimal TotalTax,
     decimal GrandTotal,
 
+    Guid? PaymentId,
+    string? PaymentStatus,
+    string? PaymentType,
+    List<string>? PaymentQRURls,
+    decimal? PaymentAmount,
+
     List<OrderItemResponse> Items
 );
 

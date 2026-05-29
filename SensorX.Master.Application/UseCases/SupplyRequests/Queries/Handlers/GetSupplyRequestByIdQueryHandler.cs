@@ -67,7 +67,8 @@ public class GetSupplyRequestByIdQueryHandler(
             supplyRequest.CreatedAt,
             itemsDto,
             purchaseOptionsDto,
-            transferOrdersDto
+            transferOrdersDto,
+            supplyRequest.PickingNoteId
         );
 
         return Result<SupplyRequestDetailDto>.Success(detailDto);
