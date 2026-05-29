@@ -29,18 +29,9 @@ public class CustomerRespondToQuoteHandler(
                 return Result.Warning("Báo giá đã được phản hồi. Vui lòng chờ phản hồi từ nhân viên kinh doanh.");
             }
 
-            if (request.ResponseType == QuoteResponseStatus.Accepted && request.PaymentTerm == PaymentTerm.Deposit)
-            {
-                var isStockSufficient = await _inventoryAvailabilityService.IsStockSufficientAsync(quote.LineItems, cancellationToken);
-                if (isStockSufficient)
-                {
-                    return Result.Failure("Tồn kho đã đủ, không thể chọn đặt cọc 30%.");
-                }
-            }
-
             var response = new QuoteResponse(
                 request.ResponseType,
-                request.PaymentTerm,
+                PaymentTerm.FullPayment,
                 request.ShippingAddress ?? quote.CustomerInfo.Address,
                 request.RecipientName,
                 request.RecipientPhone,
