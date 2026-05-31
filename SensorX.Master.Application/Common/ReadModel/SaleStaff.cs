@@ -93,11 +93,10 @@ namespace SensorX.Master.Application.Common.ReadModel
                 idleHours = (DateTimeOffset.UtcNow - LastAssignedAt.Value).TotalHours;
             }
 
-            // Tùy chọn: Chặn không cho điểm thưởng thời gian quá lố (Max 48h)
-            if (idleHours > 48) idleHours = 48;
+            double boostIdle = Math.Tanh(idleHours / 24.0) * idleWeight;
 
             // 3. Ra điểm số chốt hạ
-            return (aggregatedSkillScore * workloadPenalty) + (idleHours * idleWeight);
+            return (aggregatedSkillScore * workloadPenalty) + boostIdle;
         }
     }
 }

@@ -15,6 +15,7 @@ public class AIAssignmentService(
     IDataServiceClient _dataServiceClient,
     IQueryBuilder<SaleStaff> _staffBuilder,
     IQueryBuilder<StaffContextPerformance> _performanceBuilder,
+    IQueryBuilder<AIHyperparameter> _hyperparameterBuilder,
     IQueryExecutor _queryExecutor,
     ILogger<AIAssignmentService> _logger
 ) : IAIAssignmentService
@@ -56,7 +57,17 @@ public class AIAssignmentService(
         var performances = await GetStaffPerformancesAsync(availableStaffs, categoryIds, cancellationToken);
 
         // 5. Find Best Staff
-        return FindBestStaff(rfq, availableStaffs, performances, itemWeights, totalWeight);
+        double k = 1.5;
+        double idleWeight = 0.1;
+        var hyperparamQuery = _hyperparameterBuilder.QueryAsNoTracking.Where(h => h.Id == 1);
+        var hyperparams = await _queryExecutor.FirstOrDefaultAsync(hyperparamQuery, cancellationToken);
+        if (hyperparams != null)
+        {
+            k = hyperparams.K;
+            idleWeight = hyperparams.IdleWeight;
+        }
+
+        return FindBestStaff(rfq, availableStaffs, performances, itemWeights, totalWeight, k, idleWeight);
     }
 
     private static (Dictionary<Guid, (Guid CategoryId, double Weight)> Weights, double TotalWeight) CalculateItemWeights(RFQ rfq, ProductPricingPolicyData[] productPolicies)
@@ -122,14 +133,13 @@ public class AIAssignmentService(
         List<SaleStaff> availableStaffs,
         List<StaffContextPerformance> performances,
         Dictionary<Guid, (Guid CategoryId, double Weight)> itemWeights,
-        double totalWeight)
+        double totalWeight,
+        double k,
+        double idleWeight)
     {
         SaleStaff? bestStaff = null;
         double highestFinalScore = -double.MaxValue;
         var snapshotList = new List<AllocationSnapshot>();
-
-        double k = 1.5; // Hệ số trừng phạt quá tải
-        double idleWeight = 0.1; // Trọng số khuyến khích thời gian rảnh rỗi
 
         foreach (var staff in availableStaffs)
         {
@@ -165,7 +175,6 @@ public class AIAssignmentService(
             {
                 idleHours = (DateTimeOffset.UtcNow - staff.LastAssignedAt.Value).TotalHours;
             }
-            if (idleHours > 48) idleHours = 48;
 
             // Ghi nhận snapshot
             snapshotList.Add(new AllocationSnapshot
@@ -175,7 +184,9 @@ public class AIAssignmentService(
                 AggregatedSkillScore = Math.Round(aggregatedSkillScore, 4),
                 CurrentWorkload = staff.CurrentWorkload,
                 IdleHours = Math.Round(idleHours, 4),
-                FinalScore = Math.Round(finalScore, 4)
+                FinalScore = Math.Round(finalScore, 4),
+                K = Math.Round(k, 4),
+                IdleWeight = Math.Round(idleWeight, 4)
             });
 
             if (finalScore > highestFinalScore)
