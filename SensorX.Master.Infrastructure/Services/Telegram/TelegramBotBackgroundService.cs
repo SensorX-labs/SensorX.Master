@@ -12,8 +12,6 @@ using Telegram.Bot.Types.Enums;
 
 namespace SensorX.Master.Infrastructure.Services.Telegram;
 
-// ─── Worker ───────────────────────────────────────────────────────────────────
-
 public partial class TelegramBotBackgroundService : BackgroundService
 {
     private const string BotPollingMutexName = "SensorX.Master.TelegramBotPolling";
@@ -40,7 +38,6 @@ public partial class TelegramBotBackgroundService : BackgroundService
         _options = options.Value;
     }
 
-    // khởi động worker
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         using var pollingMutex = new Mutex(false, BotPollingMutexName);
@@ -53,12 +50,12 @@ public partial class TelegramBotBackgroundService : BackgroundService
             ownsPolling = pollingMutex.WaitOne(0);
             if (!ownsPolling)
             {
-                _logger.LogWarning("[TelegramBot] PID {ProcessId}: Đã có một instance khác đang polling. Bỏ qua Telegram bot ở process này.", Environment.ProcessId);
+                _logger.LogWarning("[TelegramBot] PID {ProcessId}: Another instance is already polling.", Environment.ProcessId);
                 return;
             }
 
             var me = await _botClient.GetMe(stoppingToken);
-            _logger.LogInformation("[TelegramBot] PID {ProcessId}: Bot @{BotName} đã khởi động và đang lắng nghe...", Environment.ProcessId, me.Username);
+            _logger.LogInformation("[TelegramBot] PID {ProcessId}: Bot @{BotName} started.", Environment.ProcessId, me.Username);
 
             _botClient.StartReceiving(
                 updateHandler: HandleUpdateAsync,
@@ -71,11 +68,11 @@ public partial class TelegramBotBackgroundService : BackgroundService
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested || pollingCancellationTokenSource.IsCancellationRequested)
         {
-            _logger.LogInformation("[TelegramBot] PID {ProcessId}: Bot đã dừng.", Environment.ProcessId);
+            _logger.LogInformation("[TelegramBot] PID {ProcessId}: Bot stopped.", Environment.ProcessId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[TelegramBot] Lỗi khởi động Bot");
+            _logger.LogError(ex, "[TelegramBot] Startup error");
         }
         finally
         {
@@ -88,26 +85,25 @@ public partial class TelegramBotBackgroundService : BackgroundService
         }
     }
 
-    // xử lý tin nhắn
     private async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken ct)
     {
         if (!ProcessedUpdates.TryAdd(update.Id, 0))
         {
-            _logger.LogWarning("[TelegramBot] PID {ProcessId}: Bỏ qua update trùng: {UpdateId}", Environment.ProcessId, update.Id);
+            _logger.LogWarning("[TelegramBot] PID {ProcessId}: Skip duplicate update: {UpdateId}", Environment.ProcessId, update.Id);
             return;
         }
 
         if (update.Message is not { Text: { } messageText } message) return;
         var chatId = message.Chat.Id;
+        var normalizedText = messageText.Trim();
 
-        // check admin
         if (string.IsNullOrEmpty(_options.AdminId) || _options.AdminId == "0")
         {
-            if (messageText.Trim() == _options.SetupSecret)
+            if (normalizedText == _options.SetupSecret)
             {
                 _options.AdminId = chatId.ToString();
                 SaveAdminId(chatId.ToString());
-                await botClient.SendMessage(chatId, "Đã xác nhận Admin! Bot đang chạy trực tiếp trong Master Service.", cancellationToken: ct);
+                await botClient.SendMessage(chatId, "Đã xác nhận Admin. Bot đang chạy trực tiếp trong Master Service.", cancellationToken: ct);
             }
             else
             {
@@ -116,10 +112,18 @@ public partial class TelegramBotBackgroundService : BackgroundService
             return;
         }
 
-        // nếu là người lạ thì chặn
         if (chatId.ToString() != _options.AdminId)
         {
-            _logger.LogWarning("[TelegramBot] Truy cập trái phép từ ChatId: {ChatId}", chatId);
+            _logger.LogWarning("[TelegramBot] Unauthorized access from ChatId: {ChatId}", chatId);
+            return;
+        }
+
+        if (normalizedText.Equals("/help", StringComparison.OrdinalIgnoreCase) ||
+            normalizedText.Equals("/menu", StringComparison.OrdinalIgnoreCase) ||
+            normalizedText.Equals("help", StringComparison.OrdinalIgnoreCase) ||
+            normalizedText.Equals("menu", StringComparison.OrdinalIgnoreCase))
+        {
+            await SendLongMessageAsync(botClient, chatId, FormatHelpMessage(), ct);
             return;
         }
 
@@ -127,32 +131,35 @@ public partial class TelegramBotBackgroundService : BackgroundService
 
         try
         {
-            // Gọi 9router phân tích intent
-            var skillName = await ResolveSkillAsync(messageText, ct);
+            var skillName = await ResolveSkillAsync(normalizedText, ct);
             string responseText;
 
             if (skillName is not null)
             {
-                // Dispatch MediatR
                 using var scope = _serviceProvider.CreateScope();
                 var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
                 responseText = skillName switch
                 {
-                    "QUOTE_PENDING"                           => await HandleQuotesAsync(mediator, "Pending", ct),
-                    "QUOTE_APPROVED"                          => await HandleQuotesAsync(mediator, "Approved", ct),
-                    var s when s.StartsWith("QUOTE_APPROVE:") => await HandleQuoteApprove(mediator, s["QUOTE_APPROVE:".Length..].Trim(), ct),
-                    _                                         => "⚠️ Skill chưa được implement."
+                    "HELP"                                     => FormatHelpMessage(),
+                    "QUOTE_PENDING"                            => await HandleQuotesAsync(mediator, "Pending", ct),
+                    "QUOTE_APPROVED"                           => await HandleQuotesAsync(mediator, "Approved", ct),
+                    var s when s.StartsWith("QUOTE_DETAIL:")   => await HandleQuoteDetailAsync(mediator, s["QUOTE_DETAIL:".Length..].Trim(), ct),
+                    var s when s.StartsWith("QUOTE_APPROVE:")  => await HandleQuoteApprove(mediator, s["QUOTE_APPROVE:".Length..].Trim(), ct),
+                    var s when s.StartsWith("QUOTE_REJECT:")   => await HandleQuoteRejectAsync(mediator, s["QUOTE_REJECT:".Length..].Trim(), ct),
+                    _                                          => "⚠️ Skill chưa được implement."
                 };
 
-                _logger.LogInformation("[TelegramBot] Đã xử lý skill: {Skill}", skillName);
+                _logger.LogInformation("[TelegramBot] Processed skill: {Skill}", skillName);
             }
             else
             {
-                responseText = "🤷 Tôi không hiểu yêu cầu này.\n\nTôi có thể giúp bạn:\n" +
-                               "• _Báo giá chờ duyệt_\n" +
-                               "• _Danh sách báo giá đã duyệt_\n" +
-                               "• _Duyệt báo giá (ví dụ: Duyệt báo giá QT-2024-001)_";
+                responseText = "🤷 Tôi chưa hiểu yêu cầu này.\n\n" +
+                               "Bạn có thể thử:\n" +
+                               "• `Báo giá chờ duyệt`\n" +
+                               "• `Chi tiết báo giá QT-2024-001`\n" +
+                               "• `Duyệt báo giá QT-2024-001`\n" +
+                               "• `/help`";
             }
 
             await botClient.DeleteMessage(chatId, statusMsg.MessageId, ct);
@@ -160,9 +167,13 @@ public partial class TelegramBotBackgroundService : BackgroundService
         }
         catch (Exception ex)
         {
-            await botClient.EditMessageText(chatId, statusMsg.MessageId,
-                $"❌ Lỗi xử lý:\n`{ex.Message}`", parseMode: ParseMode.Markdown, cancellationToken: ct);
-            _logger.LogError(ex, "[TelegramBot] Lỗi xử lý tin nhắn");
+            await botClient.EditMessageText(
+                chatId,
+                statusMsg.MessageId,
+                $"❌ Lỗi xử lý:\n`{ex.Message}`",
+                parseMode: ParseMode.Markdown,
+                cancellationToken: ct);
+            _logger.LogError(ex, "[TelegramBot] Message handling error");
         }
     }
 
@@ -170,11 +181,18 @@ public partial class TelegramBotBackgroundService : BackgroundService
     {
         const int max = 4000;
         if (string.IsNullOrWhiteSpace(text)) return;
+
         for (int i = 0; i < text.Length; i += max)
         {
             var chunk = text.Substring(i, Math.Min(max, text.Length - i));
-            try { await bot.SendMessage(chatId, chunk, parseMode: ParseMode.Markdown, cancellationToken: ct); }
-            catch { await bot.SendMessage(chatId, chunk, cancellationToken: ct); }
+            try
+            {
+                await bot.SendMessage(chatId, chunk, parseMode: ParseMode.Markdown, cancellationToken: ct);
+            }
+            catch
+            {
+                await bot.SendMessage(chatId, chunk, cancellationToken: ct);
+            }
         }
     }
 
@@ -184,6 +202,7 @@ public partial class TelegramBotBackgroundService : BackgroundService
         {
             const string path = "appsettings.json";
             if (!File.Exists(path)) return;
+
             var json = File.ReadAllText(path);
             var node = System.Text.Json.Nodes.JsonNode.Parse(json);
             if (node?["Telegram"] != null)
@@ -192,19 +211,21 @@ public partial class TelegramBotBackgroundService : BackgroundService
                 File.WriteAllText(path, node.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
             }
         }
-        catch { /* Bỏ qua nếu chạy trong Docker */ }
+        catch
+        {
+        }
     }
 
     private Task HandlePollingErrorAsync(ITelegramBotClient bot, Exception ex, CancellationToken ct)
     {
         if (ex.Message.Contains("409: Conflict", StringComparison.OrdinalIgnoreCase))
         {
-            _logger.LogWarning("[TelegramBot] PID {ProcessId}: Một instance khác đang dùng cùng bot token. Dừng polling Telegram ở process này.", Environment.ProcessId);
+            _logger.LogWarning("[TelegramBot] PID {ProcessId}: Another instance is using this bot token. Stop polling in this process.", Environment.ProcessId);
             _pollingCancellationTokenSource?.Cancel();
             return Task.CompletedTask;
         }
 
-        _logger.LogError(ex, "[TelegramBot] Lỗi polling Telegram API");
+        _logger.LogError(ex, "[TelegramBot] Telegram polling error");
         return Task.CompletedTask;
     }
 }
