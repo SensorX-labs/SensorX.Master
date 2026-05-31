@@ -7,6 +7,6 @@ public class GetTransferOrderByCode : Specification<TransferOrder>, ISingleResul
 {
     public GetTransferOrderByCode(Code code)
     {
-        Query.Where(x => x.Code.Value == code.Value);
+        Query.Where(x => x.Code == code);
     }
 }

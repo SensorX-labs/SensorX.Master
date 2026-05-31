@@ -8,6 +8,6 @@ public sealed class GetSupplyRequestByCode : Specification<SupplyRequest>, ISing
 {
     public GetSupplyRequestByCode(Code code)
     {
-        Query.Where(x => x.Code.Value == code.Value);
+        Query.Where(x => x.Code == code);
     }
 }

@@ -2,18 +2,20 @@ using System.Net.Http;
 using System.Text.Json;
 using MediatR;
 using SensorX.Master.Application.Common.ResponseClient;
+using SensorX.Master.Application.Common.DomainEvent;
 using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.TransferOrderAggregate;
 using SensorX.Master.Domain.Events;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
+using SensorX.Master.Application.Common.Interfaces;
 
 namespace SensorX.Master.Application.UseCases.TransferOrders.Commands.CreateTransferOrder;
 
 public class CreateTransferOrderCommandHandler(
     IRepository<TransferOrder> transferOrderRepository,
     IRepository<SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.WarehouseAggregate.Warehouse> warehouseRepository,
-    IMediator mediator
+    IUnitOfWork unitOfWork
 ) : IRequestHandler<CreateTransferOrderCommand, Result<Guid>>
 {
     private record InventoryItemStockDto(
@@ -63,30 +65,12 @@ public class CreateTransferOrderCommandHandler(
             );
         }
 
-        await transferOrderRepository.AddAsync(transferOrder, cancellationToken);
-
-        // Raise domain event on the aggregate
+        // Raise domain event on the aggregate BEFORE adding to the repository
         transferOrder.RaiseCreatedDomainEvent(request.PickingNoteId);
 
-        // Publish domain event directly
-        var domainItems = request.Items.Select(x => new TransferOrderCreatedDomainItem(
-            x.ProductId,
-            x.ProductCode,
-            x.ProductName,
-            x.Unit,
-            x.Quantity,
-            x.ManufactureName,
-            x.Note ?? ""
-        )).ToList();
-
-        await mediator.Publish(new TransferOrderCreatedDomainEvent(
-            transferOrder.Id.Value,
-            code.Value,
-            sourceWarehouseId.Value,
-            destinationWarehouseId.Value,
-            request.PickingNoteId ?? Guid.Empty,
-            domainItems
-        ), cancellationToken);
+        await transferOrderRepository.AddAsync(transferOrder, cancellationToken);
+        
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result<Guid>.Success(transferOrder.Id.Value);
     }
