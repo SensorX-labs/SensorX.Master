@@ -1,6 +1,7 @@
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 using SensorX.Master.Domain.ValueObjects;
+using System.Text.Json.Serialization;
 
 namespace SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
 
@@ -18,6 +19,7 @@ public class OrderItem : Entity<OrderItemId>
 
     private OrderItem() : base() { }
 
+    [JsonConstructor]
     public OrderItem(OrderItemId id, ProductId productId, Code productCode, string productName, string manufacturer, string unit, Quantity quantity, Money unitPrice, Percent taxRate, string? note) : base(id)
     {
         ProductId = productId;

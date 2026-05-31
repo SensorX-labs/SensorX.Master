@@ -1,5 +1,8 @@
 using MediatR;
+using SensorX.Master.Application.Common.Interfaces;
+using SensorX.Master.Application.Services;
 using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
+using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.PaymentAggregate;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
@@ -8,7 +11,11 @@ using SensorX.Master.Domain.ValueObjects;
 namespace SensorX.Master.Application.UseCases.Orders.Commands.CreateOrder;
 
 public class CreateOrderCommandHandler(
-    IRepository<Order> orderRepository
+    IRepository<Order> orderRepository,
+    IRepository<Payment> paymentRepository,
+    IInventoryAvailabilityService inventoryAvailabilityService,
+    ISepayQRBuilder sepayQRBuilder,
+    IUnitOfWork unitOfWork
 ) : IRequestHandler<CreateOrderCommand, Guid>
 {
     public async Task<Guid> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
@@ -42,7 +49,7 @@ public class CreateOrderCommandHandler(
             customerId,
             deliveryInfo,
             senderInfo,
-            OrderStatus.Processing,
+            OrderStatus.PendingPayment,
             request.OrderDate
         );
 
@@ -62,8 +69,22 @@ public class CreateOrderCommandHandler(
             ));
         }
 
+        var paymentType = await inventoryAvailabilityService.DeterminePaymentTypeAsync(order.Items, cancellationToken);
+        var payment = new Payment(
+            PaymentId.New(),
+            order.Id,
+            order.GetGrandTotal(),
+            PaymentMethod.BankTransfer,
+            PaymentStatus.Pending,
+            paymentType);
+
+        payment.SetPaymentType(paymentType);
+        payment.SetQRUrls(sepayQRBuilder.BuildQRUrls(payment, order));
+
         order.RaiseCreatedDomainEvent();
         await orderRepository.AddAsync(order, cancellationToken);
+        await paymentRepository.AddAsync(payment, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return order.Id.Value;
     }

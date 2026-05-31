@@ -46,7 +46,8 @@ public record SupplyRequestDetailDto(
     DateTimeOffset CreatedAt,
     List<SupplyRequestItemDetailDto> Items,
     List<PurchaseOptionDetailDto> PurchaseOptions,
-    List<TransferPlanDetailDto> TransferOrders
+    List<TransferPlanDetailDto> TransferOrders,
+    Guid? PickingNoteId = null
 );
 
 public record SupplyRequestListItemDto(

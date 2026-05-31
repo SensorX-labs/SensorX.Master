@@ -21,7 +21,7 @@ public class QuoteOrderedEventHandler(
         
         if (quote is null) return;
 
-        quote.MarkAsOrdered();
+        // quote.MarkAsOrdered();
 
         await _quoteRepository.SaveChangesAsync(cancellationToken);
     }

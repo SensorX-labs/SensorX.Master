@@ -18,6 +18,7 @@ public sealed record GetMyQuoteDetailResponse
     decimal Subtotal,
     decimal TotalTax,
     decimal GrandTotal,
+    bool IsStockSufficient,
     List<QuoteItemResponse> Items,
 
     SenderInfoResponse Sender,

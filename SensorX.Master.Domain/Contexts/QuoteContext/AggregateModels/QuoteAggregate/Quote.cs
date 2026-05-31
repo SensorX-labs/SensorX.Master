@@ -284,5 +284,10 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
             Status = QuoteStatus.Ordered;
             UpdatedAt = DateTimeOffset.UtcNow;
         }
+        public void ChangeStatus(QuoteStatus status)
+        {
+            Status = status;
+            UpdatedAt = DateTimeOffset.UtcNow;
+        }
     }
 }

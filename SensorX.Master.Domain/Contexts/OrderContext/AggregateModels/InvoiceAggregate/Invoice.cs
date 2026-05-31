@@ -95,4 +95,8 @@ public class Invoice : Entity<InvoiceId>, IAggregateRoot, ICreationTrackable, IU
         TaxAuthorityCode = taxAuthorityCode;
         Status = InvoiceStatus.Issued;
     }
+    public decimal GetTotalAmount()
+    {
+        return GrandTotal.Amount;
+    }
 }
