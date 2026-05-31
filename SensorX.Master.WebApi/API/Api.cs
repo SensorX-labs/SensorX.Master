@@ -21,6 +21,7 @@ public static class Api
         api.MapSupplyRequestApi();
         api.MapSepayApi();
         api.MapAIHyperparametersApi();
+        api.MapStaffQueriesApi();
         return api;
     }
 }
