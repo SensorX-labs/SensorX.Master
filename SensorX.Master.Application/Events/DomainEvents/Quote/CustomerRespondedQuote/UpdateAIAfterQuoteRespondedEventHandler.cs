@@ -1,11 +1,13 @@
+using System.Text.Json;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using SensorX.Master.Application.Common.DomainEvent;
 using SensorX.Master.Application.Common.Interfaces;
 using SensorX.Master.Application.Common.ReadModel;
+using SensorX.Master.Application.Services.AIAssignment;
+using SensorX.Master.Application.Services.AIAssignment.Models;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
-using SensorX.Master.Application.Services.AIAssignment.Models;
 using SensorX.Master.Domain.SeedWork;
 
 namespace SensorX.Master.Application.Events.DomainEvents.Quote.CustomerRespondedQuote;
@@ -21,6 +23,8 @@ public class UpdateAIAfterQuoteRespondedEventHandler(
     ILogger<UpdateAIAfterQuoteRespondedEventHandler> _logger
 ) : INotificationHandler<DomainEventNotification<CustomerRespondedQuoteEvent>>
 {
+    private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
+
     public async Task Handle(DomainEventNotification<CustomerRespondedQuoteEvent> notification, CancellationToken cancellationToken)
     {
         var domainEvent = notification.DomainEvent;
@@ -90,16 +94,16 @@ public class UpdateAIAfterQuoteRespondedEventHandler(
 
         // Cập nhật tham số AI trực tuyến (Online Gradient Update)
         var rfq = await _rfqRepository.GetByIdAsync(quote.RFQId, cancellationToken);
-        if (rfq != null && rfq.AllocationLogs.Any())
+        if (rfq is not null && rfq.AllocationLogs.Count != 0)
         {
             var latestLog = rfq.AllocationLogs.OrderByDescending(l => l.Round).FirstOrDefault();
             if (latestLog != null)
             {
                 try
                 {
-                    var snapshots = System.Text.Json.JsonSerializer.Deserialize<List<AllocationSnapshot>>(
+                    var snapshots = JsonSerializer.Deserialize<List<AllocationSnapshot>>(
                         latestLog.SnapshotJson,
-                        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        _jsonOptions
                     );
 
                     var staffSnapshot = snapshots?.FirstOrDefault(s => s.StaffId == staffId.Value);
@@ -118,28 +122,21 @@ public class UpdateAIAfterQuoteRespondedEventHandler(
                             double idleWeightOld = hyperparams.IdleWeight;
                             double alpha = hyperparams.LearningRate;
 
-                            double y = isSuccess ? 1.0 : 0.0;
-                            double yHat = 1.0 / (1.0 + Math.Exp(-finalScore));
-                            double error = y - yHat;
+                            var (updatedK, updatedIdleWeight) = AIAssignmentService.CalculateGradientUpdate(
+                                kOld,
+                                idleWeightOld,
+                                alpha,
+                                finalScore,
+                                aggregatedSkillScore,
+                                currentWorkload,
+                                idleHours,
+                                isSuccess
+                            );
 
-                            double penaltyWorkload = 1.0 / Math.Pow(currentWorkload + 1.0, kOld);
-                            
-                            // Delta K = error * [ -AggregatedSkillScore * Penalty_workload * ln(CurrentWorkload + 1) ]
-                            double deltaK = error * (-aggregatedSkillScore * penaltyWorkload * Math.Log(currentWorkload + 1.0));
+                            hyperparams.K = updatedK;
+                            hyperparams.IdleWeight = updatedIdleWeight;
 
-                            // Delta IdleWeight = error * [ (1 - tanh^2(IdleHours / 24)) * (1 / 24) ]
-                            double tanhVal = Math.Tanh(idleHours / 24.0);
-                            double deltaIdleWeight = error * ((1.0 - (tanhVal * tanhVal)) / 24.0);
-
-                            // Gradient Clipping [-1.0, 1.0]
-                            double clippedDeltaK = Math.Max(-1.0, Math.Min(1.0, deltaK));
-                            double clippedDeltaIdleWeight = Math.Max(-1.0, Math.Min(1.0, deltaIdleWeight));
-
-                            // Cập nhật và chặn dưới >= 0.0
-                            hyperparams.K = Math.Max(0.0, kOld + alpha * clippedDeltaK);
-                            hyperparams.IdleWeight = Math.Max(0.0, idleWeightOld + alpha * clippedDeltaIdleWeight);
-
-                            _logger.LogInformation("Online Gradient Update: K updated {KOld} -> {KNew}, IdleWeight updated {IdleWeightOld} -> {IdleWeightNew}", 
+                            _logger.LogInformation("Online Gradient Update: K updated {KOld} -> {KNew}, IdleWeight updated {IdleWeightOld} -> {IdleWeightNew}",
                                 kOld, hyperparams.K, idleWeightOld, hyperparams.IdleWeight);
 
                             await _hyperparameterRepository.Update(hyperparams, cancellationToken);

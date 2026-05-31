@@ -11,7 +11,7 @@ using SensorX.Master.Application.Services.AIAssignment.Models;
 
 namespace SensorX.Master.Application.Services.AIAssignment;
 
-public class AIAssignmentService(
+public partial class AIAssignmentService(
     IDataServiceClient _dataServiceClient,
     IQueryBuilder<SaleStaff> _staffBuilder,
     IQueryBuilder<StaffContextPerformance> _performanceBuilder,

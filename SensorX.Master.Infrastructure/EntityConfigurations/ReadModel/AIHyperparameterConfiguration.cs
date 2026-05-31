@@ -17,11 +17,11 @@ namespace SensorX.Master.Infrastructure.EntityConfigurations.ReadModel
 
             builder.Property(h => h.K)
                 .IsRequired()
-                .HasDefaultValue(1.5);
+                .HasDefaultValue(3.0);
 
             builder.Property(h => h.IdleWeight)
                 .IsRequired()
-                .HasDefaultValue(0.1);
+                .HasDefaultValue(1.0);
 
             builder.Property(h => h.LearningRate)
                 .IsRequired()
@@ -30,8 +30,8 @@ namespace SensorX.Master.Infrastructure.EntityConfigurations.ReadModel
             builder.HasData(new AIHyperparameter
             {
                 Id = 1,
-                K = 1.5,
-                IdleWeight = 0.1,
+                K = 3.0,
+                IdleWeight = 1.0,
                 LearningRate = 0.01
             });
         }
