@@ -31,8 +31,8 @@ public class RunAIAssignmentEventHandler(
 
         if (rfq.Status != RFQStatus.Pending)
         {
-            _logger.LogError("RFQ {Id} không ở trạng thái chờ phân bổ", domainEvent.RfqId.Value);
-            throw new Exception("RFQ không ở trạng thái chờ phân bổ");
+            _logger.LogInformation("RFQ {Id} không còn ở trạng thái chờ phân bổ (có thể đã được quản lý ép gán). Bỏ qua tiến trình AI.", domainEvent.RfqId.Value);
+            return;
         }
         if (rfq.Items.Count == 0 || rfq.Items == null)
         {
