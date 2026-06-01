@@ -32,6 +32,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 {
     // Yêu cầu .NET tự động chuyển đổi giữa String và Enum
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    options.SerializerOptions.NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals;
 });
 builder.Services.AddSwaggerGen(options =>
 {

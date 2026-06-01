@@ -2,12 +2,11 @@ using Microsoft.Extensions.Logging;
 using SensorX.Master.Application.Common.Interfaces;
 using SensorX.Master.Application.Common.Models.DataServiceModels;
 using SensorX.Master.Application.Common.ReadModel;
+using SensorX.Master.Application.Services.AIAssignment.Models;
 using SensorX.Master.Domain.Common;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
-
-using SensorX.Master.Application.Services.AIAssignment.Models;
 
 namespace SensorX.Master.Application.Services.AIAssignment;
 
@@ -171,7 +170,7 @@ public partial class AIAssignmentService(
             double finalScore = staff.CalculateFinalAllocationScore(aggregatedSkillScore, k, idleWeight);
 
             double idleHours = 0;
-            if (staff.LastAssignedAt.HasValue)
+            if (staff.CurrentWorkload == 0 && staff.LastAssignedAt.HasValue)
             {
                 idleHours = (DateTimeOffset.UtcNow - staff.LastAssignedAt.Value).TotalHours;
             }

@@ -19,8 +19,9 @@ namespace SensorX.Master.Application.Services.AIAssignment
             double error = y - yHat;
 
             double penaltyWorkload = 1.0 / Math.Pow(currentWorkload + 1.0, kOld);
-            
+
             // Delta K = error * [ -AggregatedSkillScore * Penalty_workload * ln(CurrentWorkload + 1) ]
+
             double deltaK = error * (-aggregatedSkillScore * penaltyWorkload * Math.Log(currentWorkload + 1.0));
 
             // Delta IdleWeight = error * [ (1 - tanh^2(IdleHours / 24)) * (1 / 24) ]

@@ -151,20 +151,22 @@ public class UpdateAIAfterQuoteRespondedEventHandler(
                         }
 
 
+                        double yHat = 1.0 / (1.0 + Math.Exp(-finalScore));
+
                         // Lưu lịch sử biến thiên
                         var history = new AIHyperparameterHistory
                         {
                             RFQId = quote.RFQId.Value,
                             StaffId = staffId.Value,
                             IsSuccess = isSuccess,
-                            PredictedScore = finalScore,
+                            PredictedScore = yHat, // Lưu xác suất dự báo thay vì điểm thô
                             KBefore = kOld,
                             KAfter = updatedK,
                             DeltaK = updatedK - kOld,
                             IdleWeightBefore = idleWeightOld,
                             IdleWeightAfter = updatedIdleWeight,
                             DeltaIdleWeight = updatedIdleWeight - idleWeightOld,
-                            Loss = isSuccess ? -Math.Log(finalScore + 1e-9) : -Math.Log(1 - finalScore + 1e-9)
+                            Loss = isSuccess ? -Math.Log(yHat + 1e-9) : -Math.Log(1.0 - yHat + 1e-9)
                         };
 
                         await _hyperparameterHistoryRepository.Add(history, cancellationToken);
