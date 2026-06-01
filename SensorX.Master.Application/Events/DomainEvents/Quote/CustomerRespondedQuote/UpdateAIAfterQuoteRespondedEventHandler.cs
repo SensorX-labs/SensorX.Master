@@ -73,6 +73,22 @@ public class UpdateAIAfterQuoteRespondedEventHandler(
                     totalFloorAmount += (double)(item.FloorPrice.Amount * item.Quantity.Value);
                 }
                 double margin = totalFloorAmount > 0 ? totalProfit / totalFloorAmount : 0;
+
+                // ==========================================
+                // BỘ LỌC CHUẨN HÓA ĐÁNH CHẶN LỖI SỐ NGUYÊN / OUTLIERS
+                // ==========================================
+                // Nếu margin vọt lên dạng số nguyên (ví dụ: lãi 31.7% nhưng hệ thống trả về số thực 31.7)
+                if (margin > 1.0 && margin <= 100.0)
+                {
+                    margin /= 100.0; // Ép về tỷ lệ thực chuẩn: 0.317
+                }
+                // Ngăn chặn Outlier cực đoan hoặc lỗi chia cho số âm/số quá nhỏ trong DB
+                else if (margin > 100.0 || margin < 0)
+                {
+                    margin = 0.3; // Fallback an toàn về mức biên lợi nhuận trung bình ngành (30%)
+                }
+                // ==========================================
+
                 perf.RecordSuccess(margin);
             }
             else

@@ -36,7 +36,16 @@ namespace SensorX.Master.Application.Common.ReadModel
         public double GetAverageMargin()
         {
             if (SuccessCount == 0) return 0;
-            return TotalMarginAccumulated / SuccessCount;
+            
+            double avgMargin = TotalMarginAccumulated / SuccessCount;
+            
+            // Khóa an toàn: Nếu dữ liệu lịch sử tồn dư dạng số nguyên > 1.0, tự động đưa về tỷ lệ thực
+            if (avgMargin > 1.0)
+            {
+                avgMargin /= 100.0;
+            }
+            
+            return avgMargin;
         }
 
         // Tính giá trị kỳ vọng cuối cùng
