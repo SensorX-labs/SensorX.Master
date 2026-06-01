@@ -20,7 +20,7 @@ public class UpdateAIAfterQuoteRespondedEventHandler(
     IRepository<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate.RFQ> _rfqRepository,
     IRepository<AIHyperparameter> _hyperparameterRepository,
     IRepository<AIHyperparameterHistory> _hyperparameterHistoryRepository,
-    IQueryBuilder<AIHyperparameter> _hyperparameterBuilder,
+    IUnitOfWork _unitOfWork,
     ILogger<UpdateAIAfterQuoteRespondedEventHandler> _logger
 ) : INotificationHandler<DomainEventNotification<CustomerRespondedQuoteEvent>>
 {
@@ -54,9 +54,7 @@ public class UpdateAIAfterQuoteRespondedEventHandler(
             {
                 perf = new StaffContextPerformance
                 {
-
                     StaffId = staffId,
-
                     CategoryId = categoryId,
                     SuccessCount = 0,
                     FailureCount = 0,
@@ -91,7 +89,6 @@ public class UpdateAIAfterQuoteRespondedEventHandler(
                 await _performanceRepository.Update(perf, cancellationToken);
             }
         }
-        await _performanceRepository.SaveChangesAsync(cancellationToken);
 
         // Cập nhật tham số AI trực tuyến (Online Gradient Update)
         var rfq = await _rfqRepository.GetByIdAsync(quote.RFQId, cancellationToken);
@@ -110,58 +107,67 @@ public class UpdateAIAfterQuoteRespondedEventHandler(
                     var staffSnapshot = snapshots?.FirstOrDefault(s => s.StaffId == staffId.Value);
                     if (staffSnapshot != null)
                     {
-                        var hyperparamQuery = _hyperparameterBuilder.QueryAsNoTracking.Where(h => h.Id == 1);
-                        var hyperparams = await _queryExecutor.FirstOrDefaultAsync(hyperparamQuery, cancellationToken);
-                        if (hyperparams != null)
+                        var hyperparams = await _hyperparameterRepository.GetByIdAsync(1, cancellationToken);
+                        bool isNewHyperparams = false;
+                        if (hyperparams == null)
                         {
-                            double finalScore = staffSnapshot.FinalScore;
-                            double aggregatedSkillScore = staffSnapshot.AggregatedSkillScore;
-                            double currentWorkload = staffSnapshot.CurrentWorkload;
-                            double idleHours = staffSnapshot.IdleHours;
-
-                            double kOld = hyperparams.K;
-                            double idleWeightOld = hyperparams.IdleWeight;
-                            double alpha = hyperparams.LearningRate;
-
-                            var (updatedK, updatedIdleWeight) = AIAssignmentService.CalculateGradientUpdate(
-                                kOld,
-                                idleWeightOld,
-                                alpha,
-                                finalScore,
-                                aggregatedSkillScore,
-                                currentWorkload,
-                                idleHours,
-                                isSuccess
-                            );
-
-                            hyperparams.K = updatedK;
-                            hyperparams.IdleWeight = updatedIdleWeight;
-
-                            _logger.LogInformation("Online Gradient Update: K updated {KOld} -> {KNew}, IdleWeight updated {IdleWeightOld} -> {IdleWeightNew}",
-                                kOld, hyperparams.K, idleWeightOld, hyperparams.IdleWeight);
-
-                            await _hyperparameterRepository.Update(hyperparams, cancellationToken);
-                            await _hyperparameterRepository.SaveChangesAsync(cancellationToken);
-
-                            // Lưu lịch sử biến thiên
-                            var history = new AIHyperparameterHistory
-                            {
-                                RFQId = quote.RFQId.Value,
-                                StaffId = staffId.Value,
-                                IsSuccess = isSuccess,
-                                PredictedScore = finalScore,
-                                KBefore = kOld,
-                                KAfter = updatedK,
-                                DeltaK = updatedK - kOld,
-                                IdleWeightBefore = idleWeightOld,
-                                IdleWeightAfter = updatedIdleWeight,
-                                DeltaIdleWeight = updatedIdleWeight - idleWeightOld,
-                                Loss = isSuccess ? -Math.Log(finalScore + 1e-9) : -Math.Log(1 - finalScore + 1e-9)
-                            };
-
-                            await _hyperparameterHistoryRepository.Add(history, cancellationToken);
-                            await _hyperparameterHistoryRepository.SaveChangesAsync(cancellationToken);
+                            hyperparams = new AIHyperparameter { Id = 1, K = 1.5, IdleWeight = 0.1, LearningRate = 0.01 };
+                            isNewHyperparams = true;
                         }
+
+                        double finalScore = staffSnapshot.FinalScore;
+                        double aggregatedSkillScore = staffSnapshot.AggregatedSkillScore;
+                        double currentWorkload = staffSnapshot.CurrentWorkload;
+                        double idleHours = staffSnapshot.IdleHours;
+
+                        double kOld = hyperparams.K;
+                        double idleWeightOld = hyperparams.IdleWeight;
+                        double alpha = hyperparams.LearningRate;
+
+                        var (updatedK, updatedIdleWeight) = AIAssignmentService.CalculateGradientUpdate(
+                            kOld,
+                            idleWeightOld,
+                            alpha,
+                            finalScore,
+                            aggregatedSkillScore,
+                            currentWorkload,
+                            idleHours,
+                            isSuccess
+                        );
+
+                        hyperparams.K = updatedK;
+                        hyperparams.IdleWeight = updatedIdleWeight;
+
+                        _logger.LogInformation("Online Gradient Update: K updated {KOld} -> {KNew}, IdleWeight updated {IdleWeightOld} -> {IdleWeightNew}",
+                            kOld, hyperparams.K, idleWeightOld, hyperparams.IdleWeight);
+
+                        if (isNewHyperparams)
+                        {
+                            await _hyperparameterRepository.Add(hyperparams, cancellationToken);
+                        }
+                        else
+                        {
+                            await _hyperparameterRepository.Update(hyperparams, cancellationToken);
+                        }
+
+
+                        // Lưu lịch sử biến thiên
+                        var history = new AIHyperparameterHistory
+                        {
+                            RFQId = quote.RFQId.Value,
+                            StaffId = staffId.Value,
+                            IsSuccess = isSuccess,
+                            PredictedScore = finalScore,
+                            KBefore = kOld,
+                            KAfter = updatedK,
+                            DeltaK = updatedK - kOld,
+                            IdleWeightBefore = idleWeightOld,
+                            IdleWeightAfter = updatedIdleWeight,
+                            DeltaIdleWeight = updatedIdleWeight - idleWeightOld,
+                            Loss = isSuccess ? -Math.Log(finalScore + 1e-9) : -Math.Log(1 - finalScore + 1e-9)
+                        };
+
+                        await _hyperparameterHistoryRepository.Add(history, cancellationToken);
                     }
                 }
                 catch (Exception ex)
@@ -170,5 +176,6 @@ public class UpdateAIAfterQuoteRespondedEventHandler(
                 }
             }
         }
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }
