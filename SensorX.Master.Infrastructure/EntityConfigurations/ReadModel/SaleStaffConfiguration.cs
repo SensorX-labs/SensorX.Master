@@ -8,7 +8,7 @@ public class SaleStaffConfiguration : IEntityTypeConfiguration<SaleStaff>
 {
     public void Configure(EntityTypeBuilder<SaleStaff> builder)
     {
-        builder.ToTable("SaleStaffSnapshots");
+        builder.ToTable("SaleStaffSnapshots", "read");
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id)

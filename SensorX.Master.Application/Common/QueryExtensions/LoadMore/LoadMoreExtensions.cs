@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using System.Reflection;
 
 namespace SensorX.Master.Application.Common.QueryExtensions.LoadMore;
 
@@ -31,12 +32,12 @@ public static class LoadMoreExtensions
 
         if (isDescending)
         {
-            keyCompare = Expression.LessThan(keyExpr, lastValueConstant);
+            keyCompare = BuildLessThan(keyExpr, lastValueConstant);
             idCompare = Expression.LessThan(idExpr, lastIdConstant);
         }
         else
         {
-            keyCompare = Expression.GreaterThan(keyExpr, lastValueConstant);
+            keyCompare = BuildGreaterThan(keyExpr, lastValueConstant);
             idCompare = Expression.GreaterThan(idExpr, lastIdConstant);
         }
 
@@ -86,6 +87,40 @@ public static class LoadMoreExtensions
         {
             return null;
         }
+    }
+
+    /// <summary>
+    /// Builds a > comparison expression that works for both numeric/Guid types and string.
+    /// For string, uses string.Compare(a, b) > 0 which EF Core translates correctly.
+    /// </summary>
+    private static Expression BuildGreaterThan(Expression left, Expression right)
+    {
+        if (left.Type == typeof(string))
+        {
+            var compareMethod = typeof(string).GetMethod(
+                nameof(string.Compare),
+                [typeof(string), typeof(string)])!;
+            var compareCall = Expression.Call(compareMethod, left, right);
+            return Expression.GreaterThan(compareCall, Expression.Constant(0));
+        }
+        return Expression.GreaterThan(left, right);
+    }
+
+    /// <summary>
+    /// Builds a < comparison expression that works for both numeric/Guid types and string.
+    /// For string, uses string.Compare(a, b) < 0 which EF Core translates correctly.
+    /// </summary>
+    private static Expression BuildLessThan(Expression left, Expression right)
+    {
+        if (left.Type == typeof(string))
+        {
+            var compareMethod = typeof(string).GetMethod(
+                nameof(string.Compare),
+                [typeof(string), typeof(string)])!;
+            var compareCall = Expression.Call(compareMethod, left, right);
+            return Expression.LessThan(compareCall, Expression.Constant(0));
+        }
+        return Expression.LessThan(left, right);
     }
 
     private static Expression ReplaceParameter(

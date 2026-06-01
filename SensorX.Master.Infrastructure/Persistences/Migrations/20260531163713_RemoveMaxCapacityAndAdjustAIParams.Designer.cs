@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SensorX.Master.Infrastructure.Persistences;
@@ -12,9 +13,11 @@ using SensorX.Master.Infrastructure.Persistences;
 namespace SensorX.Master.Infrastructure.Persistences.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260531163713_RemoveMaxCapacityAndAdjustAIParams")]
+    partial class RemoveMaxCapacityAndAdjustAIParams
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -225,59 +228,6 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                         });
                 });
 
-            modelBuilder.Entity("SensorX.Master.Application.Common.ReadModel.AIHyperparameterHistory", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<double>("DeltaIdleWeight")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("DeltaK")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("IdleWeightAfter")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("IdleWeightBefore")
-                        .HasColumnType("double precision");
-
-                    b.Property<bool>("IsSuccess")
-                        .HasColumnType("boolean");
-
-                    b.Property<double>("KAfter")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("KBefore")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("Loss")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("PredictedScore")
-                        .HasColumnType("double precision");
-
-                    b.Property<Guid>("RFQId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("StaffId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("Timestamp")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RFQId");
-
-                    b.HasIndex("StaffId");
-
-                    b.HasIndex("Timestamp");
-
-                    b.ToTable("AIHyperparameterHistories", "read");
-                });
-
             modelBuilder.Entity("SensorX.Master.Application.Common.ReadModel.Customer", b =>
                 {
                     b.Property<Guid>("Id")
@@ -321,7 +271,7 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("CustomerSnapshots", "read");
+                    b.ToTable("CustomerSnapshots", (string)null);
                 });
 
             modelBuilder.Entity("SensorX.Master.Application.Common.ReadModel.SaleStaff", b =>
@@ -361,7 +311,7 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("SaleStaffSnapshots", "read");
+                    b.ToTable("SaleStaffSnapshots", (string)null);
                 });
 
             modelBuilder.Entity("SensorX.Master.Application.Common.ReadModel.StaffContextPerformance", b =>

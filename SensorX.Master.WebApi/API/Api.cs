@@ -20,6 +20,8 @@ public static class Api
         api.MapWarehouseApi(); // Add Warehouse API
         api.MapSupplyRequestApi();
         api.MapSepayApi();
+        api.MapAIHyperparametersApi();
+        api.MapStaffQueriesApi();
         return api;
     }
 }

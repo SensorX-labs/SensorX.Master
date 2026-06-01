@@ -3,6 +3,7 @@ using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SensorX.Master.Application.Common.DomainEvent;
+using SensorX.Master.Application.Common.ReadModel;
 using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAggregate;
 using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
 using SensorX.Master.Domain.Contexts.SupplyChainContext.AggregateModels.SupplyRequestAggregate;

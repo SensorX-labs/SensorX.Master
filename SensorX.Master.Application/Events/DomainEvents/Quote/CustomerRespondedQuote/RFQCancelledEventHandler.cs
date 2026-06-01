@@ -20,7 +20,7 @@ public class RFQCancelledEventHandler(
 
         if (domainEvent.QuoteResponse.ResponseType != QuoteResponseStatus.Declined) return;
 
-        var rfq = await _rfqRepository.GetByIdAsync(domainEvent.QuoteId, cancellationToken);
+        var rfq = await _rfqRepository.GetByIdAsync(domainEvent.RFQId, cancellationToken);
         if (rfq is null) return;
 
         rfq.Cancel();
