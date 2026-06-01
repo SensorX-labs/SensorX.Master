@@ -21,6 +21,9 @@ namespace SensorX.Master.WebApi.API
             api.MapPost("reset", ResetHyperparameters)
                 .WithOpenApi(op => { op.Summary = "Reset global AI hyperparameters to default baseline"; return op; });
 
+            api.MapGet("history", GetHyperparameterHistory)
+                .WithOpenApi(op => { op.Summary = "Get history of AI hyperparameters for monitoring charts"; return op; });
+
             return app;
         }
 
@@ -92,6 +95,16 @@ namespace SensorX.Master.WebApi.API
 
             await hyperparameterRepository.SaveChangesAsync(cancellationToken);
             return TypedResults.Ok(hyperparams);
+        }
+
+        private static async Task<IResult> GetHyperparameterHistory(
+            [FromServices] IQueryBuilder<AIHyperparameterHistory> historyBuilder,
+            [FromServices] IQueryExecutor queryExecutor,
+            CancellationToken cancellationToken)
+        {
+            var query = historyBuilder.QueryAsNoTracking.OrderBy(h => h.Timestamp);
+            var history = await queryExecutor.ToListAsync(query, cancellationToken);
+            return TypedResults.Ok(history);
         }
     }
 }

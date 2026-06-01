@@ -19,6 +19,7 @@ public class UpdateAIAfterQuoteRespondedEventHandler(
     IRepository<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate.Quote> _quoteRepository,
     IRepository<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate.RFQ> _rfqRepository,
     IRepository<AIHyperparameter> _hyperparameterRepository,
+    IRepository<AIHyperparameterHistory> _hyperparameterHistoryRepository,
     IQueryBuilder<AIHyperparameter> _hyperparameterBuilder,
     ILogger<UpdateAIAfterQuoteRespondedEventHandler> _logger
 ) : INotificationHandler<DomainEventNotification<CustomerRespondedQuoteEvent>>
@@ -141,6 +142,25 @@ public class UpdateAIAfterQuoteRespondedEventHandler(
 
                             await _hyperparameterRepository.Update(hyperparams, cancellationToken);
                             await _hyperparameterRepository.SaveChangesAsync(cancellationToken);
+
+                            // Lưu lịch sử biến thiên
+                            var history = new AIHyperparameterHistory
+                            {
+                                RFQId = quote.RFQId.Value,
+                                StaffId = staffId.Value,
+                                IsSuccess = isSuccess,
+                                PredictedScore = finalScore,
+                                KBefore = kOld,
+                                KAfter = updatedK,
+                                DeltaK = updatedK - kOld,
+                                IdleWeightBefore = idleWeightOld,
+                                IdleWeightAfter = updatedIdleWeight,
+                                DeltaIdleWeight = updatedIdleWeight - idleWeightOld,
+                                Loss = isSuccess ? -Math.Log(finalScore + 1e-9) : -Math.Log(1 - finalScore + 1e-9)
+                            };
+
+                            await _hyperparameterHistoryRepository.Add(history, cancellationToken);
+                            await _hyperparameterHistoryRepository.SaveChangesAsync(cancellationToken);
                         }
                     }
                 }
