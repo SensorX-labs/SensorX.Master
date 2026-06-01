@@ -24,9 +24,8 @@ namespace SensorX.Master.Application.Services.AIAssignment
 
             double deltaK = error * (-aggregatedSkillScore * penaltyWorkload * Math.Log(currentWorkload + 1.0));
 
-            // Delta IdleWeight = error * [ (1 - tanh^2(IdleHours / 24)) * (1 / 24) ]
-            double tanhVal = Math.Tanh(idleHours / 24.0);
-            double deltaIdleWeight = error * ((1.0 - (tanhVal * tanhVal)) / 24.0);
+            // Delta IdleWeight = error * [ tanh(IdleHours / 24) ]
+            double deltaIdleWeight = error * Math.Tanh(idleHours / 24.0);
 
             // Gradient Clipping [-1.0, 1.0]
             double clippedDeltaK = Math.Max(-1.0, Math.Min(1.0, deltaK));
