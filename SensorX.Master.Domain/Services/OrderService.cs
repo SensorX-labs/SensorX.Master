@@ -40,9 +40,7 @@ public Payment CreatePaymentForInvoice(
         availableByProduct.TryGetValue(item.ProductId.Value, out var available) &&
         available >= item.Quantity.Value);
 
-    var paymentType = allItemsAvailable
-        ? PaymentType.All
-        : PaymentType.Partial;
+    var paymentType = PaymentType.All;
 
     return new Payment(
         PaymentId.New(),

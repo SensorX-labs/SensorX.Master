@@ -1,11 +1,13 @@
 using System.Text.RegularExpressions;
 using MediatR;
 using SensorX.Master.Application.Common.Interfaces;
+using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.InvoiceAggregate;
 using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
 using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.PaymentAggregate;
 using SensorX.Master.Domain.Contexts.PaymentContext.AggregateModels;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
+using SensorX.Master.Domain.ValueObjects;
 
 namespace SensorX.Master.Application.Commands.Sepays
 {
@@ -14,6 +16,7 @@ namespace SensorX.Master.Application.Commands.Sepays
         private readonly IRepository<PaymentHistory> _paymentHistoryRepository;
         private readonly IRepository<Order> _orderRepository;
         private readonly IRepository<Payment> _paymentRepository;
+        private readonly IRepository<Invoice> _invoiceRepository;
         private readonly IQueryExecutor _queryExecutor;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IPaymentNotificationService _paymentNotificationService;
@@ -22,6 +25,7 @@ namespace SensorX.Master.Application.Commands.Sepays
             IRepository<PaymentHistory> paymentHistoryRepository,
             IRepository<Order> orderRepository,
             IRepository<Payment> paymentRepository,
+            IRepository<Invoice> invoiceRepository,
             IQueryExecutor queryExecutor,
             IUnitOfWork unitOfWork,
             IPaymentNotificationService paymentNotificationService)
@@ -29,6 +33,7 @@ namespace SensorX.Master.Application.Commands.Sepays
             _paymentHistoryRepository = paymentHistoryRepository;
             _orderRepository = orderRepository;
             _paymentRepository = paymentRepository;
+            _invoiceRepository = invoiceRepository;
             _queryExecutor = queryExecutor;
             _unitOfWork = unitOfWork;
             _paymentNotificationService = paymentNotificationService;
@@ -144,24 +149,42 @@ namespace SensorX.Master.Application.Commands.Sepays
                             order.Id
                         );
 
-                        var totalReceived = existingAmounts.Sum() + paymentHistory.TransferAmount;
-                        payment.Reconcile(totalReceived);
+                        var isFullyPaid = paymentHistory.TransferAmount >= payment.Amount.Amount;
 
-                        if (payment.Status == PaymentStatus.Completed)
+                        if (isFullyPaid)
                         {
+                            payment.MarkAsCompleted();
                             order.StartProcessing();
                             await _orderRepository.Update(order, cancellationToken);
+
+                            var invoice = await _queryExecutor.FirstOrDefaultAsync(
+                                _invoiceRepository.AsQueryable()
+                                    .Where(i => i.OrderId == order.Id),
+                                cancellationToken
+                            );
+
+                            if (invoice is not null)
+                            {
+                                var paymentAmount = Money.FromVnd(paymentHistory.TransferAmount);
+                                invoice.RecordPayment(paymentAmount);
+                                await _invoiceRepository.Update(invoice, cancellationToken);
+                            }
+
+                            await _paymentRepository.Update(payment, cancellationToken);
+                            await _paymentHistoryRepository.AddAsync(paymentHistory, cancellationToken);
+                            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                            await _paymentNotificationService.NotifyPaymentStatusChangedAsync(
+                                order.Id.Value.ToString(),
+                                payment.Status.ToString(),
+                                paymentHistory.TransferAmount,
+                                cancellationToken);
                         }
-
-                        await _paymentHistoryRepository.AddAsync(paymentHistory, cancellationToken);
-                        await _paymentRepository.Update(payment, cancellationToken);
-                        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-                        await _paymentNotificationService.NotifyPaymentStatusChangedAsync(
-                            order.Id.Value.ToString(),
-                            payment.Status.ToString(),
-                            totalReceived,
-                            cancellationToken);
+                        else
+                        {
+                            await _paymentHistoryRepository.AddAsync(paymentHistory, cancellationToken);
+                            await _unitOfWork.SaveChangesAsync(cancellationToken);
+                        }
 
                         return true;
                     }

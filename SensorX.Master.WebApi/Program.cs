@@ -27,11 +27,13 @@ builder.Services.AddSignalR(options =>
     options.HandshakeTimeout = TimeSpan.FromSeconds(10);
 });
 
+builder.Services.AddHealthChecks();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     // Yêu cầu .NET tự động chuyển đổi giữa String và Enum
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    options.SerializerOptions.NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals;
 });
 builder.Services.AddSwaggerGen(options =>
 {
@@ -68,6 +70,7 @@ app.UseAuthentication();
 app.UseMiddleware<UserContextMiddleware>();
 app.UseAuthorization();
 
+app.MapHealthChecks("/health");
 app.MapApi();
 
 // Map SignalR hubs

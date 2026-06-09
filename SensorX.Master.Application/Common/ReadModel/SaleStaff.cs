@@ -29,7 +29,6 @@ namespace SensorX.Master.Application.Common.ReadModel
 
         // Các trường phục vụ hệ thống phân bổ AI
         public int CurrentWorkload { get; set; } = 0;
-        public int MaxCapacity { get; set; } = 5;
         public DateTimeOffset? LastAssignedAt { get; set; }
 
         public void Update(
@@ -58,9 +57,6 @@ namespace SensorX.Master.Application.Common.ReadModel
         // Hàm thay đổi trạng thái khi nhận đơn
         public void AssignRfq()
         {
-            if (CurrentWorkload >= MaxCapacity)
-                throw new SensorX.Master.Application.Common.Exceptions.ApplicationException("Nhân viên đã quá tải.");
-
             CurrentWorkload++;
             LastAssignedAt = DateTimeOffset.UtcNow;
         }
@@ -68,7 +64,14 @@ namespace SensorX.Master.Application.Common.ReadModel
         // Hàm thay đổi trạng thái khi xong/chê đơn
         public void ReleaseWorkload()
         {
-            if (CurrentWorkload > 0) CurrentWorkload--;
+            if (CurrentWorkload > 0)
+            {
+                CurrentWorkload--;
+                if (CurrentWorkload == 0)
+                {
+                    LastAssignedAt = DateTimeOffset.UtcNow;
+                }
+            }
         }
 
         /// <summary>
@@ -88,16 +91,15 @@ namespace SensorX.Master.Application.Common.ReadModel
 
             // 2. Thưởng rảnh rỗi (Idle Bonus)
             double idleHours = 0;
-            if (LastAssignedAt.HasValue)
+            if (CurrentWorkload == 0 && LastAssignedAt.HasValue)
             {
                 idleHours = (DateTimeOffset.UtcNow - LastAssignedAt.Value).TotalHours;
             }
 
-            // Tùy chọn: Chặn không cho điểm thưởng thời gian quá lố (Max 48h)
-            if (idleHours > 48) idleHours = 48;
+            double boostIdle = Math.Tanh(idleHours / 24.0) * idleWeight;
 
             // 3. Ra điểm số chốt hạ
-            return (aggregatedSkillScore * workloadPenalty) + (idleHours * idleWeight);
+            return (aggregatedSkillScore * workloadPenalty) + boostIdle;
         }
     }
 }
