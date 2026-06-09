@@ -57,6 +57,7 @@ public sealed record QuoteItemResponse
     Guid Id,
     Guid ProductId,
     string ProductCode,
+    string ProductName,
     string Manufacturer,
     string Unit,
     int Quantity,
