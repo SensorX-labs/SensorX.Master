@@ -38,14 +38,15 @@ public sealed record CustomerAnalysisData(
     string CustomerId,
     string CompanyName,
     string RecipientName,
-    int TotalQuotes,            // Tổng số báo giá
-    int AcceptedQuotes,         // Số báo giá đã chốt (Ordered)
-    int RejectedOrExpiredQuotes // Số báo giá thất bại (Rejected/Expired)
+    int TotalQuotes,
+    int AcceptedQuotes,
+    int RejectedOrExpiredQuotes
 );
 
 public sealed record StaffAnalysisData(
     string StaffId,
     string StaffName,
     string Department,
-    int TenureYears // Số năm kinh nghiệm
+    int TenureYears,
+    int TenureMonths
 );
