@@ -35,11 +35,19 @@ public class GetDetailQuoteByIdHandler(
             );
             var rfqItemMap = rfqItems.ToDictionary(x => x.ProductId.Value, x => x.ProductName);
 
+            var rfqCode = await _queryExecutor.FirstOrDefaultAsync(
+                _rfqQueryBuilder.QueryAsNoTracking
+                    .Where(r => r.Id == quote.RFQId)
+                    .Select(r => r.Code.Value),
+                cancellationToken
+            ) ?? string.Empty;
+
             var response = new GetDetailQuoteByIdResponse
             (
                 quote.Id.Value,
                 quote.Code.Value,
                 quote.RFQId.Value,
+                rfqCode,
                 quote.Status,
                 quote.QuoteDate,
                 quote.Note,
