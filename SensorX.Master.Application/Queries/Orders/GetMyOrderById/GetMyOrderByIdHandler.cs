@@ -22,7 +22,7 @@ public class GetMyOrderByIdHandler(
         CancellationToken cancellationToken)
     {
         if (!currentUser.IsAuthenticated || currentUser.UserId is null)
-            return Result<OffsetPagedResult<GetPageListOrderResponse>>.Failure("Nguoi dung chua duoc xac thuc " + currentUser.IsAuthenticated + currentUser.UserId);
+            return Result<GetDetailOrderByIdResponse>.Failure("Nguoi dung chua duoc xac thuc " + currentUser.IsAuthenticated + currentUser.UserId);
 
         var customerResponse = await dataServiceClient.GetCustomerByAccountIdAsync(currentUser.UserId.Value);
         if (!customerResponse.IsSuccess || customerResponse.Value is null)
