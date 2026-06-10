@@ -10,5 +10,7 @@ namespace SensorX.Master.Application.Services.AIAssignment.Models
         public double CurrentWorkload { get; set; }
         public double IdleHours { get; set; }
         public double FinalScore { get; set; }
+        public double K { get; set; }
+        public double IdleWeight { get; set; }
     }
 }

@@ -16,19 +16,6 @@ public class SepayQRBuilder : ISepayQRBuilder
     public List<string> BuildQRUrls(Payment payment, Order order)
     {
         var orderCode = order.Code.Value;
-
-        if (payment.PaymentType == PaymentType.Partial)
-        {
-            var totalAmount = payment.Amount.Amount;
-            var deposit = Math.Round(totalAmount * 0.3m, 0, MidpointRounding.AwayFromZero);
-            var remain = totalAmount - deposit;
-
-            return [
-                BuildUrl(deposit, $"{orderCode}-P1"),
-                BuildUrl(remain, $"{orderCode}-P2")
-            ];
-        }
-
         return [BuildUrl(payment.Amount.Amount, orderCode)];
     }
 

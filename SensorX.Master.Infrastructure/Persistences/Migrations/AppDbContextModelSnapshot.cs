@@ -191,6 +191,93 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                     b.ToTable("OutboxState");
                 });
 
+            modelBuilder.Entity("SensorX.Master.Application.Common.ReadModel.AIHyperparameter", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("IdleWeight")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("double precision")
+                        .HasDefaultValue(1.0);
+
+                    b.Property<double>("K")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("double precision")
+                        .HasDefaultValue(3.0);
+
+                    b.Property<double>("LearningRate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("double precision")
+                        .HasDefaultValue(0.01);
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AIHyperparameters", "read");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            IdleWeight = 1.0,
+                            K = 3.0,
+                            LearningRate = 0.01
+                        });
+                });
+
+            modelBuilder.Entity("SensorX.Master.Application.Common.ReadModel.AIHyperparameterHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<double>("DeltaIdleWeight")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("DeltaK")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("IdleWeightAfter")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("IdleWeightBefore")
+                        .HasColumnType("double precision");
+
+                    b.Property<bool>("IsSuccess")
+                        .HasColumnType("boolean");
+
+                    b.Property<double>("KAfter")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("KBefore")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Loss")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("PredictedScore")
+                        .HasColumnType("double precision");
+
+                    b.Property<Guid>("RFQId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StaffId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RFQId");
+
+                    b.HasIndex("StaffId");
+
+                    b.HasIndex("Timestamp");
+
+                    b.ToTable("AIHyperparameterHistories", "read");
+                });
+
             modelBuilder.Entity("SensorX.Master.Application.Common.ReadModel.Customer", b =>
                 {
                     b.Property<Guid>("Id")
@@ -234,7 +321,7 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("CustomerSnapshots", (string)null);
+                    b.ToTable("CustomerSnapshots", "read");
                 });
 
             modelBuilder.Entity("SensorX.Master.Application.Common.ReadModel.SaleStaff", b =>
@@ -262,9 +349,6 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                     b.Property<DateTimeOffset?>("LastAssignedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("MaxCapacity")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -277,7 +361,7 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("SaleStaffSnapshots", (string)null);
+                    b.ToTable("SaleStaffSnapshots", "read");
                 });
 
             modelBuilder.Entity("SensorX.Master.Application.Common.ReadModel.StaffContextPerformance", b =>
@@ -915,49 +999,6 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                                 .IsRequired()
                                 .HasColumnType("text")
                                 .HasColumnName("SenderName");
-
-                            b1.HasKey("OrderId");
-
-                            b1.ToTable("Orders");
-
-                            b1.WithOwner()
-                                .HasForeignKey("OrderId");
-                        });
-
-                    b.OwnsOne("SensorX.Master.Domain.ValueObjects.DeliveryInfo", "DeliveryInfo", b1 =>
-                        {
-                            b1.Property<Guid>("OrderId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<string>("CompanyName")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("CustomerCompanyName");
-
-                            b1.Property<string>("Email")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("CustomerEmail");
-
-                            b1.Property<string>("RecipientName")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("CustomerRecipientName");
-
-                            b1.Property<string>("RecipientPhone")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("CustomerRecipientPhone");
-
-                            b1.Property<string>("ShippingAddress")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("CustomerShippingAddress");
-
-                            b1.Property<string>("TaxCode")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("CustomerTaxCode");
 
                             b1.HasKey("OrderId");
 

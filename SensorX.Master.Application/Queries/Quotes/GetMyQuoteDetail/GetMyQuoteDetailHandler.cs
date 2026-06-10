@@ -5,6 +5,7 @@ using SensorX.Master.Application.Common.ResponseClient;
 using SensorX.Master.Application.Services;
 using SensorX.Master.Domain.Contexts.OrderContext.AggregateModels.OrderAggregate;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
+using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 
@@ -14,6 +15,7 @@ public class GetMyQuoteDetailHandler(
     IQueryBuilder<Quote> _quoteQueryBuilder,
     IQueryBuilder<Order> _orderBuilder,
     IQueryBuilder<SaleStaff> _staffBuilder,
+    IQueryBuilder<RFQ> _rfqQueryBuilder,
     IQueryExecutor _queryExecutor,
     IInventoryAvailabilityService _inventoryAvailabilityService
 ) : IRequestHandler<GetMyQuoteDetailQuery, Result<GetMyQuoteDetailResponse>>
@@ -42,11 +44,20 @@ public class GetMyQuoteDetailHandler(
             var status = GetResponseStatus(quote);
             var isStockSufficient = await _inventoryAvailabilityService.IsStockSufficientAsync(quote.LineItems, cancellationToken);
 
+            var rfqItems = await _queryExecutor.ToListAsync(
+                _rfqQueryBuilder.QueryAsNoTracking
+                    .Where(r => r.Id == quote.RFQId)
+                    .SelectMany(r => r.Items.Select(ri => new { ri.ProductId, ri.ProductName })),
+                cancellationToken
+            );
+            var rfqItemMap = rfqItems.ToDictionary(x => x.ProductId.Value, x => x.ProductName);
+
             var quoteItemResponses = quote.LineItems.Select(i => new QuoteItemResponse
             (
                 i.Id.Value,
                 i.ProductId.Value,
                 i.ProductCode.Value,
+                rfqItemMap.TryGetValue(i.ProductId.Value, out var prodName) ? prodName : string.Empty,
                 i.Manufacturer,
                 i.Unit,
                 i.Quantity.Value,

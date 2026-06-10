@@ -5,6 +5,7 @@ using SensorX.Master.Application.Queries.Orders.GetMyOrderById;
 using SensorX.Master.Application.Queries.Orders.GetMyOrders;
 using SensorX.Master.Application.Queries.Orders.GetOrderStats;
 using SensorX.Master.Application.Queries.Orders.GetPageListOrder;
+using SensorX.Master.Application.Queries.Orders.GetOrderPaymentStatus;
 using SensorX.Master.WebApi.Extensions;
 using MediatR;
 
@@ -33,6 +34,10 @@ public static class OrderApi
         group.MapGet("/{orderId:guid}", GetDetailOrderById)
             .WithName("GetOrderDetail")
             .WithDescription("Get order detail by ID");
+
+        group.MapGet("/{orderId:guid}/payment-status", GetOrderPaymentStatus)
+            .WithName("GetOrderPaymentStatus")
+            .WithDescription("Check payment status of an order");
 
         group.MapGet("/my/{orderId:guid}", GetMyOrderById)
             .WithName("GetMyOrderDetail")
@@ -72,6 +77,14 @@ public static class OrderApi
         [FromServices] IMediator mediator)
     {
         var result = await mediator.Send(new GetDetailOrderByIdQuery(orderId));
+        return result.ToResult();
+    }
+
+    private static async Task<IResult> GetOrderPaymentStatus(
+        [FromRoute] Guid orderId,
+        [FromServices] IMediator mediator)
+    {
+        var result = await mediator.Send(new GetOrderPaymentStatusQuery(orderId));
         return result.ToResult();
     }
 
