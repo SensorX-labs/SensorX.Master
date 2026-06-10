@@ -21,7 +21,7 @@ public class StockInCreatedConsumer(
     public async Task Consume(ConsumeContext<StockInCreatedEvent> context)
     {
         var message = context.Message;
-        
+
         if (string.IsNullOrEmpty(message.TransferOrderCode))
         {
             logger.LogInformation("StockIn {StockInId} does not have a source code. Skipping.", message.StockInId);
@@ -37,14 +37,14 @@ public class StockInCreatedConsumer(
             var srSpec = new GetSupplyRequestByCode(sourceCode);
             var supplyRequest = await supplyRequestRepository.FirstOrDefaultAsync(srSpec, context.CancellationToken);
 
-            if (supplyRequest != null && supplyRequest.Status != SupplyRequestStatus.Completed)
+            if (supplyRequest is not null && supplyRequest.Status != SupplyRequestStatus.Completed)
             {
                 supplyRequest.Complete();
                 await supplyRequestRepository.Update(supplyRequest, context.CancellationToken);
                 await unitOfWork.SaveChangesAsync(context.CancellationToken);
                 logger.LogInformation("SupplyRequest {SupplyRequestCode} has been marked as Completed.", message.TransferOrderCode);
             }
-            else if (supplyRequest == null)
+            else if (supplyRequest is null)
             {
                 logger.LogWarning("SupplyRequest {SupplyRequestCode} not found for StockIn {StockInId}", message.TransferOrderCode, message.StockInId);
             }
@@ -57,14 +57,14 @@ public class StockInCreatedConsumer(
         var spec = new GetTransferOrderByCode(sourceCode);
         var transferOrder = await transferOrderRepository.FirstOrDefaultAsync(spec, context.CancellationToken);
 
-        if (transferOrder != null && transferOrder.Status != TransferOrderStatus.Completed)
+        if (transferOrder is not null && transferOrder.Status != TransferOrderStatus.Completed)
         {
             transferOrder.Complete();
             await transferOrderRepository.Update(transferOrder, context.CancellationToken);
             await unitOfWork.SaveChangesAsync(context.CancellationToken);
             logger.LogInformation("TransferOrder {TransferOrderCode} has been marked as Completed.", message.TransferOrderCode);
         }
-        else if (transferOrder == null)
+        else if (transferOrder is null)
         {
             logger.LogWarning("TransferOrder {TransferOrderCode} not found for StockIn {StockInId}", message.TransferOrderCode, message.StockInId);
         }

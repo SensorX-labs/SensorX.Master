@@ -21,7 +21,7 @@ public class GetInvoiceByIdHandler(
                 invoiceQueryBuilder.QueryAsNoTracking.Where(x => x.Id == new InvoiceId(request.InvoiceId)),
                 cancellationToken);
 
-            if (invoice == null)
+            if (invoice is null)
             {
                 return Result<GetInvoiceByIdResponse>.Failure("Khong tim thay hoa don");
             }

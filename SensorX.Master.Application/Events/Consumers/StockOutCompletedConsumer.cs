@@ -18,7 +18,7 @@ public class StockOutCompletedConsumer(
     public async Task Consume(ConsumeContext<IStockOutCreatedEvent> context)
     {
         var message = context.Message;
-        logger.LogInformation("Master received StockOutCreatedEvent: StockOutId={StockOutId}, SourceType={SourceType}, SourceId={SourceId}", 
+        logger.LogInformation("Master received StockOutCreatedEvent: StockOutId={StockOutId}, SourceType={SourceType}, SourceId={SourceId}",
             message.StockOutId, message.SourceType, message.SourceId);
 
         // SourceType 1 means TransferOrder
@@ -26,7 +26,7 @@ public class StockOutCompletedConsumer(
         {
             var transferOrderId = new TransferOrderId(message.SourceId);
             var transferOrder = await transferOrderRepository.GetByIdAsync(transferOrderId, context.CancellationToken);
-            if (transferOrder != null)
+            if (transferOrder is not null)
             {
                 transferOrder.MarkDelivering();
                 await transferOrderRepository.Update(transferOrder, context.CancellationToken);

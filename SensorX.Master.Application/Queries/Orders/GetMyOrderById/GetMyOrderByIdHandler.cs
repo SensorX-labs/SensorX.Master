@@ -33,7 +33,7 @@ public class GetMyOrderByIdHandler(
             orderQueryBuilder.QueryAsNoTracking.Where(o => o.Id == new OrderId(request.OrderId) && o.CustomerId == customerId),
             cancellationToken);
 
-        if (order == null)
+        if (order is null)
             return Result<GetDetailOrderByIdResponse>.Failure("Khong tim thay don hang");
 
         var payment = await queryExecutor.FirstOrDefaultAsync(

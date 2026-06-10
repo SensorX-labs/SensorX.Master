@@ -18,7 +18,7 @@ public class GetSupplyRequestByIdQueryHandler(
         var allRequests = await supplyRequestRepository.ListAsync(cancellationToken);
         var supplyRequest = allRequests.FirstOrDefault(x => x.Id == targetId);
 
-        if (supplyRequest == null)
+        if (supplyRequest is null)
         {
             return Result<SupplyRequestDetailDto>.Failure("Yêu cầu cung ứng không tồn tại");
         }

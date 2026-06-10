@@ -16,7 +16,7 @@ public class GetTransferOrderByIdQueryHandler(
         var allTransferOrders = await transferOrderRepository.ListAsync(cancellationToken);
         var transferOrder = allTransferOrders.FirstOrDefault(x => x.Id == targetId);
 
-        if (transferOrder == null)
+        if (transferOrder is null)
         {
             return Result<TransferOrderDetailDto>.Failure("Lệnh điều chuyển không tồn tại");
         }
