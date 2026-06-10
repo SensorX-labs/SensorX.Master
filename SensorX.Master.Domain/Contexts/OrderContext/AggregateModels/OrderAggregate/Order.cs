@@ -78,11 +78,15 @@ public class Order : Entity<OrderId>, IAggregateRoot, ICreationTrackable, IUpdat
 
     public void Cancel()
     {
+        if (Status == OrderStatus.Cancelled) return;
         Status = OrderStatus.Cancelled;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     public void StartProcessing()
     {
+        if (Status == OrderStatus.Processing) return;
+        
         if (Status == OrderStatus.PendingPayment)
         {
             Status = OrderStatus.Processing;
@@ -92,7 +96,9 @@ public class Order : Entity<OrderId>, IAggregateRoot, ICreationTrackable, IUpdat
 
     public void Dispatch()
     {
+        if (Status == OrderStatus.Dispatched) return;
         Status = OrderStatus.Dispatched;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
 }
 
