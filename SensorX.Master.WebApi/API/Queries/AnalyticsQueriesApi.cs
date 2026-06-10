@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using SensorX.Master.Application.Queries.Analytics.GetDashboardTransactionStats;
 using SensorX.Master.Application.Queries.Analytics.GetRevenueReport;
+using SensorX.Master.Application.Queries.Analytics.GetBusinessReportStats;
 using SensorX.Master.WebApi.Extensions;
 using System.Threading.Tasks;
 
@@ -28,6 +29,12 @@ public static class AnalyticsQueriesApi
             return operation;
         });
 
+        api.MapGet("business-report", GetBusinessReportStats).WithOpenApi(operation =>
+        {
+            operation.Summary = "Lấy thống kê Báo cáo Kinh doanh";
+            return operation;
+        });
+
         return api;
     }
 
@@ -42,6 +49,15 @@ public static class AnalyticsQueriesApi
 
     private static async Task<IResult> GetRevenueReport(
         [AsParameters] GetRevenueReportQuery query,
+        [FromServices] IMediator mediator
+    )
+    {
+        var result = await mediator.Send(query);
+        return result.ToResult();
+    }
+
+    private static async Task<IResult> GetBusinessReportStats(
+        [AsParameters] GetBusinessReportStatsQuery query,
         [FromServices] IMediator mediator
     )
     {

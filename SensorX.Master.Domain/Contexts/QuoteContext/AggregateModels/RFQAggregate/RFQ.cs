@@ -146,7 +146,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
             AddDomainEvent(new RFQMarkAsRespondedEvent(Id, Code));
         }
 
-        // Báo giá được chốt thì coi là đã chuyển đổi thành đơn
+        // Đã chuyển đổi thành đơn
         public void MarkAsConverted()
         {
             if (Status != RFQStatus.Responded)
@@ -158,9 +158,6 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
 
         public void Cancel()
         {
-            if (Status != RFQStatus.Responded)
-                throw new DomainException("Ghi nhận hủy yêu cầu báo giá không thành công.");
-
             Status = RFQStatus.Cancelled;
             UpdatedAt = DateTimeOffset.UtcNow;
         }
