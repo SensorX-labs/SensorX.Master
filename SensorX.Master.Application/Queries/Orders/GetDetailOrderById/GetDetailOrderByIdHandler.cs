@@ -24,7 +24,7 @@ public class GetDetailOrderByIdHandler(
                 orderQueryBuilder.QueryAsNoTracking.Where(o => o.Id == new OrderId(request.OrderId)),
                 cancellationToken);
 
-            if (order == null)
+            if (order is null)
             {
                 return Result<GetDetailOrderByIdResponse>.Failure("Khong tim thay don hang");
             }

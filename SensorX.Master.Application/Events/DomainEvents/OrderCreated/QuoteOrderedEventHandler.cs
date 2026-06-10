@@ -18,10 +18,10 @@ public class QuoteOrderedEventHandler(
 
         var quoteId = domainEvent.Order.QuoteId;
         var quote = await _quoteRepository.GetByIdAsync(quoteId, cancellationToken);
-        
+
         if (quote is null) return;
 
-        // quote.MarkAsOrdered();
+        quote.MarkAsOrdered();
 
         await _quoteRepository.SaveChangesAsync(cancellationToken);
     }

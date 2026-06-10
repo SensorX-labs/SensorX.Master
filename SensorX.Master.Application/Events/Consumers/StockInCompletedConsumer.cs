@@ -22,7 +22,7 @@ public class StockInCompletedConsumer(
     public async Task Consume(ConsumeContext<IStockInCreatedEvent> context)
     {
         var message = context.Message;
-        logger.LogInformation("Master received StockInCreatedEvent: StockInId={StockInId}, TransferOrderCode={TransferOrderCode}", 
+        logger.LogInformation("Master received StockInCreatedEvent: StockInId={StockInId}, TransferOrderCode={TransferOrderCode}",
             message.StockInId, message.TransferOrderCode);
 
         if (!string.IsNullOrWhiteSpace(message.TransferOrderCode))
@@ -37,14 +37,14 @@ public class StockInCompletedConsumer(
                     var srSpec = new GetSupplyRequestByCode(sourceCode);
                     var supplyRequest = await supplyRequestRepository.FirstOrDefaultAsync(srSpec, context.CancellationToken);
 
-                    if (supplyRequest != null && supplyRequest.Status != SupplyRequestStatus.Completed)
+                    if (supplyRequest is not null && supplyRequest.Status != SupplyRequestStatus.Completed)
                     {
                         supplyRequest.Complete();
                         await supplyRequestRepository.Update(supplyRequest, context.CancellationToken);
                         await unitOfWork.SaveChangesAsync(context.CancellationToken);
                         logger.LogInformation("Updated SupplyRequest {TransferOrderCode} status to Completed due to StockIn", message.TransferOrderCode);
                     }
-                    else if (supplyRequest == null)
+                    else if (supplyRequest is null)
                     {
                         logger.LogWarning("SupplyRequest {TransferOrderCode} not found for StockIn {StockInId}", message.TransferOrderCode, message.StockInId);
                     }
@@ -54,14 +54,14 @@ public class StockInCompletedConsumer(
                 // 2. Transfer Order logic
                 var spec = new GetTransferOrderByCode(sourceCode);
                 var transferOrder = await transferOrderRepository.FirstOrDefaultAsync(spec, context.CancellationToken);
-                if (transferOrder != null && transferOrder.Status != TransferOrderStatus.Completed)
+                if (transferOrder is not null && transferOrder.Status != TransferOrderStatus.Completed)
                 {
                     transferOrder.Complete();
                     await transferOrderRepository.Update(transferOrder, context.CancellationToken);
                     await unitOfWork.SaveChangesAsync(context.CancellationToken);
                     logger.LogInformation("Updated TransferOrder {TransferOrderCode} status to Completed due to StockIn", message.TransferOrderCode);
                 }
-                else if (transferOrder == null)
+                else if (transferOrder is null)
                 {
                     logger.LogWarning("TransferOrder with Code {TransferOrderCode} not found for StockIn {StockInId}", message.TransferOrderCode, message.StockInId);
                 }

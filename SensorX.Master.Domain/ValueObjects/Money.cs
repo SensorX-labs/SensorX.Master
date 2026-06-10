@@ -97,4 +97,5 @@ public record Money
     }
 
     public override string ToString() => $"{Amount:N0} {Currency}";
+    public static implicit operator decimal(Money money) => money.Amount;
 }

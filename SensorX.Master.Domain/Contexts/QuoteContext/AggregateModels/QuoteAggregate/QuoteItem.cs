@@ -13,6 +13,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
             ProductId productId,
             CategoryId categoryId,
             Code productCode,
+            string productName,
             string manufacturer,
             string unit,
             Quantity quantity,
@@ -24,6 +25,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
             ProductId = productId;
             CategoryId = categoryId;
             ProductCode = productCode;
+            ProductName = productName;
             Manufacturer = manufacturer;
             Unit = unit;
             Quantity = quantity;
@@ -35,6 +37,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         public ProductId ProductId { get; private set; }
         public CategoryId CategoryId { get; private set; }
         public Code ProductCode { get; private set; }
+        public string ProductName { get; private set; }
         public string Manufacturer { get; private set; }
         public string Unit { get; private set; }
         public Quantity Quantity { get; private set; }
