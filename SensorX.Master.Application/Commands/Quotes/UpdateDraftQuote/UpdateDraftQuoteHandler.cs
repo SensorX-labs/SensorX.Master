@@ -70,6 +70,7 @@ public class UpdateDraftQuoteCommandHandler(
                     new ProductId(item.ProductId),
                     categoryId,
                     item.ProductCode,
+                    item.ProductName,
                     item.Manufacturer ?? "Default",
                     item.Unit,
                     new Quantity((int)item.Quantity),

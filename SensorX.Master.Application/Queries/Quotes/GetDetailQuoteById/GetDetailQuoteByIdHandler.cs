@@ -2,6 +2,7 @@ using MediatR;
 using SensorX.Master.Application.Common.Interfaces;
 using SensorX.Master.Application.Common.ResponseClient;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
+using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 using SensorX.Master.Domain.SeedWork;
 using SensorX.Master.Domain.StrongIDs;
 
@@ -9,6 +10,7 @@ namespace SensorX.Master.Application.Queries.Quotes.GetDetailQuoteById;
 
 public class GetDetailQuoteByIdHandler(
     IQueryBuilder<Quote> _quoteQueryBuilder,
+    IQueryBuilder<RFQ> _rfqQueryBuilder,
     IQueryExecutor _queryExecutor
 ) : IRequestHandler<GetDetailQuoteByIdQuery, Result<GetDetailQuoteByIdResponse>>
 {
@@ -17,75 +19,85 @@ public class GetDetailQuoteByIdHandler(
         try
         {
             var query = _quoteQueryBuilder.QueryAsNoTracking
-                            .Where(q => q.Id == new QuoteId(request.QuoteId))
-                            .Select(q => new GetDetailQuoteByIdResponse
-                            (
-                                q.Id.Value,
-                                q.Code.Value,
-                                q.RFQId.Value,
-                                q.Status,
-                                q.QuoteDate,
-                                q.Note,
-                                q.ReasonReject,
+                            .Where(q => q.Id == new QuoteId(request.QuoteId));
 
-                                // Calculations from Domain
-                                q.GetSubtotal().Amount,
-                                q.GetTotalTax().Amount,
-                                q.GetGrandTotal().Amount,
-
-                                // Map Items
-                                q.LineItems.Select(i => new QuoteItemResponse
-                                (
-                                    i.Id.Value,
-                                    i.ProductId.Value,
-                                    i.ProductCode.Value,
-                                    i.Manufacturer,
-                                    i.Unit,
-                                    i.Quantity.Value,
-                                    i.UnitPrice.Amount,
-                                    i.TaxRate.Value,
-                                    i.GetLineAmount().Amount,
-                                    i.GetTaxAmount().Amount,
-                                    i.GetTotalLineAmount().Amount
-                                )).ToList(),
-
-                                // Map Sender Info
-                                new SenderInfoResponse(
-                                    q.SenderInfo.Id,
-                                    q.SenderInfo.Name,
-                                    q.SenderInfo.Email,
-                                    q.SenderInfo.Phone
-                                ),
-
-                                // Map Customer Info
-                                new CustomerInfoResponse(
-                                    q.CustomerId.Value,
-                                    q.CustomerInfo.CompanyName,
-                                    q.CustomerInfo.Phone.Value,
-                                    q.CustomerInfo.Email.Value,
-                                    q.CustomerInfo.Address,
-                                    q.CustomerInfo.TaxCode
-                                ),
-
-                                // Map Customer Feedback (nullable)
-                                q.Response != null
-                                    ? new QuoteCustomerResponse(
-                                        q.Response.ResponseType,
-                                        q.Response.PaymentTerm,
-                                        q.Response.ShippingAddress,
-                                        q.Response.RecipientName,
-                                        q.Response.RecipientPhone,
-                                        q.Response.Feedback
-                                    )
-                                    : null
-                            ));
-
-
-            var response = await _queryExecutor.FirstOrDefaultAsync(query, cancellationToken);
-            if (response == null)
+            var quote = await _queryExecutor.FirstOrDefaultAsync(query, cancellationToken);
+            if (quote is null)
             {
                 return Result<GetDetailQuoteByIdResponse>.Failure("Không tìm thấy báo giá");
             }
+
+            var rfqItems = await _queryExecutor.ToListAsync(
+                _rfqQueryBuilder.QueryAsNoTracking
+                    .Where(r => r.Id == quote.RFQId)
+                    .SelectMany(r => r.Items.Select(ri => new { ri.ProductId, ri.ProductName })),
+                cancellationToken
+            );
+            var rfqItemMap = rfqItems.ToDictionary(x => x.ProductId, x => x.ProductName);
+
+            var response = new GetDetailQuoteByIdResponse
+            (
+                quote.Id,
+                quote.Code,
+                quote.RFQId,
+                quote.Status,
+                quote.QuoteDate,
+                quote.Note,
+                quote.ReasonReject,
+
+                // Calculations from Domain
+                quote.GetSubtotal(),
+                quote.GetTotalTax(),
+                quote.GetGrandTotal(),
+
+                // Map Items
+                quote.LineItems.Select(i => new QuoteItemResponse
+                (
+                    i.Id,
+                    i.ProductId,
+                    i.ProductCode,
+                    i.ProductName,
+                    i.Manufacturer,
+                    i.Unit,
+                    i.Quantity,
+                    i.UnitPrice,
+                    i.TaxRate,
+                    i.GetLineAmount(),
+                    i.GetTaxAmount(),
+                    i.GetTotalLineAmount()
+                )).ToList(),
+
+                // Map Sender Info
+                new SenderInfoResponse(
+                    quote.SenderInfo.Id,
+                    quote.SenderInfo.Name,
+                    quote.SenderInfo.Email,
+                    quote.SenderInfo.Phone
+                ),
+
+                // Map Customer Info
+                new CustomerInfoResponse(
+                    quote.CustomerId,
+                    quote.CustomerInfo.CompanyName,
+                    quote.CustomerInfo.Phone,
+                    quote.CustomerInfo.Email,
+                    quote.CustomerInfo.Address,
+                    quote.CustomerInfo.TaxCode
+                ),
+
+                // Map Customer Feedback (nullable)
+                quote.Response != null
+                    ? new QuoteCustomerResponse(
+                        quote.Response.ResponseType,
+                        quote.Response.PaymentTerm,
+                        quote.Response.ShippingAddress,
+                        quote.Response.RecipientName,
+                        quote.Response.RecipientPhone,
+                        quote.Response.Feedback
+                    )
+                    : null
+            );
+
             return Result<GetDetailQuoteByIdResponse>.Success(response);
         }
         catch (Exception ex)

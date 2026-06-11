@@ -5,15 +5,16 @@ using SensorX.Master.Application.Common.DomainEvent;
 using SensorX.Master.Application.Common.Interfaces;
 using SensorX.Master.Application.Common.Models.DataServiceModels;
 using SensorX.Master.Domain.Events;
+
 namespace SensorX.Master.Application.Events.DomainEvents.Quote.QuoteCreated.QuoteAnlysis;
 
 public sealed class QuoteSubmittedForApprovalEventHandler(
-    IQueryBuilder<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate.Quote> _quoteQueryBuilder,
-    IQueryBuilder<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate.RFQ> _rfqQueryBuilder,
-    IQueryExecutor _queryExecutor,
-    IDataServiceClient _dataClient,
-    IPublishEndpoint _publishEndpoint,
-    ILogger<QuoteSubmittedForApprovalEventHandler> _logger
+    IQueryBuilder<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate.Quote> quoteQueryBuilder,
+    IQueryBuilder<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate.RFQ> rfqQueryBuilder,
+    IQueryExecutor queryExecutor,
+    IDataServiceClient dataClient,
+    IPublishEndpoint publishEndpoint,
+    ILogger<QuoteSubmittedForApprovalEventHandler> logger
 ) : INotificationHandler<DomainEventNotification<SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate.QuoteSubmittedForApprovalEvent>>
 {
     public async Task Handle(
@@ -21,39 +22,35 @@ public sealed class QuoteSubmittedForApprovalEventHandler(
         CancellationToken cancellationToken)
     {
         var domainEvent = notification.DomainEvent;
+
         try
         {
-            // 1. Load báo giá hiện tại
-            var quoteQuery = _quoteQueryBuilder.QueryAsNoTracking.Where(x => x.Id == domainEvent.QuoteId);
-            var quote = await _queryExecutor.FirstOrDefaultAsync(quoteQuery, cancellationToken);
+            var quoteQuery = quoteQueryBuilder.QueryAsNoTracking.Where(x => x.Id == domainEvent.QuoteId);
+            var quote = await queryExecutor.FirstOrDefaultAsync(quoteQuery, cancellationToken);
             if (quote is null) return;
 
-            // 2. Tìm StaffId từ RFQ
             Guid? staffId = null;
             if (quote.RFQId != null)
             {
-                var rfqQuery = _rfqQueryBuilder.QueryAsNoTracking.Where(x => x.Id == quote.RFQId);
-                var rfq = await _queryExecutor.FirstOrDefaultAsync(rfqQuery, cancellationToken);
+                var rfqQuery = rfqQueryBuilder.QueryAsNoTracking.Where(x => x.Id == quote.RFQId);
+                var rfq = await queryExecutor.FirstOrDefaultAsync(rfqQuery, cancellationToken);
                 staffId = rfq?.StaffId?.Value;
             }
 
-            // 3. Lấy dữ liệu sản phẩm và nhân viên từ Data Service
             var productIds = quote.LineItems.Select(x => x.ProductId.Value).ToArray();
-            var pricingTask = _dataClient.GetProductPricingAsync(productIds);
+            var pricingTask = dataClient.GetProductPricingAsync(productIds);
             var staffTask = staffId.HasValue
-                ? _dataClient.GetEmployeeMetricsAsync(staffId.Value)
-                : Task.FromResult<StaffMetricsApiResponse>(new StaffMetricsApiResponse { IsSuccess = false });
+                ? dataClient.GetEmployeeMetricsAsync(staffId.Value)
+                : Task.FromResult(new StaffMetricsApiResponse { IsSuccess = false });
 
-            // 4. Đếm số lượng báo giá của khách hàng
-            var allQuotesQuery = _quoteQueryBuilder.QueryAsNoTracking
+            var allQuotesQuery = quoteQueryBuilder.QueryAsNoTracking
                 .Where(x => x.CustomerId == quote.CustomerId && x.Id != quote.Id);
-            var customerQuotes = await _queryExecutor.ToListAsync(allQuotesQuery, cancellationToken);
+            var customerQuotes = await queryExecutor.ToListAsync(allQuotesQuery, cancellationToken);
 
             await Task.WhenAll(pricingTask, staffTask);
             var extPricing = await pricingTask;
             var extStaff = await staffTask;
 
-            // 5. Chuẩn bị danh sách items thô
             var analyzedItems = quote.LineItems.Select(item =>
             {
                 var policy = extPricing.FirstOrDefault(p => p.ProductId == item.ProductId.Value);
@@ -70,13 +67,9 @@ public sealed class QuoteSubmittedForApprovalEventHandler(
                 );
             }).ToList();
 
-            // 7. Thông tin nhân viên và Năm kinh nghiệm
             var staffData = extStaff?.Value;
-            var tenureYears = staffData != null
-                ? Math.Max(0, DateTime.UtcNow.Year - staffData.CreatedAt.Year)
-                : 0;
+            var (tenureYears, tenureMonths) = CalculateTenure(staffData);
 
-            // 8. Đóng gói Bundle tối giản
             var bundle = new QuoteAnalysisDataBundle(
                 QuoteId: quote.Id.Value.ToString(),
                 QuoteCode: quote.Code.Value,
@@ -92,7 +85,8 @@ public sealed class QuoteSubmittedForApprovalEventHandler(
                     StaffId: staffId?.ToString() ?? "N/A",
                     StaffName: staffData?.StaffName ?? "Chưa gán",
                     Department: staffData?.Department ?? "N/A",
-                    TenureYears: tenureYears
+                    TenureYears: tenureYears,
+                    TenureMonths: tenureMonths
                 ),
                 Quote: new QuoteOverviewData(
                     TotalAmount: quote.GetGrandTotal().Amount,
@@ -104,13 +98,33 @@ public sealed class QuoteSubmittedForApprovalEventHandler(
                 GeneratedAt: DateTimeOffset.UtcNow
             );
 
-            await _publishEndpoint.Publish(bundle, cancellationToken);
-            _logger.LogInformation(">>> [AI-Enrichment] Đã bắn Bundle tối giản cho {QuoteCode}.", quote.Code.Value);
+            await publishEndpoint.Publish(bundle, cancellationToken);
+            logger.LogInformation(">>> [AI-Enrichment] Đã bắn Bundle tối giản cho {QuoteCode}.", quote.Code.Value);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, ">>> [AI-Enrichment] Lỗi khi xử lý báo giá {QuoteId}.", domainEvent.QuoteId.Value);
+            logger.LogError(ex, ">>> [AI-Enrichment] Lỗi khi xử lý báo giá {QuoteId}.", domainEvent.QuoteId.Value);
             throw;
         }
+    }
+
+    private static (int Years, int Months) CalculateTenure(StaffMetricsData? staffData)
+    {
+        if (staffData is null)
+        {
+            return (0, 0);
+        }
+
+        var startDate = staffData.JoinDate != default ? staffData.JoinDate : staffData.CreatedAt;
+        var now = DateTime.UtcNow;
+        var totalMonths = ((now.Year - startDate.Year) * 12) + now.Month - startDate.Month;
+
+        if (now.Day < startDate.Day)
+        {
+            totalMonths -= 1;
+        }
+
+        totalMonths = Math.Max(0, totalMonths);
+        return (totalMonths / 12, totalMonths % 12);
     }
 }

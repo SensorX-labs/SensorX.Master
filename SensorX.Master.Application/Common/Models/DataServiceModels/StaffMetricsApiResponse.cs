@@ -24,6 +24,7 @@ public class StaffMetricsData
     public string Email { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
     public string Department { get; set; } = string.Empty;
+    public DateTime JoinDate { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 }

@@ -17,7 +17,7 @@ public class StockOutCreatedConsumer(
     public async Task Consume(ConsumeContext<StockOutCreatedEvent> context)
     {
         var message = context.Message;
-        
+
         // 0 = SalesOrder (DocumentType.SalesOrder)
         if (message.SourceType != 0)
         {
@@ -29,7 +29,7 @@ public class StockOutCreatedConsumer(
 
         var order = await orderRepository.GetByIdAsync(new OrderId(message.SourceId), context.CancellationToken);
 
-        if (order != null)
+        if (order is not null)
         {
             // Update order status to Dispatched
             // wait, Order doesn't have an explicit method for Dispatch. I'll need to check if there is one.
