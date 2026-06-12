@@ -21,7 +21,7 @@ public class CreateSupplyRequestCommandHandler(
     {
         var warehouseId = new WarehouseId(request.WarehouseId);
         var warehouse = await warehouseRepository.GetByIdAsync(warehouseId, cancellationToken);
-        if (warehouse == null || !warehouse.IsActive)
+        if (warehouse is null || !warehouse.IsActive)
         {
             return Result<Guid>.Failure("Kho yêu cầu không tồn tại hoặc đã bị vô hiệu hóa");
         }

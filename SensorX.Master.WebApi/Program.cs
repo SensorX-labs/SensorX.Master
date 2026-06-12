@@ -6,8 +6,8 @@ using SensorX.Master.Infrastructure.DI;
 using SensorX.Master.Infrastructure.Persistences;
 using SensorX.Master.WebApi.API;
 using SensorX.Master.WebApi.Configurations;
-using SensorX.Master.WebApi.Middleware;
 using SensorX.Master.WebApi.Hubs;
+using SensorX.Master.WebApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 // Cấu hình Authentication & Authorization (Tin tưởng Gateway)

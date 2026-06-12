@@ -47,19 +47,19 @@ public sealed class GetPageListRFQHandler(
             if (!string.IsNullOrWhiteSpace(request.CompanyName))
             {
                 var companyName = request.CompanyName.Trim();
-                sourceQuery = sourceQuery.Where(r => r.CustomerInfo.CompanyName.Contains(companyName));
+                sourceQuery = sourceQuery.Where(r => r.CustomerInfo != null && r.CustomerInfo.CompanyName.Contains(companyName));
             }
 
             if (!string.IsNullOrWhiteSpace(request.RecipientName))
             {
                 var recipientName = request.RecipientName.Trim();
-                sourceQuery = sourceQuery.Where(r => r.CustomerInfo.CompanyName.Contains(recipientName));
+                sourceQuery = sourceQuery.Where(r => r.CustomerInfo != null && r.CustomerInfo.CompanyName.Contains(recipientName));
             }
 
             if (!string.IsNullOrWhiteSpace(request.RecipientPhone))
             {
                 var recipientPhone = request.RecipientPhone.Trim();
-                sourceQuery = sourceQuery.Where(r => ((string)r.CustomerInfo.Phone).Contains(recipientPhone));
+                sourceQuery = sourceQuery.Where(r => r.CustomerInfo != null && ((string)r.CustomerInfo.Phone).Contains(recipientPhone));
             }
 
             if (!string.IsNullOrWhiteSpace(request.StaffName))

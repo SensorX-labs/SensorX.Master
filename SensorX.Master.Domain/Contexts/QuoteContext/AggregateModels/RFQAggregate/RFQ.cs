@@ -47,6 +47,8 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
         // khách hàng gửi RFQ
         public void Send(CustomerInfo customerInfo)
         {
+            if (Status == RFQStatus.Pending) return;
+
             if (Status != RFQStatus.Draft)
                 throw new DomainException("RFQ đang ở trạng thái không hợp lệ.");
 
@@ -59,6 +61,8 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
         // gán nhân viên để xử lý RFQ
         public void Assign(StaffId staffId, string snapshotJson)
         {
+            if (Status == RFQStatus.Pending && StaffId == staffId) return;
+
             if (Status != RFQStatus.Pending)
                 throw new DomainException("Chỉ có thể phân bổ RFQ ở trạng thái chờ phân bổ");
 
@@ -78,6 +82,8 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
         // nhân viên chấp nhận xử lý
         public void Accept()
         {
+            if (Status == RFQStatus.Accepted) return;
+
             if (Status != RFQStatus.Pending || StaffId == null)
                 throw new DomainException("Chỉ có thể tiếp nhận RFQ ở trạng thái chờ phân bổ");
 
@@ -112,6 +118,8 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
         // tất cả nhân viên từ chối
         public void MaskAsAllRejected()
         {
+            if (Status == RFQStatus.Rejected) return;
+
             if (Status != RFQStatus.Pending)
                 throw new DomainException("Chỉ có thể xác nhận không có nhân viên nào xử lý khi ở trạng thái chờ phân bổ");
 
@@ -124,6 +132,8 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
         // Quản lý chỉ định nhân viên (ép gán)
         public void ForceAssign(StaffId staffId)
         {
+            if (Status == RFQStatus.Accepted && StaffId == staffId) return;
+
             if (Status != RFQStatus.Rejected && Status != RFQStatus.Pending)
                 throw new DomainException("Trạng thái RFQ không hợp lệ. Không thể chỉ định phân bổ.");
 
@@ -138,6 +148,8 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
         // Đã báo giá lại khách hàng
         public void MarkAsResponded()
         {
+            if (Status == RFQStatus.Responded) return;
+
             if (Status != RFQStatus.Accepted)
                 throw new DomainException($"Ghi nhận phản hồi báo giá không thành công do trạng thái không hợp lệ: {Status}.");
 
@@ -146,9 +158,11 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
             AddDomainEvent(new RFQMarkAsRespondedEvent(Id, Code));
         }
 
-        // Báo giá được chốt thì coi là đã chuyển đổi thành đơn
+        // Đã chuyển đổi thành đơn
         public void MarkAsConverted()
         {
+            if (Status == RFQStatus.Converted) return;
+
             if (Status != RFQStatus.Responded)
                 throw new DomainException("Ghi nhận chuyển đổi yêu cầu báo giá không thành công.");
 
@@ -158,8 +172,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggrega
 
         public void Cancel()
         {
-            if (Status != RFQStatus.Responded)
-                throw new DomainException("Ghi nhận hủy yêu cầu báo giá không thành công.");
+            if (Status == RFQStatus.Cancelled) return;
 
             Status = RFQStatus.Cancelled;
             UpdatedAt = DateTimeOffset.UtcNow;

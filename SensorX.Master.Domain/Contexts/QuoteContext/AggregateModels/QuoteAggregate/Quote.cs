@@ -88,6 +88,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
             ProductId productId,
             CategoryId categoryId,
             Code productCode,
+            string productName,
             string manufacturer,
             string unit,
             Quantity quantity,
@@ -108,6 +109,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
                 productId,
                 categoryId,
                 productCode,
+                productName,
                 manufacturer,
                 unit,
                 quantity,
@@ -185,6 +187,8 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         /// </summary>
         public void SubmitForApproval()
         {
+            if (Status == QuoteStatus.Pending) return;
+
             if (Status is QuoteStatus.Draft or QuoteStatus.Returned)
             {
                 Status = QuoteStatus.Pending;
@@ -202,6 +206,8 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         /// </summary>
         public void WithDraw()
         {
+            if (Status == QuoteStatus.Draft) return;
+
             if (Status is QuoteStatus.Pending)
             {
                 Status = QuoteStatus.Draft;
@@ -218,6 +224,8 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         /// </summary>
         public void Approve()
         {
+            if (Status == QuoteStatus.Approved) return;
+
             if (Status is QuoteStatus.Pending)
             {
                 Status = QuoteStatus.Approved;
@@ -234,6 +242,8 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         /// </summary>
         public void Reject(string reason)
         {
+            if (Status == QuoteStatus.Returned) return;
+
             if (Status is QuoteStatus.Pending)
             {
                 Status = QuoteStatus.Returned;
@@ -251,6 +261,8 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         /// </summary>
         public void Publish()
         {
+            if (Status == QuoteStatus.Sent) return;
+
             if (Status is QuoteStatus.Approved)
             {
                 Status = QuoteStatus.Sent;
@@ -269,6 +281,8 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         /// </summary>
         public void Cancel()
         {
+            if (Status == QuoteStatus.Cancelled) return;
+
             Status = QuoteStatus.Cancelled;
             UpdatedAt = DateTimeOffset.UtcNow;
         }
@@ -278,6 +292,9 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
         /// </summary>
         public void MarkAsOrdered()
         {
+            if (Status == QuoteStatus.Ordered)
+                return;
+
             if (Status != QuoteStatus.Sent)
                 throw new DomainException("Chỉ có báo giá đã gửi mới có thể chuyển sang trạng thái đã sinh đơn.");
 

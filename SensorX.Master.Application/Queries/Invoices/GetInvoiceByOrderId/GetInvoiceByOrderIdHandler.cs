@@ -22,7 +22,7 @@ public class GetInvoiceByOrderIdHandler(
                 invoiceQueryBuilder.QueryAsNoTracking.Where(x => x.OrderId == new OrderId(request.OrderId)),
                 cancellationToken);
 
-            if (invoice == null)
+            if (invoice is null)
             {
                 return Result<GetInvoiceByIdResponse>.Failure("Khong tim thay hoa don theo don hang");
             }

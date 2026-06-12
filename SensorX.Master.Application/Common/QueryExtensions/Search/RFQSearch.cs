@@ -16,7 +16,7 @@ public static class RFQSearch
 
         return query.Where(p =>
             ((string)p.Code).ToLower().Contains(term) ||
-            p.CustomerInfo.CompanyName.ToLower().Contains(term) ||
+            p.CustomerInfo!.CompanyName.ToLower().Contains(term) ||
             ((string)p.CustomerInfo.Phone).ToLower().Contains(term)
         );
     }

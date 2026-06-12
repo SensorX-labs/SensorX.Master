@@ -1,16 +1,12 @@
 using MediatR;
 using SensorX.Master.Application.Common.ResponseClient;
-using SensorX.Master.Application.Services;
-using SensorX.Master.Domain.Common.Exceptions;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 using SensorX.Master.Domain.SeedWork;
-using SensorX.Master.Domain.StrongIDs;
 
 namespace SensorX.Master.Application.Commands.Quotes.CustomerRespondToQuote;
 
 public class CustomerRespondToQuoteHandler(
-    IRepository<Quote> _quoteRepository,
-    IInventoryAvailabilityService _inventoryAvailabilityService
+    IRepository<Quote> _quoteRepository
 ) : IRequestHandler<CustomerRespondToQuoteCommand, Result>
 {
     public async Task<Result> Handle(CustomerRespondToQuoteCommand request, CancellationToken cancellationToken)

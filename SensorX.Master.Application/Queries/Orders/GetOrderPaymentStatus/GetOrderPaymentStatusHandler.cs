@@ -21,7 +21,7 @@ public class GetOrderPaymentStatusHandler(
                 queryBuilder.QueryAsNoTracking.Where(x => x.OrderId == new OrderId(request.OrderId)),
                 cancellationToken);
 
-            if (payment == null)
+            if (payment is null)
             {
                 return Result<GetOrderPaymentStatusResponse>.Success(
                     new GetOrderPaymentStatusResponse(request.OrderId, false, "Pending"));

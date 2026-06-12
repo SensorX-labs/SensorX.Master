@@ -48,9 +48,9 @@ public class CreateOrderEventHandler(
                 SenderInfo: senderInfo,
                 OrderDate: DateTimeOffset.UtcNow,
                 Items: quote.LineItems.Select(item => new OrderItemDto(
-                    ProductId: item.ProductId.Value,
-                    ProductCode: item.ProductCode.Value,
-                    ProductName: item.ProductCode.Value,
+                    ProductId: item.ProductId,
+                    ProductCode: item.ProductCode,
+                    ProductName: item.ProductName,
                     Manufacturer: item.Manufacturer,
                     Unit: item.Unit,
                     Quantity: item.Quantity.Value,

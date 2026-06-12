@@ -22,7 +22,7 @@ public class GetDetailQuoteByIdHandler(
                             .Where(q => q.Id == new QuoteId(request.QuoteId));
 
             var quote = await _queryExecutor.FirstOrDefaultAsync(query, cancellationToken);
-            if (quote == null)
+            if (quote is null)
             {
                 return Result<GetDetailQuoteByIdResponse>.Failure("Không tìm thấy báo giá");
             }
@@ -54,25 +54,25 @@ public class GetDetailQuoteByIdHandler(
                 quote.ReasonReject,
 
                 // Calculations from Domain
-                quote.GetSubtotal().Amount,
-                quote.GetTotalTax().Amount,
-                quote.GetGrandTotal().Amount,
+                quote.GetSubtotal(),
+                quote.GetTotalTax(),
+                quote.GetGrandTotal(),
 
                 // Map Items
                 quote.LineItems.Select(i => new QuoteItemResponse
                 (
-                    i.Id.Value,
-                    i.ProductId.Value,
-                    i.ProductCode.Value,
-                    rfqItemMap.TryGetValue(i.ProductId.Value, out var prodName) ? prodName : string.Empty,
+                    i.Id,
+                    i.ProductId,
+                    i.ProductCode,
+                    i.ProductName,
                     i.Manufacturer,
                     i.Unit,
-                    i.Quantity.Value,
-                    i.UnitPrice.Amount,
-                    i.TaxRate.Value,
-                    i.GetLineAmount().Amount,
-                    i.GetTaxAmount().Amount,
-                    i.GetTotalLineAmount().Amount
+                    i.Quantity,
+                    i.UnitPrice,
+                    i.TaxRate,
+                    i.GetLineAmount(),
+                    i.GetTaxAmount(),
+                    i.GetTotalLineAmount()
                 )).ToList(),
 
                 // Map Sender Info
@@ -85,10 +85,10 @@ public class GetDetailQuoteByIdHandler(
 
                 // Map Customer Info
                 new CustomerInfoResponse(
-                    quote.CustomerId.Value,
+                    quote.CustomerId,
                     quote.CustomerInfo.CompanyName,
-                    quote.CustomerInfo.Phone.Value,
-                    quote.CustomerInfo.Email.Value,
+                    quote.CustomerInfo.Phone,
+                    quote.CustomerInfo.Email,
                     quote.CustomerInfo.Address,
                     quote.CustomerInfo.TaxCode
                 ),
