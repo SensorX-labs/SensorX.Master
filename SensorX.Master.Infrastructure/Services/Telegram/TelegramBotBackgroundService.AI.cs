@@ -1,12 +1,9 @@
 using System.Net.Http.Json;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 
 namespace SensorX.Master.Infrastructure.Services.Telegram;
-
-// ─── 9router OpenAI-compatible DTOs ───────────────────────────────────────────
 
 file record ChatMsg(
     [property: JsonPropertyName("role")] string Role,
@@ -33,40 +30,86 @@ public partial class TelegramBotBackgroundService
 {
     private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNameCaseInsensitive = true };
 
-    // Prompt mặc định đã tối ưu - thêm skill mới trực tiếp vào đây
     private static readonly string SystemPrompt = """
-        Bạn là bộ phân loại ý định cho chatbot doanh nghiệp SensorX.
-        Phân tích tin nhắn và trả về tên skill phù hợp nhất.
+        Bạn là bộ phân loại ý định cho Telegram bot nội bộ SensorX.
 
-        Danh sách skills:
-        - HELP: Khi người dùng hỏi help, menu, hướng dẫn, trợ giúp, bot làm được gì
+        Nhiệm vụ:
+        - Đọc tin nhắn người dùng.
+        - Chỉ trả về đúng 1 skill hợp lệ mà backend đang hỗ trợ.
+        - Không giải thích.
+        - Không trả về JSON.
+        - Không trả về tên skill gần đúng.
+        - Nếu không khớp thì trả về UNKNOWN.
 
-        === BÁO GIÁ ===
-        - QUOTE_PENDING: Báo giá đang chờ duyệt, báo giá chờ phê duyệt, quote pending
-        - QUOTE_APPROVED: Danh sách báo giá đã duyệt, báo giá được chấp nhận, approved quotes
-        - QUOTE_DETAIL: Xem chi tiết một báo giá cụ thể. Trả về: QUOTE_DETAIL:<mã báo giá>
-        - QUOTE_APPROVE: Duyệt/phê duyệt một báo giá cụ thể. Trả về: QUOTE_APPROVE:<mã báo giá>
-        - QUOTE_REJECT: Từ chối một báo giá cụ thể. Trả về: QUOTE_REJECT:<mã báo giá>|<lý do>
+        Các skill hợp lệ duy nhất:
+        - HELP
+        - QUOTE_PENDING
+        - QUOTE_APPROVED
+        - QUOTE_DETAIL:<QUOTE_CODE>
+        - QUOTE_APPROVE:<QUOTE_CODE>
+        - QUOTE_REJECT:<QUOTE_CODE>|<REASON>
+        - ORDER_LIST
+        - ORDER_DETAIL:<ORDER_CODE>
+        - UNKNOWN
 
-        === ĐƠN HÀNG ===
-        - ORDER_LIST: Xem danh sách đơn hàng, list orders, đơn hàng mới
-        - ORDER_DETAIL: Xem chi tiết một đơn hàng (bao gồm thanh toán + sản phẩm). Trả về: ORDER_DETAIL:<mã đơn hàng>
+        Quy tắc bắt buộc:
+        - Không bao giờ trả về ORDER.
+        - Không bao giờ trả về ORDERS.
+        - Không bao giờ trả về QUOTE.
+        - Không bao giờ trả về QUOTES.
+        - Nếu người dùng muốn xem danh sách đơn hàng thì phải trả về ORDER_LIST.
+        - Nếu người dùng muốn xem chi tiết đơn hàng và có mã ORD-... thì phải trả về ORDER_DETAIL:<mã>.
+        - Nếu người dùng muốn xem báo giá chờ duyệt thì trả về QUOTE_PENDING.
+        - Nếu người dùng muốn xem báo giá đã duyệt thì trả về QUOTE_APPROVED.
+        - Nếu người dùng muốn xem chi tiết báo giá và có mã QT-... thì trả về QUOTE_DETAIL:<mã>.
+        - Nếu người dùng muốn duyệt báo giá và có mã QT-... thì trả về QUOTE_APPROVE:<mã>.
+        - Nếu người dùng muốn từ chối báo giá và có mã QT-... cùng lý do thì trả về QUOTE_REJECT:<mã>|<lý do>.
+        - Giữ nguyên mã đơn hàng/báo giá từ tin nhắn người dùng.
+        - Không thêm khoảng trắng thừa ở đầu hoặc cuối.
 
-        - UNKNOWN: Không có skill nào phù hợp.
+        Ví dụ:
+        User: /help
+        Skill: HELP
 
-        Quy tắc:
-        - Chỉ trả về DUY NHẤT tên skill. KHÔNG giải thích, KHÔNG thêm văn bản khác.
-        - Nếu người dùng nhắc "đơn hàng" + mã ORD-xxx → ORDER_DETAIL:<mã>.
-        - Nếu người dùng nhắc "báo giá" + mã QT-xxx → QUOTE_DETAIL:<mã>.
+        User: menu
+        Skill: HELP
+
+        User: danh sách đơn hàng
+        Skill: ORDER_LIST
+
+        User: đơn hàng mới
+        Skill: ORDER_LIST
+
+        User: chi tiết đơn hàng ORD-2024-001
+        Skill: ORDER_DETAIL:ORD-2024-001
+
+        User: báo giá chờ duyệt
+        Skill: QUOTE_PENDING
+
+        User: báo giá đã duyệt
+        Skill: QUOTE_APPROVED
+
+        User: chi tiết báo giá QT-2024-001
+        Skill: QUOTE_DETAIL:QT-2024-001
+
+        User: duyệt báo giá QT-2024-001
+        Skill: QUOTE_APPROVE:QT-2024-001
+
+        User: từ chối báo giá QT-2024-001 vì sai đơn giá
+        Skill: QUOTE_REJECT:QT-2024-001|sai đơn giá
         """;
 
     private async Task<string?> ResolveSkillAsync(string userMessage, CancellationToken ct)
     {
         try
         {
-            var req = new ChatReq(_options.NineRouterModel,
+            var req = new ChatReq(
+                _options.NineRouterModel,
                 [new ChatMsg("system", SystemPrompt), new ChatMsg("user", userMessage)],
-                0.05f, 50, false);
+                0.0f,
+                64,
+                false
+            );
 
             var client = _httpClientFactory.CreateClient("NineRouter");
             var endpoint = $"{_options.NineRouterUrl.TrimEnd('/')}/v1/chat/completions";
@@ -75,15 +118,34 @@ public partial class TelegramBotBackgroundService
             resp.EnsureSuccessStatusCode();
 
             var body = await resp.Content.ReadFromJsonAsync<ChatResp>(JsonOpts, ct);
-            var skill = body?.Choices?.FirstOrDefault()?.Message?.Content?.Trim().ToUpper();
+            var rawSkill = body?.Choices?.FirstOrDefault()?.Message?.Content?.Trim();
+            var skill = NormalizeSkillName(rawSkill);
 
-            _logger.LogInformation("[TelegramBot] '{Message}' → Skill: '{Skill}'", userMessage, skill);
-            return (string.IsNullOrWhiteSpace(skill) || skill == "UNKNOWN") ? null : skill;
+            _logger.LogInformation("[TelegramBot] '{Message}' -> Skill: '{Skill}'", userMessage, skill);
+            return string.IsNullOrWhiteSpace(skill) || skill == "UNKNOWN" ? null : skill;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[TelegramBot] Lỗi khi gọi 9router");
+            _logger.LogError(ex, "[TelegramBot] Loi khi goi 9router");
             return null;
         }
+    }
+
+    private static string? NormalizeSkillName(string? skill)
+    {
+        if (string.IsNullOrWhiteSpace(skill))
+            return null;
+
+        var normalized = skill.Trim().ToUpperInvariant();
+
+        return normalized switch
+        {
+            "ORDER" => "ORDER_LIST",
+            "ORDERS" => "ORDER_LIST",
+            "ORDERS_LIST" => "ORDER_LIST",
+            "QUOTE" => "QUOTE_PENDING",
+            "QUOTES" => "QUOTE_PENDING",
+            _ => normalized
+        };
     }
 }
