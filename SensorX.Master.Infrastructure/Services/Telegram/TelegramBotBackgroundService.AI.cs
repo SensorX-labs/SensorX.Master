@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 
 namespace SensorX.Master.Infrastructure.Services.Telegram;
@@ -29,6 +30,8 @@ file record ChatResp(
 public partial class TelegramBotBackgroundService
 {
     private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNameCaseInsensitive = true };
+    private static readonly Regex OrderCodeRegex = new(@"ORD-[A-Z0-9-]+", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    private static readonly Regex QuoteCodeRegex = new(@"QT-[A-Z0-9-]+", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
     private static readonly string SystemPrompt = """
         Bạn là bộ phân loại ý định cho Telegram bot nội bộ SensorX.
@@ -101,6 +104,13 @@ public partial class TelegramBotBackgroundService
 
     private async Task<string?> ResolveSkillAsync(string userMessage, CancellationToken ct)
     {
+        var deterministicSkill = ResolveSkillDeterministically(userMessage);
+        if (!string.IsNullOrWhiteSpace(deterministicSkill))
+        {
+            _logger.LogInformation("[TelegramBot] '{Message}' -> Skill: '{Skill}' (rule)", userMessage, deterministicSkill);
+            return deterministicSkill;
+        }
+
         try
         {
             var req = new ChatReq(
@@ -147,5 +157,88 @@ public partial class TelegramBotBackgroundService
             "QUOTES" => "QUOTE_PENDING",
             _ => normalized
         };
+    }
+
+    private static string? ResolveSkillDeterministically(string userMessage)
+    {
+        if (string.IsNullOrWhiteSpace(userMessage))
+            return null;
+
+        var text = userMessage.Trim();
+        var normalized = text.ToLowerInvariant();
+
+        if (normalized is "/help" or "/menu" or "help" or "menu")
+            return "HELP";
+
+        if (normalized.Contains("chi tiet don hang") || normalized.Contains("chi tiết đơn hàng"))
+        {
+            var orderCode = OrderCodeRegex.Match(text);
+            if (orderCode.Success)
+                return $"ORDER_DETAIL:{orderCode.Value.ToUpperInvariant()}";
+        }
+
+        if (normalized.Contains("danh sach don hang")
+            || normalized.Contains("danh sách đơn hàng")
+            || normalized.Contains("don hang moi")
+            || normalized.Contains("đơn hàng mới")
+            || normalized == "don hang"
+            || normalized == "đơn hàng")
+        {
+            return "ORDER_LIST";
+        }
+
+        if (normalized.Contains("chi tiet bao gia") || normalized.Contains("chi tiết báo giá"))
+        {
+            var quoteCode = QuoteCodeRegex.Match(text);
+            if (quoteCode.Success)
+                return $"QUOTE_DETAIL:{quoteCode.Value.ToUpperInvariant()}";
+        }
+
+        if ((normalized.Contains("duyet bao gia") || normalized.Contains("duyệt báo giá"))
+            && QuoteCodeRegex.IsMatch(text))
+        {
+            var quoteCode = QuoteCodeRegex.Match(text);
+            return $"QUOTE_APPROVE:{quoteCode.Value.ToUpperInvariant()}";
+        }
+
+        if ((normalized.Contains("tu choi bao gia") || normalized.Contains("từ chối báo giá"))
+            && QuoteCodeRegex.IsMatch(text))
+        {
+            var quoteCode = QuoteCodeRegex.Match(text);
+            var reason = ExtractRejectReason(text);
+            return string.IsNullOrWhiteSpace(reason)
+                ? $"QUOTE_REJECT:{quoteCode.Value.ToUpperInvariant()}|"
+                : $"QUOTE_REJECT:{quoteCode.Value.ToUpperInvariant()}|{reason}";
+        }
+
+        if (normalized.Contains("bao gia cho duyet")
+            || normalized.Contains("báo giá chờ duyệt")
+            || normalized.Contains("quote pending"))
+        {
+            return "QUOTE_PENDING";
+        }
+
+        if (normalized.Contains("bao gia da duyet")
+            || normalized.Contains("báo giá đã duyệt")
+            || normalized.Contains("approved quote")
+            || normalized.Contains("approved quotes"))
+        {
+            return "QUOTE_APPROVED";
+        }
+
+        return null;
+    }
+
+    private static string ExtractRejectReason(string text)
+    {
+        var separators = new[] { " vì ", " vi ", "|" };
+        foreach (var separator in separators)
+        {
+            var index = text.IndexOf(separator, StringComparison.OrdinalIgnoreCase);
+            if (index >= 0)
+                return text[(index + separator.Length)..].Trim();
+        }
+
+        return string.Empty;
     }
 }
