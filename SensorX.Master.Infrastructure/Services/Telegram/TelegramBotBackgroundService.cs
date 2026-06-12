@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Telegram.Bot;
+using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -14,8 +15,10 @@ namespace SensorX.Master.Infrastructure.Services.Telegram;
 
 public partial class TelegramBotBackgroundService : BackgroundService
 {
-    private const string BotPollingMutexName = "SensorX.Master.TelegramBotPolling";
     private static readonly ConcurrentDictionary<int, byte> ProcessedUpdates = new();
+    private static int _pollingStarted;
+    // Giới hạn tối đa số update ID được lưu để tránh memory leak
+    private const int MaxProcessedUpdates = 500;
 
     private readonly ILogger<TelegramBotBackgroundService> _logger;
     private readonly ITelegramBotClient _botClient;
@@ -40,21 +43,33 @@ public partial class TelegramBotBackgroundService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var pollingMutex = new Mutex(false, BotPollingMutexName);
         using var pollingCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
         _pollingCancellationTokenSource = pollingCancellationTokenSource;
         var ownsPolling = false;
 
         try
         {
-            ownsPolling = pollingMutex.WaitOne(0);
+            ownsPolling = Interlocked.CompareExchange(ref _pollingStarted, 1, 0) == 0;
             if (!ownsPolling)
             {
                 _logger.LogWarning("[TelegramBot] PID {ProcessId}: Another instance is already polling.", Environment.ProcessId);
                 return;
             }
 
-            var me = await _botClient.GetMe(stoppingToken);
+            User me;
+            try
+            {
+                me = await _botClient.GetMe(stoppingToken);
+            }
+            catch (ApiRequestException apiEx) when (IsFatalApiError(apiEx))
+            {
+                _logger.LogCritical(
+                    "[TelegramBot] PID {ProcessId}: Fatal API error during startup (Code={ErrorCode}). "
+                    + "Bot token may be revoked or invalid. Polling will NOT start. Fix the token and restart the service.",
+                    Environment.ProcessId, apiEx.ErrorCode);
+                return;
+            }
+
             _logger.LogInformation("[TelegramBot] PID {ProcessId}: Bot @{BotName} started.", Environment.ProcessId, me.Username);
 
             _botClient.StartReceiving(
@@ -78,12 +93,19 @@ public partial class TelegramBotBackgroundService : BackgroundService
         {
             if (ownsPolling)
             {
-                pollingMutex.ReleaseMutex();
+                Interlocked.Exchange(ref _pollingStarted, 0);
             }
 
             _pollingCancellationTokenSource = null;
         }
     }
+
+    /// <summary>
+    /// Lỗi fatal từ Telegram API: token bị revoke (401), bot bị block/banned (403).
+    /// Những lỗi này không thể tự phục hồi bằng cách retry.
+    /// </summary>
+    private static bool IsFatalApiError(ApiRequestException ex)
+        => ex.ErrorCode is 401 or 403;
 
     private async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken ct)
     {
@@ -91,6 +113,13 @@ public partial class TelegramBotBackgroundService : BackgroundService
         {
             _logger.LogWarning("[TelegramBot] PID {ProcessId}: Skip duplicate update: {UpdateId}", Environment.ProcessId, update.Id);
             return;
+        }
+
+        // Giới hạn kích thước dictionary để tránh memory leak khi chạy dài ngày
+        if (ProcessedUpdates.Count > MaxProcessedUpdates)
+        {
+            foreach (var key in ProcessedUpdates.Keys.OrderBy(k => k).Take(ProcessedUpdates.Count - MaxProcessedUpdates))
+                ProcessedUpdates.TryRemove(key, out _);
         }
 
         if (update.Message is not { Text: { } messageText } message) return;
@@ -189,8 +218,14 @@ public partial class TelegramBotBackgroundService : BackgroundService
             {
                 await bot.SendMessage(chatId, chunk, parseMode: ParseMode.Markdown, cancellationToken: ct);
             }
+            catch (ApiRequestException apiEx) when (IsFatalApiError(apiEx))
+            {
+                // Token bị revoke / bot bị ban → không retry, throw để caller biết
+                throw;
+            }
             catch
             {
+                // Markdown parse lỗi → fallback gửi plain text
                 await bot.SendMessage(chatId, chunk, cancellationToken: ct);
             }
         }
@@ -218,9 +253,22 @@ public partial class TelegramBotBackgroundService : BackgroundService
 
     private Task HandlePollingErrorAsync(ITelegramBotClient bot, Exception ex, CancellationToken ct)
     {
+        // 409 Conflict: có instance khác đang dùng cùng token → dừng polling process này
         if (ex.Message.Contains("409: Conflict", StringComparison.OrdinalIgnoreCase))
         {
             _logger.LogWarning("[TelegramBot] PID {ProcessId}: Another instance is using this bot token. Stop polling in this process.", Environment.ProcessId);
+            _pollingCancellationTokenSource?.Cancel();
+            return Task.CompletedTask;
+        }
+
+        // 401 Unauthorized / 403 Forbidden: token bị revoke hoặc bot bị ban
+        // → Dừng polling ngay lập tức, KHÔNG retry để tránh crash service
+        if (ex is ApiRequestException { ErrorCode: 401 or 403 } fatalEx)
+        {
+            _logger.LogCritical(
+                "[TelegramBot] PID {ProcessId}: Fatal API error during polling (Code={ErrorCode}): {Message}. "
+                + "Bot token may be revoked or bot is banned. Stopping polling permanently. Restart the service after fixing the token.",
+                Environment.ProcessId, fatalEx.ErrorCode, fatalEx.Message);
             _pollingCancellationTokenSource?.Cancel();
             return Task.CompletedTask;
         }
