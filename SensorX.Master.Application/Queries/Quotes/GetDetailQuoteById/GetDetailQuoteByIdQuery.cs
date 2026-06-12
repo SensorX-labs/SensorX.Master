@@ -11,6 +11,7 @@ public sealed record GetDetailQuoteByIdResponse
     Guid Id,
     string Code,
     Guid RFQId,
+    string RFQCode,
     QuoteStatus Status,
     DateTimeOffset? QuoteDate,
     string? Note,

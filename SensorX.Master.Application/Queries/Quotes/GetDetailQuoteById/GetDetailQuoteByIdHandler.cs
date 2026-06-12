@@ -33,13 +33,21 @@ public class GetDetailQuoteByIdHandler(
                     .SelectMany(r => r.Items.Select(ri => new { ri.ProductId, ri.ProductName })),
                 cancellationToken
             );
-            var rfqItemMap = rfqItems.ToDictionary(x => x.ProductId, x => x.ProductName);
+            var rfqItemMap = rfqItems.ToDictionary(x => x.ProductId.Value, x => x.ProductName);
+
+            var rfqCode = await _queryExecutor.FirstOrDefaultAsync(
+                _rfqQueryBuilder.QueryAsNoTracking
+                    .Where(r => r.Id == quote.RFQId)
+                    .Select(r => r.Code.Value),
+                cancellationToken
+            ) ?? string.Empty;
 
             var response = new GetDetailQuoteByIdResponse
             (
-                quote.Id,
-                quote.Code,
-                quote.RFQId,
+                quote.Id.Value,
+                quote.Code.Value,
+                quote.RFQId.Value,
+                rfqCode,
                 quote.Status,
                 quote.QuoteDate,
                 quote.Note,
