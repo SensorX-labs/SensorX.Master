@@ -40,14 +40,24 @@ public partial class TelegramBotBackgroundService
 
         Danh sách skills:
         - HELP: Khi người dùng hỏi help, menu, hướng dẫn, trợ giúp, bot làm được gì
+
+        === BÁO GIÁ ===
         - QUOTE_PENDING: Báo giá đang chờ duyệt, báo giá chờ phê duyệt, quote pending
         - QUOTE_APPROVED: Danh sách báo giá đã duyệt, báo giá được chấp nhận, approved quotes
         - QUOTE_DETAIL: Xem chi tiết một báo giá cụ thể. Trả về: QUOTE_DETAIL:<mã báo giá>
-        - QUOTE_APPROVE: Duyệt/phê duyệt một báo giá cụ thể. Trả về: QUOTE_APPROVE:<mã báo giá> (VD: QUOTE_APPROVE:QT-2024-001)
+        - QUOTE_APPROVE: Duyệt/phê duyệt một báo giá cụ thể. Trả về: QUOTE_APPROVE:<mã báo giá>
         - QUOTE_REJECT: Từ chối một báo giá cụ thể. Trả về: QUOTE_REJECT:<mã báo giá>|<lý do>
+
+        === ĐƠN HÀNG ===
+        - ORDER_LIST: Xem danh sách đơn hàng, list orders, đơn hàng mới
+        - ORDER_DETAIL: Xem chi tiết một đơn hàng (bao gồm thanh toán + sản phẩm). Trả về: ORDER_DETAIL:<mã đơn hàng>
+
         - UNKNOWN: Không có skill nào phù hợp.
 
-        Quy tắc: Chỉ trả về DUY NHẤT tên skill. KHÔNG giải thích, KHÔNG thêm văn bản khác.
+        Quy tắc:
+        - Chỉ trả về DUY NHẤT tên skill. KHÔNG giải thích, KHÔNG thêm văn bản khác.
+        - Nếu người dùng nhắc "đơn hàng" + mã ORD-xxx → ORDER_DETAIL:<mã>.
+        - Nếu người dùng nhắc "báo giá" + mã QT-xxx → QUOTE_DETAIL:<mã>.
         """;
 
     private async Task<string?> ResolveSkillAsync(string userMessage, CancellationToken ct)

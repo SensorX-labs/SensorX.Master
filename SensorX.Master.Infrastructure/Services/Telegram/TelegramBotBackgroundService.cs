@@ -170,13 +170,17 @@ public partial class TelegramBotBackgroundService : BackgroundService
 
                 responseText = skillName switch
                 {
-                    "HELP"                                     => FormatHelpMessage(),
-                    "QUOTE_PENDING"                            => await HandleQuotesAsync(mediator, "Pending", ct),
-                    "QUOTE_APPROVED"                           => await HandleQuotesAsync(mediator, "Approved", ct),
-                    var s when s.StartsWith("QUOTE_DETAIL:")   => await HandleQuoteDetailAsync(mediator, s["QUOTE_DETAIL:".Length..].Trim(), ct),
-                    var s when s.StartsWith("QUOTE_APPROVE:")  => await HandleQuoteApprove(mediator, s["QUOTE_APPROVE:".Length..].Trim(), ct),
-                    var s when s.StartsWith("QUOTE_REJECT:")   => await HandleQuoteRejectAsync(mediator, s["QUOTE_REJECT:".Length..].Trim(), ct),
-                    _                                          => "⚠️ Skill chưa được implement."
+                    "HELP"                                          => FormatHelpMessage(),
+                    // ── Quote skills ──
+                    "QUOTE_PENDING"                                 => await HandleQuotesAsync(mediator, "Pending", ct),
+                    "QUOTE_APPROVED"                                => await HandleQuotesAsync(mediator, "Approved", ct),
+                    var s when s.StartsWith("QUOTE_DETAIL:")        => await HandleQuoteDetailAsync(mediator, s["QUOTE_DETAIL:".Length..].Trim(), ct),
+                    var s when s.StartsWith("QUOTE_APPROVE:")       => await HandleQuoteApprove(mediator, s["QUOTE_APPROVE:".Length..].Trim(), ct),
+                    var s when s.StartsWith("QUOTE_REJECT:")        => await HandleQuoteRejectAsync(mediator, s["QUOTE_REJECT:".Length..].Trim(), ct),
+                    // ── Order skills ──
+                    "ORDER_LIST"                                    => await HandleOrdersAsync(mediator, ct),
+                    var s when s.StartsWith("ORDER_DETAIL:")        => await HandleOrderDetailAsync(mediator, s["ORDER_DETAIL:".Length..].Trim(), ct),
+                    _                                               => "⚠️ Skill chưa được implement."
                 };
 
                 _logger.LogInformation("[TelegramBot] Processed skill: {Skill}", skillName);
@@ -187,7 +191,8 @@ public partial class TelegramBotBackgroundService : BackgroundService
                                "Bạn có thể thử:\n" +
                                "• `Báo giá chờ duyệt`\n" +
                                "• `Chi tiết báo giá QT-2024-001`\n" +
-                               "• `Duyệt báo giá QT-2024-001`\n" +
+                               "• `Danh sách đơn hàng`\n" +
+                               "• `Chi tiết đơn hàng ORD-2024-001`\n" +
                                "• `/help`";
             }
 
