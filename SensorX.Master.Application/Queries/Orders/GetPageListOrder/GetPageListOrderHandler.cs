@@ -27,7 +27,7 @@ public class GetPageListOrderHandler(
         if (!string.IsNullOrWhiteSpace(request.Code))
         {
             var code = request.Code.Trim().ToLower();
-            sourceQuery = sourceQuery.Where(x => ((string)x.Code).ToLower().Contains(code));
+            sourceQuery = sourceQuery.Where(x => x.Code.Value.ToLower().Contains(code));
         }
 
         if (!string.IsNullOrWhiteSpace(request.CompanyName))
@@ -45,7 +45,7 @@ public class GetPageListOrderHandler(
         if (!string.IsNullOrWhiteSpace(request.RecipientPhone))
         {
             var recipientPhone = request.RecipientPhone.Trim().ToLower();
-            sourceQuery = sourceQuery.Where(x => ((string)x.DeliveryInfo.RecipientPhone).ToLower().Contains(recipientPhone));
+            sourceQuery = sourceQuery.Where(x => x.DeliveryInfo.RecipientPhone.Value.ToLower().Contains(recipientPhone));
         }
 
         if (!string.IsNullOrWhiteSpace(request.SenderName))
