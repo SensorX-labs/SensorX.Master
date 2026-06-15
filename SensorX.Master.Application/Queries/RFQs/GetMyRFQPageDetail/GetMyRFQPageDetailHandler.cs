@@ -2,6 +2,7 @@ using MediatR;
 using SensorX.Master.Application.Common.Interfaces;
 using SensorX.Master.Application.Common.ReadModel;
 using SensorX.Master.Application.Common.ResponseClient;
+using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
 using SensorX.Master.Domain.SeedWork;
 
@@ -9,6 +10,7 @@ namespace SensorX.Master.Application.Queries.RFQs.GetMyRFQPageDetail;
 
 public class GetMyRFQPageDetailHandler(
     IRepository<RFQ> _rfqRepository,
+    IQueryBuilder<Quote> _quoteBuilder,
     IQueryBuilder<Customer> _customerBuilder,
     IQueryBuilder<SaleStaff> _staffBuilder,
     IQueryExecutor _queryExecutor
@@ -25,12 +27,15 @@ public class GetMyRFQPageDetailHandler(
 
         MyRfqSaleStaff? saleStaff = await GetSaleStaff(rfqData, cancellationToken);
         MyRfqDetailCustomer? customerDetail = await GetCustomerDetail(rfqData, cancellationToken);
+        var quoteInfo = await GetQuoteInfo(rfqData, cancellationToken);
 
         var result = new MyRfqDetail(
             rfqData.Id.Value,
             rfqData.Code.ToString(),
             rfqData.Status.ToString(),
             rfqData.CreatedAt,
+            quoteInfo?.Id.Value,
+            quoteInfo?.Code.ToString(),
             saleStaff,
             customerDetail,
             [.. rfqData.Items.Select(x => new MyRfqDetailItem(
@@ -43,6 +48,15 @@ public class GetMyRFQPageDetailHandler(
         );
 
         return Result<MyRfqDetail>.Success(result);
+    }
+
+    private async Task<Quote?> GetQuoteInfo(RFQ rfqData, CancellationToken cancellationToken)
+    {
+        var quoteQuery = _quoteBuilder.QueryAsNoTracking
+            .Where(x => x.RFQId == rfqData.Id)
+            .OrderByDescending(x => x.CreatedAt);
+
+        return await _queryExecutor.FirstOrDefaultAsync(quoteQuery, cancellationToken);
     }
 
     private async Task<MyRfqSaleStaff?> GetSaleStaff(RFQ rfqData, CancellationToken cancellationToken)
