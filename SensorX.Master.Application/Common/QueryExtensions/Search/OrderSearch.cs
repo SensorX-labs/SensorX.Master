@@ -14,12 +14,12 @@ public static class OrderSearch
         var term = searchTerm.Trim().ToLower();
 
         return query.Where(o =>
-            ((string)o.Code).ToLower().Contains(term) ||
-            o.DeliveryInfo.CompanyName.ToLower().Contains(term) ||
-            o.DeliveryInfo.RecipientName.ToLower().Contains(term) ||
-            ((string)o.DeliveryInfo.RecipientPhone).ToLower().Contains(term) ||
-            ((string)o.DeliveryInfo.Email).ToLower().Contains(term) ||
-            o.DeliveryInfo.ShippingAddress.ToLower().Contains(term) ||
-            o.SenderInfo.Name.ToLower().Contains(term));
+            o.Code.Value.ToLower().Contains(term) ||
+            (o.DeliveryInfo.CompanyName != null && o.DeliveryInfo.CompanyName.ToLower().Contains(term)) ||
+            (o.DeliveryInfo.RecipientName != null && o.DeliveryInfo.RecipientName.ToLower().Contains(term)) ||
+            (o.DeliveryInfo.RecipientPhone != null && o.DeliveryInfo.RecipientPhone.Value.ToLower().Contains(term)) ||
+            (o.DeliveryInfo.Email != null && o.DeliveryInfo.Email.Value.ToLower().Contains(term)) ||
+            (o.DeliveryInfo.ShippingAddress != null && o.DeliveryInfo.ShippingAddress.ToLower().Contains(term)) ||
+            (o.SenderInfo.Name != null && o.SenderInfo.Name.ToLower().Contains(term)));
     }
 }
