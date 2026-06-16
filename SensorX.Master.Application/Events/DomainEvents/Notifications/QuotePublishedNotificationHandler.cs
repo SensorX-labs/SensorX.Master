@@ -47,7 +47,7 @@ public class QuotePublishedNotificationHandler(
             title: "Báo giá mới đã sẵn sàng",
             content: $"Báo giá {quoteCode} cho yêu cầu RFQ của bạn đã được lập.",
             type: "Quote",
-            targetUrl: $"/my/quotes/{domainEvent.QuoteId.Value}"
+            targetUrl: $"/transactions/quotations/{domainEvent.QuoteId.Value}"
         );
         await notificationRepository.AddAsync(notifEntity, cancellationToken);
         await notificationRepository.SaveChangesAsync(cancellationToken);
@@ -86,7 +86,7 @@ public class QuotePublishedNotificationHandler(
 
         htmlBuilder.Append("</table>");
         htmlBuilder.Append($"<p>Tổng cộng (bao gồm VAT): <strong>{quote.GetGrandTotal().Amount:N0} VND</strong></p>");
-        htmlBuilder.Append($"<p><a href='{frontendUrl}/my/quotes/{domainEvent.QuoteId.Value}'>Nhấp vào đây để xem chi tiết, Phản hồi hoặc Chấp nhận báo giá</a></p>");
+        htmlBuilder.Append($"<p><a href='{frontendUrl}/transactions/quotations/{domainEvent.QuoteId.Value}'>Nhấp vào đây để xem chi tiết, Phản hồi hoặc Chấp nhận báo giá</a></p>");
         htmlBuilder.Append("<p>Trân trọng,<br/>Đội ngũ SensorX</p>");
 
         // 6. Send Email to Customer

@@ -30,7 +30,7 @@ public class RFQRejectedNotificationHandler(
             title: "Yêu cầu RFQ bị từ chối",
             content: $"RFQ {domainEvent.Code.Value} đã bị từ chối bởi {staffName}.",
             type: "RFQ",
-            targetUrl: $"/rfq/{domainEvent.RfqId.Value}"
+            targetUrl: $"/sales/RFQ/{domainEvent.RfqId.Value}"
         );
         await notificationRepository.AddAsync(notifEntity, cancellationToken);
         await notificationRepository.SaveChangesAsync(cancellationToken);

@@ -47,7 +47,7 @@ public class OrderCreatedNotificationHandler(
             title: "Đơn hàng mới đã được khởi tạo",
             content: $"Đơn hàng {orderCode} của bạn đã được khởi tạo thành công.",
             type: "Order",
-            targetUrl: $"/my/orders/{domainEvent.OrderId}"
+            targetUrl: $"/transactions/orders/{domainEvent.OrderId}"
         );
         await notificationRepository.AddAsync(notifEntity, cancellationToken);
         await notificationRepository.SaveChangesAsync(cancellationToken);
@@ -87,7 +87,7 @@ public class OrderCreatedNotificationHandler(
         htmlBuilder.Append("</table>");
         htmlBuilder.Append($"<p>Tổng tiền thanh toán (đã có VAT): <strong>{order.GetGrandTotal().Amount:N0} VND</strong></p>");
         htmlBuilder.Append($"<p>Vui lòng tiến hành thanh toán theo hướng dẫn trên website hoặc liên hệ bộ phận CSKH để được hỗ trợ.</p>");
-        htmlBuilder.Append($"<p><a href='{frontendUrl}/my/orders/{domainEvent.OrderId}'>Nhấp vào đây để xem chi tiết đơn hàng</a></p>");
+        htmlBuilder.Append($"<p><a href='{frontendUrl}/transactions/orders/{domainEvent.OrderId}'>Nhấp vào đây để xem chi tiết đơn hàng</a></p>");
         htmlBuilder.Append("<p>Cảm ơn quý khách đã tin tưởng chọn SensorX!<br/>Trân trọng,</p>");
 
         // 6. Publish Email to RabbitMQ

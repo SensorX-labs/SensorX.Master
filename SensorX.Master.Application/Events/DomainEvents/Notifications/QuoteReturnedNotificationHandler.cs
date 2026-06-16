@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
@@ -5,40 +6,41 @@ using SensorX.Master.Application.Common.DomainEvent;
 using SensorX.Master.Application.Common.Interfaces;
 using SensorX.Master.Application.Common.ReadModel;
 using SensorX.Master.Domain.Common;
-using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.RFQAggregate;
+using SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate;
 using SensorX.Master.Domain.SeedWork;
+
+using QuoteEntity = SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggregate.Quote;
 
 namespace SensorX.Master.Application.Events.DomainEvents.Notifications;
 
-public class RFQForceAssignedNotificationHandler(
+public class QuoteReturnedNotificationHandler(
     INotificationRepository notificationRepository,
     IRealtimeNotificationService realtimeNotificationService,
+    IRepository<QuoteEntity> quoteRepository,
     IRepository<SaleStaff> staffRepository
-) : INotificationHandler<DomainEventNotification<RFQForceAssignedEvent>>
+) : INotificationHandler<DomainEventNotification<QuoteReturnedEvent>>
 {
-    public async Task Handle(DomainEventNotification<RFQForceAssignedEvent> notification, CancellationToken cancellationToken)
+    public async Task Handle(DomainEventNotification<QuoteReturnedEvent> notification, CancellationToken cancellationToken)
     {
         var domainEvent = notification.DomainEvent;
 
-        // Fetch new SaleStaff
-        var staff = await staffRepository.GetByIdAsync(domainEvent.NewStaffId, cancellationToken);
-        if (staff == null) return;
+        // Fetch Quote to get Code
+        var quote = await quoteRepository.GetByIdAsync(domainEvent.QuoteId, cancellationToken);
+        var quoteCode = quote?.Code?.Value ?? "N/A";
 
-        // Skip duplicate notification if the same staff member was already assigned to this RFQ
-        if (domainEvent.PreviousStaffId == domainEvent.NewStaffId)
-        {
-            return;
-        }
+        // Fetch SaleStaff to get AccountId
+        var staff = await staffRepository.GetByIdAsync(domainEvent.StaffId, cancellationToken);
+        if (staff == null) return;
 
         var accountId = staff.AccountId.Value;
 
         // 1. Save to Database
         var notifEntity = NotificationEntity.CreateForUser(
             userId: accountId,
-            title: "RFQ được chỉ định xử lý",
-            content: $"Bạn đã được Quản lý chỉ định xử lý RFQ {domainEvent.Code.Value}.",
-            type: "RFQ",
-            targetUrl: $"/sales/RFQ/{domainEvent.RfqId.Value}"
+            title: "Báo giá bị từ chối",
+            content: $"Báo giá {quoteCode} đã bị trả về/từ chối. Lý do: {domainEvent.Reason}",
+            type: "Quote",
+            targetUrl: $"/sales/quotations/{domainEvent.QuoteId.Value}"
         );
         await notificationRepository.AddAsync(notifEntity, cancellationToken);
         await notificationRepository.SaveChangesAsync(cancellationToken);

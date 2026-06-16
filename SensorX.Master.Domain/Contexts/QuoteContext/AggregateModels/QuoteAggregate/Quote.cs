@@ -230,6 +230,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
             {
                 Status = QuoteStatus.Approved;
                 UpdatedAt = DateTimeOffset.UtcNow;
+                AddDomainEvent(new QuoteApprovedEvent(Id, RFQId, SenderInfo.Id));
             }
             else
             {
@@ -249,6 +250,7 @@ namespace SensorX.Master.Domain.Contexts.QuoteContext.AggregateModels.QuoteAggre
                 Status = QuoteStatus.Returned;
                 ReasonReject = reason;
                 UpdatedAt = DateTimeOffset.UtcNow;
+                AddDomainEvent(new QuoteReturnedEvent(Id, RFQId, SenderInfo.Id, reason));
             }
             else
             {

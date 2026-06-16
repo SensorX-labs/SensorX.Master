@@ -30,7 +30,7 @@ public class QuoteSubmittedNotificationHandler(
             title: "Báo giá chờ phê duyệt",
             content: $"Báo giá {quoteCode} đã được gửi lên và đang chờ phê duyệt.",
             type: "Quote",
-            targetUrl: $"/quotes/{domainEvent.QuoteId.Value}"
+            targetUrl: $"/sales/quotations/{domainEvent.QuoteId.Value}"
         );
         await notificationRepository.AddAsync(notifEntity, cancellationToken);
         await notificationRepository.SaveChangesAsync(cancellationToken);
