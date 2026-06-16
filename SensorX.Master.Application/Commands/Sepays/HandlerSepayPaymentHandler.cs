@@ -84,20 +84,57 @@ namespace SensorX.Master.Application.Commands.Sepays
                         var d6 = partsMatch.Groups[2].Value;
                         var d9 = partsMatch.Groups[3].Value;
 
-                        var candidatesQuery = _orderRepository.AsQueryable()
-                            .Where(o => o.Code.Value.StartsWith(prefix) && o.Code.Value.Contains(d6) && o.Code.Value.Contains(d9));
+                        if (prefix == "INV")
+                        {
+                            var invoiceCandidateQuery = _invoiceRepository.AsQueryable()
+                                .Where(i => i.Code.Value.StartsWith(prefix) && i.Code.Value.Contains(d6) && i.Code.Value.Contains(d9));
+                            var invoiceCandidates = await _queryExecutor.ToListAsync(invoiceCandidateQuery, cancellationToken);
+                            var invoiceCandidate = invoiceCandidates.FirstOrDefault(i => i.Code.Value == orderCode || i.Code.Value.Replace("-", string.Empty) == normalizedCandidate);
+                            if (invoiceCandidate is not null)
+                            {
+                                order = await _queryExecutor.FirstOrDefaultAsync(
+                                    _orderRepository.AsQueryable()
+                                        .Where(o => o.Id == invoiceCandidate.OrderId),
+                                    cancellationToken
+                                );
+                            }
+                        }
+                        else
+                        {
+                            var candidatesQuery = _orderRepository.AsQueryable()
+                                .Where(o => o.Code.Value.StartsWith(prefix) && o.Code.Value.Contains(d6) && o.Code.Value.Contains(d9));
 
-                        var candidates = await _queryExecutor.ToListAsync(candidatesQuery, cancellationToken);
-                        order = candidates.FirstOrDefault(o => o.Code.Value == orderCode || o.Code.Value.Replace("-", string.Empty) == normalizedCandidate);
+                            var candidates = await _queryExecutor.ToListAsync(candidatesQuery, cancellationToken);
+                            order = candidates.FirstOrDefault(o => o.Code.Value == orderCode || o.Code.Value.Replace("-", string.Empty) == normalizedCandidate);
+                        }
                     }
                     else
                     {
                         // fallback to exact match only (no client-side normalization)
-                        order = await _queryExecutor.FirstOrDefaultAsync(
-                            _orderRepository.AsQueryable()
-                                .Where(o => o.Code.Value == orderCode),
-                            cancellationToken
-                        );
+                        if (orderCode.StartsWith("INV"))
+                        {
+                            var invoiceCandidate = await _queryExecutor.FirstOrDefaultAsync(
+                                _invoiceRepository.AsQueryable()
+                                    .Where(i => i.Code.Value == orderCode),
+                                cancellationToken
+                            );
+                            if (invoiceCandidate is not null)
+                            {
+                                order = await _queryExecutor.FirstOrDefaultAsync(
+                                    _orderRepository.AsQueryable()
+                                        .Where(o => o.Id == invoiceCandidate.OrderId),
+                                    cancellationToken
+                                );
+                            }
+                        }
+                        else
+                        {
+                            order = await _queryExecutor.FirstOrDefaultAsync(
+                                _orderRepository.AsQueryable()
+                                    .Where(o => o.Code.Value == orderCode),
+                                cancellationToken
+                            );
+                        }
                     }
 
                     if (order is not null)

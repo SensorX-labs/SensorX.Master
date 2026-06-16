@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SensorX.Master.Infrastructure.Persistences;
@@ -12,9 +13,11 @@ using SensorX.Master.Infrastructure.Persistences;
 namespace SensorX.Master.Infrastructure.Persistences.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260615133722_AddNotificationsTable")]
+    partial class AddNotificationsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -408,10 +411,6 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                     b.Property<bool>("IsRead")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("Role")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
                     b.Property<string>("TargetUrl")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -427,16 +426,14 @@ namespace SensorX.Master.Infrastructure.Persistences.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<Guid?>("UserId")
+                    b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Role");
-
                     b.HasIndex("UserId");
 
-                    b.HasIndex("Role", "IsRead");
+                    b.HasIndex("UserId", "CreatedAt");
 
                     b.HasIndex("UserId", "IsRead");
 

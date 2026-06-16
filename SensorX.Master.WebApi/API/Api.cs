@@ -23,6 +23,7 @@ public static class Api
         api.MapSepayApi();
         api.MapAIHyperparametersApi();
         api.MapStaffQueriesApi();
+        api.MapNotificationApi();
         return api;
     }
 }

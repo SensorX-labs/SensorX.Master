@@ -48,6 +48,7 @@ namespace SensorX.Master.Infrastructure.DI
             services.AddScoped<ICurrentUser, CurrentUser>();
             services.AddScoped<IGeolocationQueryService, GeolocationQueryService>();
             services.AddScoped<IAIAssignmentService, AIAssignmentService>();
+            services.AddScoped<INotificationRepository, NotificationRepository>();
 
             // Đăng ký HttpClient cho Data Service
             services.AddHttpClient<IDataServiceClient, DataServiceClient>();
@@ -109,6 +110,7 @@ namespace SensorX.Master.Infrastructure.DI
                     cfg.Message<SensorX.Master.Application.Events.IntegrationEvents.TransferOrderFinishedEvent>(e => e.SetEntityName("transfer-order-finished"));
                     cfg.Message<SensorX.Master.Application.Events.IntegrationEvents.IStockInCreatedEvent>(e => e.SetEntityName("stock-in-created"));
                     cfg.Message<SensorX.Master.Application.Events.IntegrationEvents.IStockOutCreatedEvent>(e => e.SetEntityName("stock-out-created"));
+                    cfg.Message<SensorX.Master.Application.Events.IntegrationEvents.SendEmailCommand>(e => e.SetEntityName("send-email-command"));
 
                     cfg.ConfigureEndpoints(context);
                 });

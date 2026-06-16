@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using SensorX.Master.Application.Commands.Orders.CancelOrder;
 using SensorX.Master.Application.Commands.Orders.CreateOrder;
 using SensorX.Master.Application.Queries.Orders.GetDetailOrderById;
 using SensorX.Master.Application.Queries.Orders.GetMyOrderById;
@@ -53,6 +54,10 @@ public static class OrderApi
             .WithName("CreateOrder")
             .WithDescription("Create a new order");
 
+        group.MapPost("/my/{orderId:guid}/cancel", CancelMyOrder)
+            .WithName("CancelMyOrder")
+            .WithDescription("Cancel a pending-payment order (authenticated customer only)");
+
         return app;
     }
 
@@ -101,6 +106,14 @@ public static class OrderApi
         [FromServices] IMediator mediator)
     {
         var result = await mediator.Send(new GetMyOrderByIdQuery(orderId));
+        return result.ToResult();
+    }
+
+    private static async Task<IResult> CancelMyOrder(
+        [FromRoute] Guid orderId,
+        [FromServices] IMediator mediator)
+    {
+        var result = await mediator.Send(new CancelOrderCommand(orderId));
         return result.ToResult();
     }
 }

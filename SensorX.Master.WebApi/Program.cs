@@ -80,6 +80,7 @@ app.MapApi();
 
 // Map SignalR hubs
 app.MapHub<PaymentHub>("/hubs/payment").RequireAuthorization();
+app.MapHub<NotificationHub>("/hubs/notifications").RequireAuthorization();
 
 var autoApplyMigration = builder.Configuration.GetValue("Migration:AutoApply", true);
 if (autoApplyMigration)

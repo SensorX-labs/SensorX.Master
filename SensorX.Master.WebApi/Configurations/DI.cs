@@ -20,6 +20,7 @@ namespace SensorX.Master.WebApi.Configurations
 
             services.AddScoped<OrderService>();
             services.AddScoped<IPaymentNotificationService, PaymentNotificationService>();
+            services.AddScoped<IRealtimeNotificationService, RealtimeNotificationService>();
             return services;
         }
     }
