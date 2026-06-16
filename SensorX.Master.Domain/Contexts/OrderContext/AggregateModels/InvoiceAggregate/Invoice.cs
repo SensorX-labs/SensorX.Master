@@ -69,7 +69,7 @@ public class Invoice : Entity<InvoiceId>, IAggregateRoot, ICreationTrackable, IU
 
     public string GetExpectedTransferSyntax()
     {
-        return $"{OrderId.Value}|{GrandTotal.Amount}|{BillingInfo.TaxCode}";
+        return Code.Value;
     }
 
     public void RecordPayment(Money amount)
