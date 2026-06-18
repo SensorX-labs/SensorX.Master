@@ -22,11 +22,9 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(o => o.QuoteId)
             .HasConversion(id => id.Value, v => new QuoteId(v));
 
-        // Map Code as an owned value-object so its `Value` can be queried directly
-        builder.OwnsOne(o => o.Code, cb =>
-        {
-            cb.Property(c => c.Value).HasColumnName("Code");
-        });
+        builder.Property(o => o.Code)
+            .HasConversion(c => c.Value, v => Code.From(v))
+            .HasColumnName("Code");
 
         builder.Property(o => o.CustomerId)
             .HasConversion(id => id.Value, v => new CustomerId(v));
