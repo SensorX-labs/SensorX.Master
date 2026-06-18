@@ -17,7 +17,6 @@ public class GetPageListOrderHandler(
         CancellationToken cancellationToken)
     {
         var sourceQuery = orderQueryBuilder.QueryAsNoTracking.ApplySearch(request.SearchTerm);
-
         if (!string.IsNullOrWhiteSpace(request.Status)
             && Enum.TryParse<OrderStatus>(request.Status, true, out var status))
         {
