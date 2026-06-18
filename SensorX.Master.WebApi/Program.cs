@@ -2,6 +2,7 @@ using System;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using SensorX.Master.Infrastructure.DI;
 using SensorX.Master.Infrastructure.Persistences;
 using SensorX.Master.WebApi.API;
@@ -10,6 +11,10 @@ using SensorX.Master.WebApi.Hubs;
 using SensorX.Master.WebApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.Configure<HostOptions>(options =>
+{
+    options.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.Ignore;
+});
 // Cấu hình Authentication & Authorization (Tin tưởng Gateway)
 builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();

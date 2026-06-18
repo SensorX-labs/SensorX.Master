@@ -10,6 +10,8 @@ public sealed record MyRfqDetail(
     string Code,
     string Status,
     DateTimeOffset CreatedAt,
+    Guid? QuoteId,
+    string? QuoteCode,
     MyRfqSaleStaff? SaleStaff,
     MyRfqDetailCustomer? Customer,
     List<MyRfqDetailItem> Items
