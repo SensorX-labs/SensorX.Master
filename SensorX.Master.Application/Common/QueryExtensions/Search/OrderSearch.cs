@@ -13,6 +13,13 @@ public static class OrderSearch
 
         var term = searchTerm.Trim().ToLower();
 
-        return query.Where(o => o.Code.Value.ToLower().Contains(term));
+        return query.Where(o =>
+            ((string)o.Code).ToLower().Contains(term) ||
+            o.DeliveryInfo.CompanyName.ToLower().Contains(term) ||
+            o.DeliveryInfo.RecipientName.ToLower().Contains(term) ||
+            ((string)o.DeliveryInfo.RecipientPhone).ToLower().Contains(term) ||
+            ((string)o.DeliveryInfo.Email).ToLower().Contains(term) ||
+            o.DeliveryInfo.ShippingAddress.ToLower().Contains(term) ||
+            o.SenderInfo.Name.ToLower().Contains(term));
     }
 }
